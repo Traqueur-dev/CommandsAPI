@@ -42,7 +42,7 @@ dependencies {
     </dependency>
 </dependencies>
 ```
-By sure to relocate commandsAPI in to prevent bugs with other plugins.
+Be sure to relocate commandsAPI in to prevent bugs with other plugins.
 
 ### Instantiate the CommandManager
 
@@ -215,7 +215,7 @@ public class GreetCommand extends Command<JavaPlugin> {
 
 #### Custom Argument Types
 
-You can create custom argument types by implements the `ArgumentConverter` class and implementing the `apply`methods. Then, register the custom argument type with the `CommandManager` instance.
+You can create custom argument types by implements the `ArgumentConverter` class and implementing the `apply` methods. Then, register the custom argument type with the `CommandManager` instance.
 
 ```java
 public class CustomArgument implements ArgumentConverter<CustomType> {
@@ -254,7 +254,7 @@ public class CustomArgument implements ArgumentConverter<CustomType>, TabConvert
     }
 
     @Override
-    public List<String> onCompletion(CommandSender sender, String input) {
+    public List<String> onCompletion() {
         return /*list of completion*/;
     }
 }
