@@ -21,7 +21,7 @@ dependencies {
     compileOnly "org.spigotmc:spigot-api:1.21-R0.1-SNAPSHOT"
 }
 
-task generateVersionProperties {
+tasks.register('generateVersionProperties') {
     doLast {
         def file = new File("$projectDir/src/main/resources/version.properties")
         if (!file.parentFile.exists()) {
@@ -45,9 +45,4 @@ publishing {
             from components.java
         }
     }
-}
-
-wrapper {
-    gradleVersion = "8.7"
-    distributionType = Wrapper.DistributionType.ALL
 }
