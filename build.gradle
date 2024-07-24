@@ -37,7 +37,6 @@ processResources.dependsOn generateVersionProperties
 
 shadowJar {
     relocate 'lol.hyper.githubreleaseapi', 'fr.traqueur.commands.updater'
-    archiveFileName.set("${project.name}-${project.version}.jar")
 }
 
 java {
@@ -45,10 +44,12 @@ java {
     withJavadocJar()
 }
 
+
 publishing {
     publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
+        shadow(MavenPublication) {
+            from components.java
+            artifact shadowJar
         }
     }
 }
