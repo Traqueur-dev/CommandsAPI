@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'fr.traqueur'
-version = '1.0.1-DEBUG-5'
+version = '1.0.1-DEBUG-7'
 
 repositories {
     mavenCentral()
@@ -51,8 +51,11 @@ tasks.assemble {
 
 publishing {
     publications {
-        shadow(MavenPublication) {
-            artifact jar
+        maven(MavenPublication) {
+            groupId project.group
+            artifactId project.name
+            version project.version
+            artifact "build/libs/${project.name}-${project.version}.jar"
         }
     }
 }
