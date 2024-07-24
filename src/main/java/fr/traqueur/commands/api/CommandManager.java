@@ -7,7 +7,7 @@ import fr.traqueur.commands.api.arguments.TabConverter;
 import fr.traqueur.commands.api.arguments.impl.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
-import fr.traqueur.commands.api.utils.Updater;
+import fr.traqueur.commands.updater.Updater;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
@@ -83,7 +83,9 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.registerConverter(OfflinePlayer.class, "offlineplayer", new OfflinePlayerArgument());
         this.registerConverter(String.class, "infinite", s -> s);
 
-        Updater.checkForUpdates(plugin);
+        if(!Updater.isUpToDate()) {
+            this.plugin.getLogger().warning("Your version of the command framework is outdated. Please update it.");
+        }
     }
 
 
