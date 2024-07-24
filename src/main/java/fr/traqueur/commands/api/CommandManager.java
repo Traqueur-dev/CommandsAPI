@@ -8,16 +8,11 @@ import fr.traqueur.commands.api.arguments.TabConverter;
 import fr.traqueur.commands.api.arguments.impl.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TemplateArgumentNotExistException;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -81,6 +76,12 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         }
     }
 
+    /**
+     * Enregistre les sous-commandes d'une commande.
+     * @param parentLabel Le nom de la commande parente.
+     * @param subcommands Les sous-commandes à enregistrer.
+     * @throws TemplateArgumentNotExistException Si le modèle d'argument n'existe pas.
+     */
     public void registerSubCommands(String parentLabel, List<Command> subcommands) throws TemplateArgumentNotExistException {
         if(subcommands == null || subcommands.isEmpty()) {
             return;
@@ -185,7 +186,13 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         }
     }
 
-    public void registerCompletion(String label, int commandSize, TabConverter converter) {
+    /**
+     * Enregistre un compléteur de commande.
+     * @param label L'étiquette de la commande.
+     * @param commandSize La taille de la commande.
+     * @param converter Le convertisseur de complétion.
+     */
+    private void registerCompletion(String label, int commandSize, TabConverter converter) {
         Map<Integer, TabConverter> mapInner = this.completers.getOrDefault(label, new HashMap<>());
         TabConverter newConverter;
         TabConverter converterInner = mapInner.getOrDefault(commandSize, null);
@@ -320,7 +327,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @return true si la commande a été exécutée avec succès, sinon false.
      */
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull org.bukkit.command.Command command, @NotNull String label, @NotNull String[] args) {
+    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
         if (!plugin.isEnabled()) {
             return false;
         }
@@ -337,13 +344,13 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             }
             String cmdLabel = buffer.toString();
             if (commands.containsKey(cmdLabel)) {
-                Command endiaCommand = commands.get(cmdLabel);
-                if (!endiaCommand.getPermission().isEmpty() && !sender.hasPermission(endiaCommand.getPermission())) {
-                    sender.sendMessage(Component.text("Tu n'as pas la permission de faire cette commande.").color(NamedTextColor.RED));
+                Command commandFramework = commands.get(cmdLabel);
+                if (!command.getPermission().isEmpty() && !sender.hasPermission(command.getPermission())) {
+                    sender.sendMessage("§cTu n'as pas la permission de faire cette commande.");
                     return true;
                 }
-                if (endiaCommand.inGameOnly() && !(sender instanceof Player)) {
-                    sender.sendMessage(Component.text("Cette commande n'est disponible qu'en jeu.").color(NamedTextColor.RED));
+                if (commandFramework.inGameOnly() && !(sender instanceof Player)) {
+                    sender.sendMessage("§cCette commande n'est disponible qu'en jeu.");
                     return true;
                 }
                 int subCommand = cmdLabel.split("\\.").length - 1;
@@ -351,37 +358,35 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 if (args.length - subCommand >= 0)
                     System.arraycopy(args, subCommand, modArgs, 0, args.length - subCommand);
 
-                if (modArgs.length < endiaCommand.getArgs().size()) {
-                    String usage = endiaCommand.getUsage();
+                if (modArgs.length < commandFramework.getArgs().size()) {
+                    String usage = command.getUsage();
                     if (usage.isEmpty()) {
                         usage = "La commande n'a pas le bon nombre d'arguments.";
                     }
-                    sender.sendMessage(Component.text(usage).color(NamedTextColor.RED));
+                    sender.sendMessage("§c" +usage);
                     return true;
                 }
 
-                if (!endiaCommand.isInfiniteArgs() && (modArgs.length > endiaCommand.getArgs().size() + endiaCommand.getOptinalArgs().size())) {
-                    String usage = endiaCommand.getUsage();
+                if (!commandFramework.isInfiniteArgs() && (modArgs.length > commandFramework.getArgs().size() + commandFramework.getOptinalArgs().size())) {
+                    String usage = command.getUsage();
                     if (usage.isEmpty()) {
                         usage = "La commande n'a pas le bon nombre d'arguments.";
                     }
-                    sender.sendMessage(Component.text(usage).color(NamedTextColor.RED));
+                    sender.sendMessage("§c" + usage);
                     return true;
                 }
 
-                Arguments arguments = null;
+                Arguments arguments;
                 try {
-                    arguments = this.parse(endiaCommand, modArgs);
+                    arguments = this.parse(commandFramework, modArgs);
                 } catch (TemplateArgumentNotExistException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 } catch (ArgumentIncorrectException e) {
-                    sender.sendMessage(Component.text("L'argument ").color(NamedTextColor.RED)
-                            .append(Component.text(e.getInput()).color(NamedTextColor.YELLOW))
-                            .append(Component.text(" n'est pas reconnu dans l'usage de la commande.").color(NamedTextColor.RED)));
+                    sender.sendMessage("§cL'argument "+ "§a" + e.getInput() + "§c n'est pas reconnu dans l'usage de la commande.");
                     return true;
                 }
 
-                endiaCommand.execute(sender, arguments);
+                commandFramework.execute(sender, arguments);
                 return true;
             }
         }
@@ -390,7 +395,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull org.bukkit.command.Command command, @NotNull String label, @NotNull String[] args) {
+    public List<String> onTabComplete(CommandSender commandSender, org.bukkit.command.Command command, String label, String[] args) {
         String arg = args[args.length-1];
         for (int i = args.length; i >= 0; i--) {
             StringBuilder buffer = new StringBuilder();
