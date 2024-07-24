@@ -13,6 +13,7 @@ import java.util.Arrays;
  * This class is the base class for all commands.
  * It contains all the necessary methods to create a command.
  * It is abstract and must be inherited to be used.
+ * @param <T> The plugin that owns the command.
  */
 public abstract class Command<T extends JavaPlugin> {
 
