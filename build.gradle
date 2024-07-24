@@ -1,5 +1,4 @@
 plugins {
-    id 'io.github.goooler.shadow' version '8.1.8'
     id 'java'
     id 'maven-publish'
 }
@@ -20,10 +19,9 @@ repositories {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:1.21-R0.1-SNAPSHOT"
-    implementation group: 'lol.hyper', name: 'github-release-api', version: '1.0.5'
 }
 
-task generateVersionProperties {
+tasks.register('generateVersionProperties') {
     doLast {
         def file = new File("$projectDir/src/main/resources/version.properties")
         if (!file.parentFile.exists()) {
@@ -35,25 +33,16 @@ task generateVersionProperties {
 
 processResources.dependsOn generateVersionProperties
 
-shadowJar {
-    relocate 'lol.hyper.githubreleaseapi', 'fr.traqueur.commands.updater'
-    archiveFileName.set("${project.name}-${project.version}.jar")
-}
-
 java {
     withSourcesJar()
     withJavadocJar()
 }
 
+
 publishing {
     publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
+        maven(MavenPublication) {
+            from components.java
         }
     }
-}
-
-wrapper {
-    gradleVersion = "8.7"
-    distributionType = Wrapper.DistributionType.ALL
 }
