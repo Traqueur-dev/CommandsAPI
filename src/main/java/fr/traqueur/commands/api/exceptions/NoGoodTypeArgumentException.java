@@ -1,12 +1,12 @@
 package fr.traqueur.commands.api.exceptions;
 
 /**
- * Cette exception est levée lorsqu'un argument n'a pas le type attendu.
+ * Exception thrown when an argument has an unexpected type.
  */
 public class NoGoodTypeArgumentException extends Exception {
 
     /**
-     * Constructeur de la classe NoGoodTypeArgumentException.
+     * Constructs a new exception with the default message.
      */
     public NoGoodTypeArgumentException() {
         super("Argument has unexpected type.");

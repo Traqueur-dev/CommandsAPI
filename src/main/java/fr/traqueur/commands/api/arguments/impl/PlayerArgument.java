@@ -9,20 +9,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Cette classe implémente l'interface ArgumentConverter pour convertir une chaîne de caractères en un objet Player.
+ * Argument converter for {@link Player}.
  */
 public class PlayerArgument implements ArgumentConverter<Player>, TabConverter {
 
     /**
-     * Convertit une chaîne de caractères en un objet Player.
-     * @param input La chaîne de caractères représentant le nom du joueur.
-     * @return L'objet Player correspondant au nom spécifié, ou null si aucun joueur correspondant n'est trouvé.
+     * {@inheritDoc}
+     * <p>
+     * This implementation uses {@link Bukkit#getPlayer(String)} to convert the input to a player.
      */
     @Override
     public Player apply(String input) {
         return input != null ? Bukkit.getPlayer(input) : null;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This implementation returns a list of all online player names.
+     */
     @Override
     public List<String> onCompletion() {
         return Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList());

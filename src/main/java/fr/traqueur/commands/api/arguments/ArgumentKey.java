@@ -1,8 +1,9 @@
 package fr.traqueur.commands.api.arguments;
 
 /**
- * Cette classe représente une clé d'argument qui associe un nom et un type.
- * @param <T> Le type de la valeur associée à la clé.
+ * Represents a key for an argument.
+ *
+ * @param <T> the type of the argument
  */
 public class ArgumentKey<T> {
 
@@ -10,9 +11,10 @@ public class ArgumentKey<T> {
     private final Class<T> type;
 
     /**
-     * Constructeur privé pour créer une nouvelle instance de ArgumentKey.
-     * @param name Le nom de la clé.
-     * @param type Le type de la valeur associée à la clé.
+     * Constructs a new argument key with the given name and type.
+     *
+     * @param name the name of the argument
+     * @param type the type of the argument
      */
     private ArgumentKey(String name, Class<T> type) {
         this.name = name;
@@ -20,27 +22,29 @@ public class ArgumentKey<T> {
     }
 
     /**
-     * Méthode statique pour créer une nouvelle instance de ArgumentKey.
-     * @param name Le nom de la clé.
-     * @param type Le type de la valeur associée à la clé.
-     * @param <T> Le type de la valeur associée à la clé.
-     * @return Une nouvelle instance de ArgumentKey avec le nom et le type spécifiés.
+     * Creates a new argument key with the given name and type.
+     * @param name the name of the argument
+     * @param type the type of the argument
+     * @return the created argument key
+     * @param <T> the type of the argument
      */
     public static <T> ArgumentKey<T> of(String name, Class<T> type) {
         return new ArgumentKey<>(name, type);
     }
 
     /**
-     * Obtient le nom de la clé.
-     * @return Le nom de la clé.
+     * Gets the name of the argument.
+     *
+     * @return the name of the argument
      */
     public String getKey() {
         return name;
     }
 
     /**
-     * Obtient le type de la valeur associée à la clé.
-     * @return Le type de la valeur associée à la clé.
+     * Gets the type of the argument.
+     *
+     * @return the type of the argument
      */
     public Class<T> getType() {
         return type;

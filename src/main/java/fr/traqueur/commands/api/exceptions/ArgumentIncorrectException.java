@@ -1,18 +1,19 @@
 package fr.traqueur.commands.api.exceptions;
 
 /**
- * Cette exception est levée lorsqu'un argument est incorrect.
+ * Exception thrown when an argument is incorrect.
  */
 public class ArgumentIncorrectException extends Exception {
 
     /**
-     * La chaîne de caractères représentant l'argument incorrect.
+     * The input that caused the exception.
      */
     private final String input;
 
     /**
-     * Constructeur de la classe ArgumentIncorrectException.
-     * @param input La chaîne de caractères représentant l'argument incorrect.
+     * Constructor.
+     *
+     * @param input The input that caused the exception.
      */
     public ArgumentIncorrectException(String input) {
         super("Argument incorrect: " + input);
@@ -20,8 +21,8 @@ public class ArgumentIncorrectException extends Exception {
     }
 
     /**
-     * Renvoie la chaîne de caractères représentant l'argument incorrect.
-     * @return La chaîne de caractères représentant l'argument incorrect.
+     * Get the input that caused the exception.
+     * @return The input.
      */
     public String getInput() {
         return input;

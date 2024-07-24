@@ -1,5 +1,6 @@
-package fr.traqueur.commands.api.arguments;
+package fr.traqueur.commands.api;
 
+import fr.traqueur.commands.api.arguments.ArgumentKey;
 import fr.traqueur.commands.api.exceptions.ArgumentNotExistException;
 import fr.traqueur.commands.api.exceptions.NoGoodTypeArgumentException;
 
@@ -8,23 +9,24 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Cette classe représente un ensemble d'arguments avec leurs clés et valeurs associées.
+ * This class is used to store arguments.
  */
 public class Arguments {
     private final HashMap<ArgumentKey<?>, Object> arguments;
 
     /**
-     * Constructeur pour créer une nouvelle instance de Arguments.
+     * Constructor of the class.
      */
     public Arguments() {
         this.arguments = new HashMap<>();
     }
 
     /**
-     * Obtient la valeur de l'argument spécifié.
-     * @param argument Le nom de l'argument.
-     * @param <T> Le type de la valeur de l'argument.
-     * @return La valeur de l'argument spécifié.
+     * Get an argument from the map.
+     *
+     * @param argument The key of the argument.
+     * @param <T> The type of the argument.
+     * @return The argument.
      */
     public <T> T get(String argument) {
         try {
@@ -40,10 +42,11 @@ public class Arguments {
     }
 
     /**
-     * Obtient la valeur de l'argument spécifié sous forme d'Optional.
-     * @param argument Le nom de l'argument.
-     * @param <T> Le type de la valeur de l'argument.
-     * @return La valeur de l'argument spécifié sous forme d'Optional.
+     * Get an argument from the map as optional.
+     *
+     * @param argument The key of the argument.
+     * @param <T> The type of the argument.
+     * @return The argument.
      */
     public <T> Optional<T> getOptional(String argument) {
         try {
@@ -70,12 +73,13 @@ public class Arguments {
     }
 
     /**
-     * Ajoute un nouvel argument avec sa clé et sa valeur associée.
-     * @param key La clé de l'argument.
-     * @param type Le type de l'argument.
-     * @param object La valeur de l'argument.
+     * Add an argument to the map.
+     *
+     * @param key The key of the argument.
+     * @param type The type of the argument.
+     * @param object The object of the argument.
      */
-    public void add(String key, Class<?> type, Object object) {
+    protected void add(String key, Class<?> type, Object object) {
         ArgumentKey<?> argumentKey = ArgumentKey.of(key, type);
         this.arguments.put(argumentKey, object);
     }

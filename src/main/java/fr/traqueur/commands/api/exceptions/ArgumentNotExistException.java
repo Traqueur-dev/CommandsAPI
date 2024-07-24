@@ -1,12 +1,12 @@
 package fr.traqueur.commands.api.exceptions;
 
 /**
- * Cette exception est levée lorsqu'un argument n'existe pas.
+ * This exception is thrown when the argument does not exist.
  */
 public class ArgumentNotExistException extends Exception {
 
     /**
-     * Constructeur de la classe ArgumentNotExistException.
+     * Create a new instance of the exception with the default message.
      */
     public ArgumentNotExistException() {
         super("Argument does not exist.");

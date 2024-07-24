@@ -3,11 +3,10 @@ package fr.traqueur.commands.api;
 import com.google.common.collect.Lists;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
-import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabConverter;
 import fr.traqueur.commands.api.arguments.impl.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
-import fr.traqueur.commands.api.exceptions.TemplateArgumentNotExistException;
+import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
@@ -20,20 +19,45 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Cette classe gère l'enregistrement et l'exécution des commandes personnalisées.
+ * This class is the command manager.
+ * It allows you to register commands and subcommands.
+ * It also allows you to register argument converters and tab completers.
  */
 public class CommandManager implements CommandExecutor, TabCompleter {
 
+    /**
+     * The plugin that owns the command manager.
+     */
     private final Plugin plugin;
+
+    /**
+     * The command map of the server.
+     */
     private final CommandMap commandMap;
+
+    /**
+     * The constructor of the plugin command.
+     */
     private final Constructor<? extends PluginCommand> pluginConstructor;
+
+    /**
+     * The commands registered in the command manager.
+     */
     private final Map<String, Command> commands;
+
+    /**
+     * The argument converters registered in the command manager.
+     */
     private final Map<String, Map.Entry<Class<?>, ArgumentConverter<?>>> typeConverters;
+
+    /**
+     * The tab completers registered in the command manager.
+     */
     private final Map<String, Map<Integer, TabConverter>> completers;
 
     /**
-     * Constructeur de la classe CommandManager.
-     * @param plugin Le plugin utilisant ce gestionnaire de commandes.
+     * The constructor of the command manager.
+     * @param plugin The plugin that owns the command manager.
      */
     public CommandManager(Plugin plugin) {
         this.plugin = plugin;
@@ -60,8 +84,8 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Enregistre une commande personnalisée.
-     * @param command La commande à enregistrer.
+     * Register a command in the command manager.
+     * @param command The command to register.
      */
     public void registerCommand(Command command) {
         try {
@@ -71,18 +95,18 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 this.registerCommand(command, alias);
                 this.registerSubCommands(alias, command.getSubcommands());
             }
-        } catch(TemplateArgumentNotExistException e) {
+        } catch(TypeArgumentNotExistException e) {
             throw new RuntimeException(e);
         }
     }
 
     /**
-     * Enregistre les sous-commandes d'une commande.
-     * @param parentLabel Le nom de la commande parente.
-     * @param subcommands Les sous-commandes à enregistrer.
-     * @throws TemplateArgumentNotExistException Si le modèle d'argument n'existe pas.
+     * Register a list of subcommands in the command manager.
+     * @param parentLabel The parent label of the commands.
+     * @param subcommands The list of subcommands to register.
+     * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      */
-    public void registerSubCommands(String parentLabel, List<Command> subcommands) throws TemplateArgumentNotExistException {
+    public void registerSubCommands(String parentLabel, List<Command> subcommands) throws TypeArgumentNotExistException {
         if(subcommands == null || subcommands.isEmpty()) {
             return;
         }
@@ -97,28 +121,30 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Enregistre un convertisseur d'argument.
-     * @param typeClass La classe du type d'argument.
-     * @param type Le type de l'argument.
-     * @param converter Le convertisseur d'argument.
+     * Register an argument converter in the command manager.
+     * @param typeClass The class of the type.
+     * @param type The type of the argument.
+     * @param converter The converter of the argument.
+     * @param <T> The type of the argument.
      */
     public <T> void registerConverter(Class<T> typeClass, String type, ArgumentConverter<T> converter) {
         this.typeConverters.put(type, new AbstractMap.SimpleEntry<>(typeClass, converter));
     }
 
     /**
-     * Enregistre une commande personnalisée.
-     * @param command La commande à enregistrer.
-     * @param label le nom de la commande à enregistrer.
+     * Register a command in the command manager.
+     * @param command The command to register.
+     * @param label The label of the command.
+     * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      */
-    private void registerCommand(Command command, String label) throws TemplateArgumentNotExistException {
+    private void registerCommand(Command command, String label) throws TypeArgumentNotExistException {
         try {
             plugin.getLogger().info("Register command " + label);
             ArrayList<Argument> args = command.getArgs();
             ArrayList<Argument> optArgs = command.getOptinalArgs();
 
             if(!this.checkTypeForArgs(args) || !this.checkTypeForArgs(optArgs)) {
-                throw new TemplateArgumentNotExistException();
+                throw new TypeArgumentNotExistException();
             }
             commands.put(label.toLowerCase(), command);
             String cmdLabel = label.split("\\.")[0].toLowerCase();
@@ -187,10 +213,10 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Enregistre un compléteur de commande.
-     * @param label L'étiquette de la commande.
-     * @param commandSize La taille de la commande.
-     * @param converter Le convertisseur de complétion.
+     * Register a tab completer in the command manager.
+     * @param label The label of the command.
+     * @param commandSize The size of the command.
+     * @param converter The converter of the tab completer.
      */
     private void registerCompletion(String label, int commandSize, TabConverter converter) {
         Map<Integer, TabConverter> mapInner = this.completers.getOrDefault(label, new HashMap<>());
@@ -209,21 +235,16 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.completers.put(label, mapInner);
     }
 
-    /**
-     * Vérifie si les types d'arguments sont corrects.
-     * @param args La liste des arguments à vérifier.
-     * @return true si les types sont corrects, sinon false.
-     * @throws TemplateArgumentNotExistException Si le modèle d'argument n'existe pas.
-     */
-    private boolean checkTypeForArgs(ArrayList<Argument> args) throws TemplateArgumentNotExistException {
+
+    private boolean checkTypeForArgs(ArrayList<Argument> args) throws TypeArgumentNotExistException {
         for(String arg: args.stream().map(Argument::arg).toList()) {
             String[] parts = arg.split(":");
 
             if (parts.length != 2) {
-                throw new TemplateArgumentNotExistException();
+                throw new TypeArgumentNotExistException();
             }
             String type = parts[1].trim();
-            if(!this.isGoodType(type)) {
+            if(!this.typeExist(type)) {
                 return false;
             }
         }
@@ -231,14 +252,14 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Parse les arguments fournis.
-     * @param command La commande à laquelle les arguments sont associés.
-     * @param args Les arguments à parser.
-     * @return Les arguments parsés.
-     * @throws TemplateArgumentNotExistException Si le modèle d'argument n'existe pas.
-     * @throws ArgumentIncorrectException Si un argument est incorrect.
+     * Parse the arguments of the command.
+     * @param command The command to parse.
+     * @param args The arguments to parse.
+     * @return The arguments parsed.
+     * @throws TypeArgumentNotExistException If the type of the argument does not exist.
+     * @throws ArgumentIncorrectException If the argument is incorrect.
      */
-    private Arguments parse(Command command, String[] args) throws TemplateArgumentNotExistException, ArgumentIncorrectException {
+    private Arguments parse(Command command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
         Arguments arguments = new Arguments();
         ArrayList<Argument> templates = command.getArgs();
         for (int i = 0; i < templates.size(); i++) {
@@ -262,22 +283,23 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Applique le parsing sur un argument spécifique.
-     * @param args Les arguments fournis.
-     * @param arguments Les arguments parsés.
-     * @param templates Les modèles d'arguments.
-     * @param i L'index de l'argument à parser.
-     * @param input La valeur de l'argument.
-     * @return true si le parsing a été appliqué avec succès, sinon false.
-     * @throws TemplateArgumentNotExistException Si le modèle d'argument n'existe pas.
-     * @throws ArgumentIncorrectException Si un argument est incorrect.
+     * Apply the parsing of the arguments.
+     * @param args The arguments to parse.
+     * @param arguments The arguments parsed.
+     * @param templates The templates of the arguments.
+     * @param i The index of the argument.
+     * @param input The input of the argument.
+     * @return  If the parsing is applied.
+     * @throws TypeArgumentNotExistException If the type of the argument does not exist.
+     * @throws ArgumentIncorrectException If the argument is incorrect.
      */
-    private boolean applyParsing(String[] args, Arguments arguments, ArrayList<Argument> templates, int i, String input) throws TemplateArgumentNotExistException, ArgumentIncorrectException {
+    private boolean applyParsing(String[] args, Arguments arguments, ArrayList<Argument> templates, int i,
+                                 String input) throws TypeArgumentNotExistException, ArgumentIncorrectException {
         String template = templates.get(i).arg();
         String[] parts = template.split(":");
 
         if (parts.length != 2) {
-            throw new TemplateArgumentNotExistException();
+            throw new TypeArgumentNotExistException();
         }
 
         String key = parts[0].trim();
@@ -309,22 +331,21 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Vérifie si un type est correct.
-     * @param type Le type à vérifier.
-     * @return true si le type est correct, sinon false.
+     * Check if the type of the argument exists.
+     * @param type The type of the argument.
+     * @return If the type of the argument exists.
      */
-    private boolean isGoodType(String type) {
+    private boolean typeExist(String type) {
         return this.typeConverters.containsKey(type);
     }
 
     /**
-     * Exécute une commande lorsqu'elle est invoquée.
-     *
-     * @param sender Le commandant qui a invoqué la commande.
-     * @param command L'objet de la commande invoquée.
-     * @param label L'étiquette de la commande invoquée.
-     * @param args Les arguments fournis avec la commande.
-     * @return true si la commande a été exécutée avec succès, sinon false.
+     * This method is called when a command is executed.
+     * @param sender The sender of the command.
+     * @param command The command executed.
+     * @param label The label of the command.
+     * @param args The arguments of the command.
+     * @return If the command is executed.
      */
     @Override
     public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
@@ -379,7 +400,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 Arguments arguments;
                 try {
                     arguments = this.parse(commandFramework, modArgs);
-                } catch (TemplateArgumentNotExistException e) {
+                } catch (TypeArgumentNotExistException e) {
                     throw new RuntimeException(e);
                 } catch (ArgumentIncorrectException e) {
                     sender.sendMessage("§cL'argument "+ "§a" + e.getInput() + "§c n'est pas reconnu dans l'usage de la commande.");
@@ -394,6 +415,14 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /**
+     * This method is called when a tab is completed.
+     * @param commandSender The sender of the command.
+     * @param command The command completed.
+     * @param label The label of the command.
+     * @param args The arguments of the command.
+     * @return The list of completions.
+     */
     @Override
     public List<String> onTabComplete(CommandSender commandSender, org.bukkit.command.Command command, String label, String[] args) {
         String arg = args[args.length-1];
@@ -425,8 +454,8 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Récupère les commandes enregistrées.
-     * @return Les commandes enregistrées.
+     * Get the commands of the command manager.
+     * @return The commands of the command manager.
      */
     public Map<String, Command> getCommands() {
         return commands;

@@ -1,9 +1,8 @@
 package fr.traqueur.commands.api;
 
 import fr.traqueur.commands.api.arguments.Argument;
-import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabConverter;
-import fr.traqueur.commands.api.exceptions.NoArgsWithInfiniteArgumentException;
+import fr.traqueur.commands.api.exceptions.ArgsWithInfiniteArgumentException;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -11,74 +10,72 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Cette classe abstraite représente une commande du plugin.
- * Elle permet de créer et gérer des commandes avec leurs sous-commandes, des arguments et des permissions.
- *
+ * This class is the base class for all commands.
+ * It contains all the necessary methods to create a command.
+ * It is abstract and must be inherited to be used.
  */
 public abstract class Command {
 
     // Attributs de la classe
-
     /**
-     * Le plugin auquel appartient la commande.
+     * The plugin that owns the command.
      */
     private final JavaPlugin plugin;
 
     /**
-     * Le nom de la commande.
+     * The name of the command.
      */
     private final String name;
 
     /**
-     * La liste des alias de la commande.
+     * The aliases of the command.
      */
     private final ArrayList<String> aliases;
 
     /**
-     * La liste des sous-commandes de la commande.
+     * The subcommands of the command.
      */
     private final ArrayList<Command> subcommands;
 
     /**
-     * La liste des arguments de la commande.
+     * The arguments of the command.
      */
     private final ArrayList<Argument> args;
 
     /**
-     * La liste des arguments optionnels de la commande.
+     * The optional arguments of the command.
      */
     private final ArrayList<Argument> optionalArgs;
 
     /**
-     * La description de la commande.
+     * The description of the command.
      */
     private String description;
 
     /**
-     * L'utilisation de la commande.
+     * The usage of the command.
      */
     private String usage;
 
     /**
-     * La permission requise pour exécuter la commande.
+     * The permission of the command.
      */
     private String permission;
 
     /**
-     * Indique si la commande est uniquement exécutable en jeu.
+     * If the command is only for the game.
      */
     private boolean gameOnly;
 
     /**
-     * Indique si la commande prend un nombre infini d'arguments.
+     * If the command has infinite arguments.
      */
     private boolean infiniteArgs;
 
     /**
-     * Constructeur de la classe Command.
-     *
-     * @param plugin Le plugin auquel appartient la commande.
-     * @param name   Le nom de la commande.
+     * The constructor of the command.
+     * @param plugin The plugin that owns the command.
+     * @param name The name of the command.
      */
     public Command(JavaPlugin plugin, String name) {
         this.plugin = plugin;
@@ -93,181 +90,154 @@ public abstract class Command {
         this.optionalArgs = new ArrayList<>();
     }
 
-    // Méthodes abstraites
-
     /**
-     * Méthode abstraite à implémenter pour exécuter la commande.
-     *
-     * @param sender L'expéditeur de la commande.
-     * @param args   Les arguments de la commande.
+     * This method is called when the command is executed.
+     * @param sender The sender of the command.
+     * @param args The arguments of the command.
      */
     public abstract void execute(CommandSender sender, Arguments args);
 
-    // Getters pour les attributs
-
     /**
-     * Retourne le nom de la commande.
-     *
-     * @return Le nom de la commande.
+     * This method is called to get the name of the command.
+     * @return The name of the command.
      */
-    public String getName() {
+    protected String getName() {
         return name;
     }
 
     /**
-     * Retourne la description de la commande.
-     *
-     * @return La description de la commande.
+     * This method is called to get the description of the command.
+     * @return The description of the command.
      */
-    public String getDescription() {
+    protected String getDescription() {
         return description;
     }
 
     /**
-     * Retourne la permission requise pour exécuter la commande.
-     *
-     * @return La permission requise pour exécuter la commande.
+     * This method is called to get the permission of the command.
+     * @return The permission of the command.
      */
-    public String getPermission() {
+    protected String getPermission() {
         return permission;
     }
 
     /**
-     * Retourne l'utilisation de la commande.
-     *
-     * @return L'utilisation de la commande.
+     * This method is called to get the usage of the command.
+     * @return The usage of the command.
      */
-    public String getUsage() {
+    protected String getUsage() {
         return usage;
     }
 
     /**
-     * Retourne la liste des alias de la commande.
-     *
-     * @return La liste des alias de la commande.
+     * This method is called to get the aliases of the command.
+     * @return The aliases of the command.
      */
-    public ArrayList<String> getAliases() {
+    protected ArrayList<String> getAliases() {
         return aliases;
     }
 
+
     /**
-     * Retourne la liste des sous-commandes de la commande.
-     *
-     * @return La liste des sous-commandes de la commande.
+     * This method is called to get the subcommands of the command.
+     * @return The subcommands of the command.
      */
-    public ArrayList<Command> getSubcommands() {
+    protected ArrayList<Command> getSubcommands() {
         return subcommands;
     }
 
     /**
-     * Retourne la liste des arguments de la commande.
-     *
-     * @return La liste des arguments de la commande.
+     * This method is called to get the arguments of the command.
+     * @return The arguments of the command.
      */
-    public ArrayList<Argument> getArgs() {
+    protected ArrayList<Argument> getArgs() {
         return args;
     }
 
     /**
-     * Retourne la liste des arguments optionnels de la commande.
-     *
-     * @return La liste des arguments optionnels de la commande.
+     * This method is called to get the optional arguments of the command.
+     * @return The optional arguments of the command.
      */
-    public ArrayList<Argument> getOptinalArgs() {
+    protected ArrayList<Argument> getOptinalArgs() {
         return optionalArgs;
     }
 
     /**
-     * Retourne true si la commande est uniquement exécutable en jeu, sinon false.
-     *
-     * @return true si la commande est uniquement exécutable en jeu, sinon false.
+     * This method is called to check if the command is only to use in game.
+     * @return If the command is only to use in game.
      */
-    public boolean inGameOnly() {
+    protected boolean inGameOnly() {
         return gameOnly;
     }
 
+
     /**
-     * Retourne true si la commande prend un nombre infini d'arguments, sinon false.
-     *
-     * @return true si la commande prend un nombre infini d'arguments, sinon false.
+     * This method is called to check if the command has infinite arguments.
+     * @return If the command has infinite arguments.
      */
-    public boolean isInfiniteArgs() {
+    protected boolean isInfiniteArgs() {
         return infiniteArgs;
     }
 
-    // Setters pour les attributs
-
     /**
-     * Définit la description de la commande.
-     *
-     * @param description La description de la commande.
+     * This method is called to set the description of the command
+     * @param description The description of the command.
      */
     public void setDescription(String description) {
         this.description = description;
     }
 
     /**
-     * Définit si la commande est uniquement exécutable en jeu.
-     *
-     * @param gameOnly true si la commande est uniquement exécutable en jeu, sinon false.
+     * This method is called to set if the command is only to use in game.
+     * @param gameOnly If the command is only to use in game.
      */
     public void setGameOnly(boolean gameOnly) {
         this.gameOnly = gameOnly;
     }
 
     /**
-     * Définit la permission requise pour exécuter la commande.
-     *
-     * @param permission La permission requise pour exécuter la commande.
+     * This method is called to set the permission of the command.
+     * @param permission The permission of the command.
      */
     public void setPermission(String permission) {
         this.permission = permission;
     }
 
     /**
-     * Définit l'utilisation de la commande.
-     *
-     * @param usage L'utilisation de la commande.
+     * This method is called to set the usage of the command.
+     * @param usage The usage of the command.
      */
     public void setUsage(String usage) {
         this.usage = usage;
     }
 
     /**
-     * Ajoute des alias à la commande.
-     * @param aliases Les alias à ajouter.
+     * This method is called to add aliases to the command.
+     * @param aliases The aliases to add.
      */
     public void addAlias(String... aliases) {
         this.aliases.addAll(Arrays.asList(aliases));
     }
 
     /**
-     * Ajoute un alias à la commande.
-     * @param alias L'alias à ajouter.
+     * This method is called to add a alias to the command.
+     * @param alias The alias to add.
      */
     public void addAlias(String alias) {
         this.aliases.add(alias);
     }
 
     /**
-     * Ajoute des sous-commandes à la commande.
-     * @param commands Les sous-commandes à ajouter.
+     * This method is called to add subcommands to the command.
+     * @param commands The subcommands to add.
      */
     public void addSubCommand(Command... commands) {
         this.subcommands.addAll(Arrays.asList(commands));
     }
 
     /**
-     * Ajoute une sous-commande à la commande.
-     * @param command La sous-commande à ajouter.
-     */
-    public void addSubCommand(Command command) {
-        this.subcommands.add(command);
-    }
-
-    /**
-     * Ajoute des arguments à la commande.
-     * @param args Les arguments à ajouter.
+     * This method is called to add arguments to the command.
+     * @param args The arguments to add.
      */
     public void addArgs(String... args) {
         Arrays.asList(args).forEach(arg -> {
@@ -276,27 +246,28 @@ public abstract class Command {
     }
 
     /**
-     * Ajoute un argument à la commande.
-     * @param arg L'argument à ajouter.
+     * This method is called to add arguments to the command.
+     * @param arg The argument to add.
+     * @param converter The converter of the argument.
      */
     public void addArgs(String arg, TabConverter converter) {
         try {
             if (this.infiniteArgs) {
-                throw new NoArgsWithInfiniteArgumentException(false);
+                throw new ArgsWithInfiniteArgumentException(false);
             }
 
             if (arg.contains(":infinite")) {
                 this.infiniteArgs = true;
             }
             this.args.add(new Argument(arg, converter.onCompletion()));
-        } catch (NoArgsWithInfiniteArgumentException e) {
+        } catch (ArgsWithInfiniteArgumentException e) {
             this.plugin.getLogger().severe(e.getMessage());
         }
     }
 
     /**
-     * Ajoute des arguments optionnels à la commande.
-     * @param args Les arguments optionnels à ajouter.
+     * This method is called to add optional arguments to the command.
+     * @param args The optional arguments to add.
      */
     public void addOptinalArgs(String... args) {
         for (String a : args) {
@@ -305,23 +276,24 @@ public abstract class Command {
     }
 
     /**
-     * Ajoute un argument optionnel à la commande.
-     * @param arg L'argument optionnel à ajouter.
+     * This method is called to add optional arguments to the command.
+     * @param arg The optional argument to add.
+     * @param converter The converter of the argument.
      */
     public void addOptinalArgs(String arg, TabConverter converter) {
         try {
             if (this.infiniteArgs) {
-                throw new NoArgsWithInfiniteArgumentException(true);
+                throw new ArgsWithInfiniteArgumentException(true);
             }
             this.optionalArgs.add(new Argument(arg, converter.onCompletion()));
-        } catch (NoArgsWithInfiniteArgumentException e) {
+        } catch (ArgsWithInfiniteArgumentException e) {
             this.plugin.getLogger().severe(e.getMessage());
         }
     }
 
     /**
-     * Retourne le plugin auquel appartient la commande.
-     * @return Le plugin auquel appartient la commande.
+     * This method is called to get the plugin that owns the command.
+     * @return The plugin that owns the command.
      */
     public JavaPlugin getPlugin() {
         return plugin;

@@ -4,14 +4,15 @@ package fr.traqueur.commands.api.arguments.impl;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 
 /**
- * Cette classe implémente l'interface ArgumentConverter pour convertir une chaîne de caractères en un objet Long.
+ * Argument used to convert a string to a long.
  */
 public class LongArgument implements ArgumentConverter<Long> {
 
     /**
-     * Convertit une chaîne de caractères en un objet Long.
-     * @param input La chaîne de caractères représentant le nombre à convertir.
-     * @return L'objet Long correspondant à la chaîne de caractères spécifiée.
+     * Convert a string to a long.
+     *
+     * @param input the string to convert
+     * @return the long or null if the string is not a long
      */
     @Override
     public Long apply(String input) {
