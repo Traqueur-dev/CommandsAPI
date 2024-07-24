@@ -48,7 +48,7 @@ java {
 publishing {
     publications {
         shadow(MavenPublication) {
-            artifact shadowJar
+            artifact jar
         }
     }
 }
