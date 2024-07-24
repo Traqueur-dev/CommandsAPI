@@ -7,6 +7,7 @@ import fr.traqueur.commands.api.arguments.TabConverter;
 import fr.traqueur.commands.api.arguments.impl.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
+import fr.traqueur.commands.api.utils.Updater;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
@@ -43,7 +44,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     /**
      * The commands registered in the command manager.
      */
-    private final Map<String, Command> commands;
+    private final Map<String, Command<?>> commands;
 
     /**
      * The argument converters registered in the command manager.
@@ -81,13 +82,17 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.registerConverter(Player.class, "player", new PlayerArgument());
         this.registerConverter(OfflinePlayer.class, "offlineplayer", new OfflinePlayerArgument());
         this.registerConverter(String.class, "infinite", s -> s);
+
+        Updater.checkForUpdates(plugin);
     }
+
+
 
     /**
      * Register a command in the command manager.
      * @param command The command to register.
      */
-    public void registerCommand(Command command) {
+    public void registerCommand(Command<?> command) {
         try {
             ArrayList<String> aliases = new ArrayList<>(command.getAliases());
             aliases.add(command.getName());
@@ -110,7 +115,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         if(subcommands == null || subcommands.isEmpty()) {
             return;
         }
-        for (Command subcommand : subcommands) {
+        for (Command<?> subcommand : subcommands) {
             ArrayList<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
             aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
@@ -137,7 +142,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @param label The label of the command.
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      */
-    private void registerCommand(Command command, String label) throws TypeArgumentNotExistException {
+    private void registerCommand(Command<?> command, String label) throws TypeArgumentNotExistException {
         try {
             plugin.getLogger().info("Register command " + label);
             ArrayList<Argument> args = command.getArgs();
@@ -259,7 +264,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      * @throws ArgumentIncorrectException If the argument is incorrect.
      */
-    private Arguments parse(Command command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
+    private Arguments parse(Command<?> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
         Arguments arguments = new Arguments();
         ArrayList<Argument> templates = command.getArgs();
         for (int i = 0; i < templates.size(); i++) {
@@ -365,7 +370,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             }
             String cmdLabel = buffer.toString();
             if (commands.containsKey(cmdLabel)) {
-                Command commandFramework = commands.get(cmdLabel);
+                Command<?> commandFramework = commands.get(cmdLabel);
                 if (!command.getPermission().isEmpty() && !sender.hasPermission(command.getPermission())) {
                     sender.sendMessage("§cTu n'as pas la permission de faire cette commande.");
                     return true;
@@ -441,8 +446,8 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                     return completer.stream().filter(str -> {
                         String cmdLabelInner = cmdLabel + "." + str.toLowerCase();
                         if(this.commands.containsKey(cmdLabelInner)) {
-                            Command endiaCommand = this.commands.get(cmdLabelInner);
-                            return endiaCommand.getPermission().isEmpty() || commandSender.hasPermission(endiaCommand.getPermission());
+                            Command<?> frameworkCommand = this.commands.get(cmdLabelInner);
+                            return frameworkCommand.getPermission().isEmpty() || commandSender.hasPermission(frameworkCommand.getPermission());
                         }
                         return true;
                     }).collect(Collectors.toList());
@@ -457,7 +462,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * Get the commands of the command manager.
      * @return The commands of the command manager.
      */
-    public Map<String, Command> getCommands() {
+    public Map<String, Command<?>> getCommands() {
         return commands;
     }
 }
