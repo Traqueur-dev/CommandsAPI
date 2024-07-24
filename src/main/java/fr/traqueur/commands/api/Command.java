@@ -14,13 +14,13 @@ import java.util.Arrays;
  * It contains all the necessary methods to create a command.
  * It is abstract and must be inherited to be used.
  */
-public abstract class Command {
+public abstract class Command<T extends JavaPlugin> {
 
     // Attributs de la classe
     /**
      * The plugin that owns the command.
      */
-    private final JavaPlugin plugin;
+    private final T plugin;
 
     /**
      * The name of the command.
@@ -77,7 +77,7 @@ public abstract class Command {
      * @param plugin The plugin that owns the command.
      * @param name The name of the command.
      */
-    public Command(JavaPlugin plugin, String name) {
+    public Command(T plugin, String name) {
         this.plugin = plugin;
         this.name = name;
         this.permission = "";
@@ -295,7 +295,7 @@ public abstract class Command {
      * This method is called to get the plugin that owns the command.
      * @return The plugin that owns the command.
      */
-    public JavaPlugin getPlugin() {
+    public T getPlugin() {
         return plugin;
     }
 }
