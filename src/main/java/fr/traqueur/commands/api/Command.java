@@ -3,7 +3,7 @@ package fr.traqueur.commands.api;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabConverter;
-import fr.traqueur.commands.api.exceptions.NoOptionalArgsWithInfiniteArgumentException;
+import fr.traqueur.commands.api.exceptions.NoArgsWithInfiniteArgumentException;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -270,16 +270,9 @@ public abstract class Command {
      * @param args Les arguments à ajouter.
      */
     public void addArgs(String... args) {
-        Arrays.asList(args).forEach(this::addArgs);
-    }
-
-
-    /**
-     * Ajoute un argument à la commande.
-     * @param arg L'argument à ajouter.
-     */
-    public void addArgs(String arg) {
-        this.addArgs(arg, () -> null);
+        Arrays.asList(args).forEach(arg -> {
+            this.addArgs(arg, () -> null);
+        });
     }
 
     /**
@@ -287,10 +280,18 @@ public abstract class Command {
      * @param arg L'argument à ajouter.
      */
     public void addArgs(String arg, TabConverter converter) {
-        if (arg.contains(":infinite")) {
-            this.infiniteArgs = true;
+        try {
+            if (this.infiniteArgs) {
+                throw new NoArgsWithInfiniteArgumentException(false);
+            }
+
+            if (arg.contains(":infinite")) {
+                this.infiniteArgs = true;
+            }
+            this.args.add(new Argument(arg, converter.onCompletion()));
+        } catch (NoArgsWithInfiniteArgumentException e) {
+            this.plugin.getLogger().severe(e.getMessage());
         }
-        this.args.add(new Argument(arg, converter.onCompletion()));
     }
 
     /**
@@ -299,16 +300,8 @@ public abstract class Command {
      */
     public void addOptinalArgs(String... args) {
         for (String a : args) {
-            this.addOptinalArgs(a);
+            this.addOptinalArgs(a, () -> null);
         }
-    }
-
-    /**
-     * Ajoute un argument optionnel à la commande.
-     * @param arg L'argument optionnel à ajouter.
-     */
-    public void addOptinalArgs(String arg) {
-        this.addOptinalArgs(arg, () -> null);
     }
 
     /**
@@ -318,14 +311,18 @@ public abstract class Command {
     public void addOptinalArgs(String arg, TabConverter converter) {
         try {
             if (this.infiniteArgs) {
-                throw new NoOptionalArgsWithInfiniteArgumentException();
+                throw new NoArgsWithInfiniteArgumentException(true);
             }
             this.optionalArgs.add(new Argument(arg, converter.onCompletion()));
-        } catch (NoOptionalArgsWithInfiniteArgumentException e) {
-            e.printStackTrace();
+        } catch (NoArgsWithInfiniteArgumentException e) {
+            this.plugin.getLogger().severe(e.getMessage());
         }
     }
 
+    /**
+     * Retourne le plugin auquel appartient la commande.
+     * @return Le plugin auquel appartient la commande.
+     */
     public JavaPlugin getPlugin() {
         return plugin;
     }
