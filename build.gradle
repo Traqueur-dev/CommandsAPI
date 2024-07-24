@@ -52,7 +52,7 @@ tasks.assemble {
 publishing {
     publications {
         shadow(MavenPublication) {
-            artifact shadowJar
+            artifact jar
         }
     }
 }
