@@ -83,9 +83,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.registerConverter(OfflinePlayer.class, "offlineplayer", new OfflinePlayerArgument());
         this.registerConverter(String.class, "infinite", s -> s);
 
-        if(!Updater.isUpToDate()) {
-            this.plugin.getLogger().warning("Your version of the command framework is outdated. Please update it.");
-        }
+        Updater.checkUpdates();
     }
 
 
