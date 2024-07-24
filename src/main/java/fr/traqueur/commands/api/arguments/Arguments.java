@@ -1,7 +1,7 @@
 package fr.traqueur.commands.api.arguments;
 
-import fr.traqueur.resourcefulbees.commands.api.exceptions.ArgumentNotExistException;
-import fr.traqueur.resourcefulbees.commands.api.exceptions.NoGoodTypeArgumentException;
+import fr.traqueur.commands.api.exceptions.ArgumentNotExistException;
+import fr.traqueur.commands.api.exceptions.NoGoodTypeArgumentException;
 
 import java.util.HashMap;
 import java.util.Map;
