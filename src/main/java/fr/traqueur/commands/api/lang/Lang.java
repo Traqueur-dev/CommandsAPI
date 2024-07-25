@@ -17,26 +17,7 @@ import java.util.Map;
  */
 public class Lang {
 
-    /**
-     * The messages
-     */
-    private static final Map<String, String> messages = new HashMap<>();
-
-    /**
-     * Setup the messages
-     */
-    public static void setupMessages(JavaPlugin plugin) {
-        File file = new File(plugin.getDataFolder(), "commands.yml");
-        YamlConfiguration commandsFile = YamlConfiguration.loadConfiguration(file);
-
-        for (Messages message : Messages.values()) {
-            if(commandsFile.contains(message.getKey())) {
-                messages.put(message.getKey(), commandsFile.getString(message.getKey()));
-            } else {
-                throw new RuntimeException("The key " + message.getKey() + " is missing in the file commands.yml");
-            }
-        }
-    }
+    private static MessageHandler handler;
 
     /**
      * Translate a message
@@ -44,7 +25,10 @@ public class Lang {
      * @return The translated message
      */
     public static String translate(Messages message) {
-        return ChatColor.translateAlternateColorCodes('&', messages.get(message.getKey()));
+        return ChatColor.translateAlternateColorCodes('&', handler.getMessage(message));
     }
 
+    public static void setMessageHandler(MessageHandler handler) {
+        Lang.handler = handler;
+    }
 }

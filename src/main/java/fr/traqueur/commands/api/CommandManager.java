@@ -7,6 +7,8 @@ import fr.traqueur.commands.api.arguments.TabConverter;
 import fr.traqueur.commands.api.arguments.impl.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
+import fr.traqueur.commands.api.lang.MessageHandler;
+import fr.traqueur.commands.api.lang.impl.InternalMessageHandler;
 import fr.traqueur.commands.api.lang.Lang;
 import fr.traqueur.commands.api.lang.Messages;
 import fr.traqueur.commands.api.updater.Updater;
@@ -66,9 +68,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      */
     public CommandManager(JavaPlugin plugin) {
         Updater.checkUpdates();
-
-        plugin.saveResource("commands.yml", false);
-        Lang.setupMessages(plugin);
+        Lang.setMessageHandler(new InternalMessageHandler());
 
         this.plugin = plugin;
         this.commands = new HashMap<>();
@@ -93,6 +93,9 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.registerConverter(String.class, "infinite", s -> s);
     }
 
+    public void setMessageHandler(MessageHandler messageHandler) {
+        Lang.setMessageHandler(messageHandler);
+    }
 
 
     /**
