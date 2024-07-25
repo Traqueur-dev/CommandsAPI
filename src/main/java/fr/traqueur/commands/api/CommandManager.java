@@ -32,6 +32,9 @@ import java.util.stream.Collectors;
  */
 public class CommandManager implements CommandExecutor, TabCompleter {
 
+    private static final String TYPE_PARSER = ":";
+    private static final String INFINITE = "infinite";
+
     /**
      * The plugin that owns the command manager.
      */
@@ -90,7 +93,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.registerConverter(Long.class, "long", new LongArgument());
         this.registerConverter(Player.class, "player", new PlayerArgument());
         this.registerConverter(OfflinePlayer.class, "offlineplayer", new OfflinePlayerArgument());
-        this.registerConverter(String.class, "infinite", s -> s);
+        this.registerConverter(String.class, INFINITE, s -> s);
     }
 
     public void setMessageHandler(MessageHandler messageHandler) {
@@ -116,12 +119,23 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     /**
+     * Register an argument converter in the command manager.
+     * @param typeClass The class of the type.
+     * @param type The type of the argument.
+     * @param converter The converter of the argument.
+     * @param <T> The type of the argument.
+     */
+    public <T> void registerConverter(Class<T> typeClass, String type, ArgumentConverter<T> converter) {
+        this.typeConverters.put(type, new AbstractMap.SimpleEntry<>(typeClass, converter));
+    }
+
+    /**
      * Register a list of subcommands in the command manager.
      * @param parentLabel The parent label of the commands.
      * @param subcommands The list of subcommands to register.
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      */
-    public void registerSubCommands(String parentLabel, List<Command<?>> subcommands) throws TypeArgumentNotExistException {
+    private void registerSubCommands(String parentLabel, List<Command<?>> subcommands) throws TypeArgumentNotExistException {
         if(subcommands == null || subcommands.isEmpty()) {
             return;
         }
@@ -136,17 +150,6 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Register an argument converter in the command manager.
-     * @param typeClass The class of the type.
-     * @param type The type of the argument.
-     * @param converter The converter of the argument.
-     * @param <T> The type of the argument.
-     */
-    public <T> void registerConverter(Class<T> typeClass, String type, ArgumentConverter<T> converter) {
-        this.typeConverters.put(type, new AbstractMap.SimpleEntry<>(typeClass, converter));
-    }
-
-    /**
      * Register a command in the command manager.
      * @param command The command to register.
      * @param label The label of the command.
@@ -157,12 +160,15 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             plugin.getLogger().info("Register command " + label);
             ArrayList<Argument> args = command.getArgs();
             ArrayList<Argument> optArgs = command.getOptinalArgs();
+            String[] labelParts = label.split("\\.");
+            String cmdLabel = labelParts[0].toLowerCase();
+            int labelSize = labelParts.length;
 
             if(!this.checkTypeForArgs(args) || !this.checkTypeForArgs(optArgs)) {
                 throw new TypeArgumentNotExistException();
             }
             commands.put(label.toLowerCase(), command);
-            String cmdLabel = label.split("\\.")[0].toLowerCase();
+
             if (commandMap.getCommand(cmdLabel) == null) {
                 PluginCommand cmd = pluginConstructor.newInstance(cmdLabel, command.getPlugin());
 
@@ -181,49 +187,44 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 Objects.requireNonNull(commandMap.getCommand(cmdLabel)).setUsage(command.getUsage());
             }
 
-            String[] labelParts = label.split("\\.");
-            int labelSize = labelParts.length;
-            StringBuilder currentLabel = new StringBuilder();
-            for (int i = 0; i < labelParts.length - 1; i++) {
-                if (i > 0) {
-                    currentLabel.append(".");
-                }
-                currentLabel.append(labelParts[i]);
+            this.addCompletionsForLabel(labelParts);
+            this.addCompletionForArgs(label, labelSize, args);
+            this.addCompletionForArgs(label, labelSize + args.size(), optArgs);
 
-                String completionPart = labelParts[i + 1];
-
-                this.registerCompletion(currentLabel.toString(), i + 1, () -> Lists.newArrayList(completionPart));
-            }
-
-            for (int i = 0; i < args.size(); i++) {
-                Argument arg = args.get(i);
-                String[] parts = arg.arg().split(":");
-                String type = parts[1].trim();
-                ArgumentConverter<?> converter = this.typeConverters.get(type).getValue();
-                if (arg.completion() != null) {
-                    this.registerCompletion(label,labelSize + i, arg::completion);
-                } else if (converter instanceof TabConverter tabConverter) {
-                    this.registerCompletion(label,labelSize + i, tabConverter);
-                } else {
-                    this.registerCompletion(label, labelSize + i, ArrayList::new);
-                }
-            }
-            for (int i = 0; i < optArgs.size(); i++) {
-                Argument arg = optArgs.get(i);
-                String[] parts = arg.arg().split(":");
-                String type = parts[1].trim();
-                ArgumentConverter<?> converter = this.typeConverters.get(type).getValue();
-                if (arg.completion() != null) {
-                    this.registerCompletion(label,labelSize + args.size() + i, arg::completion);
-                } else if (converter instanceof TabConverter tabConverter) {
-                    this.registerCompletion(label,labelSize + args.size() + i, tabConverter);
-                } else {
-                    this.registerCompletion(label, labelSize + args.size() + i, ArrayList::new);
-                }
-            }
-
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Register the completions of the command.
+     * @param labelParts The parts of the label.
+     */
+    private void addCompletionsForLabel(String[] labelParts) {
+        StringBuilder currentLabel = new StringBuilder();
+        for (int i = 0; i < labelParts.length - 1; i++) {
+            if (i > 0) {
+                currentLabel.append(".");
+            }
+            currentLabel.append(labelParts[i]);
+            String completionPart = labelParts[i + 1];
+            this.addCompletion(currentLabel.toString(), i + 1, () -> Lists.newArrayList(completionPart));
+        }
+    }
+
+    private void addCompletionForArgs(String label, int commandSize, List<Argument> args) {
+        for (int i = 0; i < args.size(); i++) {
+            Argument arg = args.get(i);
+            String[] parts = arg.arg().split(TYPE_PARSER);
+            String type = parts[1].trim();
+            ArgumentConverter<?> converter = this.typeConverters.get(type).getValue();
+            if (arg.completion() != null) {
+                this.addCompletion(label,commandSize + i, arg::completion);
+            } else if (converter instanceof TabConverter tabConverter) {
+                this.addCompletion(label,commandSize + i, tabConverter);
+            } else {
+                this.addCompletion(label, commandSize + i, ArrayList::new);
+            }
         }
     }
 
@@ -233,7 +234,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @param commandSize The size of the command.
      * @param converter The converter of the tab completer.
      */
-    private void registerCompletion(String label, int commandSize, TabConverter converter) {
+    private void addCompletion(String label, int commandSize, TabConverter converter) {
         Map<Integer, TabConverter> mapInner = this.completers.getOrDefault(label, new HashMap<>());
         TabConverter newConverter;
         TabConverter converterInner = mapInner.getOrDefault(commandSize, null);
@@ -250,10 +251,13 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.completers.put(label, mapInner);
     }
 
-
+    /**
+     * Check if the type of the argument exists.
+     * @param args The arguments to check.
+     */
     private boolean checkTypeForArgs(ArrayList<Argument> args) throws TypeArgumentNotExistException {
         for(String arg: args.stream().map(Argument::arg).toList()) {
-            String[] parts = arg.split(":");
+            String[] parts = arg.split(TYPE_PARSER);
 
             if (parts.length != 2) {
                 throw new TypeArgumentNotExistException();
@@ -264,6 +268,15 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             }
         }
         return true;
+    }
+
+    /**
+     * Check if the type of the argument exists.
+     * @param type The type of the argument.
+     * @return If the type of the argument exists.
+     */
+    private boolean typeExist(String type) {
+        return this.typeConverters.containsKey(type);
     }
 
     /**
@@ -302,16 +315,16 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @param args The arguments to parse.
      * @param arguments The arguments parsed.
      * @param templates The templates of the arguments.
-     * @param i The index of the argument.
+     * @param argIndex The index of the argument.
      * @param input The input of the argument.
      * @return  If the parsing is applied.
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      * @throws ArgumentIncorrectException If the argument is incorrect.
      */
-    private boolean applyParsing(String[] args, Arguments arguments, ArrayList<Argument> templates, int i,
+    private boolean applyParsing(String[] args, Arguments arguments, ArrayList<Argument> templates, int argIndex,
                                  String input) throws TypeArgumentNotExistException, ArgumentIncorrectException {
-        String template = templates.get(i).arg();
-        String[] parts = template.split(":");
+        String template = templates.get(argIndex).arg();
+        String[] parts = template.split(TYPE_PARSER);
 
         if (parts.length != 2) {
             throw new TypeArgumentNotExistException();
@@ -320,11 +333,11 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         String key = parts[0].trim();
         String type = parts[1].trim();
 
-        if (type.equals("infinite")) {
+        if (type.equals(INFINITE)) {
             StringBuilder builder = new StringBuilder();
-            for (int ii = i; ii < args.length; ii++) {
-                builder.append(args[ii]);
-                if (ii < args.length - 1) {
+            for (int i = argIndex; i < args.length; i++) {
+                builder.append(args[i]);
+                if (i < args.length - 1) {
                     builder.append(" ");
                 }
             }
@@ -333,9 +346,8 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         }
 
         if (typeConverters.containsKey(type)) {
-            Map.Entry<Class<?>, ArgumentConverter<?>> converterWithType = typeConverters.get(type);
-            Class<?> typeClass = converterWithType.getKey();
-            ArgumentConverter<?> converter = converterWithType.getValue();
+            Class<?> typeClass = typeConverters.get(type).getKey();
+            ArgumentConverter<?> converter = typeConverters.get(type).getValue();
             Object obj = converter.apply(input);
             if (obj == null) {
                 throw new ArgumentIncorrectException(input);
@@ -343,15 +355,6 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             arguments.add(key, typeClass, obj);
         }
         return false;
-    }
-
-    /**
-     * Check if the type of the argument exists.
-     * @param type The type of the argument.
-     * @return If the type of the argument exists.
-     */
-    private boolean typeExist(String type) {
-        return this.typeConverters.containsKey(type);
     }
 
     /**
@@ -399,7 +402,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                     if (usage.isEmpty()) {
                         usage = Lang.translate(Messages.MISSING_ARGS);
                     }
-                    sender.sendMessage("§c" +usage);
+                    sender.sendMessage(usage);
                     return true;
                 }
 
@@ -408,7 +411,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                     if (usage.isEmpty()) {
                         usage = Lang.translate(Messages.MISSING_ARGS);
                     }
-                    sender.sendMessage("§c" + usage);
+                    sender.sendMessage(usage);
                     return true;
                 }
 
