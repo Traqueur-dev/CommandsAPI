@@ -36,7 +36,7 @@ public abstract class Command<T extends JavaPlugin> {
     /**
      * The subcommands of the command.
      */
-    private final ArrayList<Command> subcommands;
+    private final ArrayList<Command<?>> subcommands;
 
     /**
      * The arguments of the command.
@@ -102,7 +102,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the name of the command.
      * @return The name of the command.
      */
-    protected String getName() {
+    protected final String getName() {
         return name;
     }
 
@@ -110,7 +110,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the description of the command.
      * @return The description of the command.
      */
-    protected String getDescription() {
+    protected final String getDescription() {
         return description;
     }
 
@@ -118,7 +118,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the permission of the command.
      * @return The permission of the command.
      */
-    protected String getPermission() {
+    protected final String getPermission() {
         return permission;
     }
 
@@ -126,7 +126,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the usage of the command.
      * @return The usage of the command.
      */
-    protected String getUsage() {
+    protected final String getUsage() {
         return usage;
     }
 
@@ -134,7 +134,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the aliases of the command.
      * @return The aliases of the command.
      */
-    protected ArrayList<String> getAliases() {
+    protected final ArrayList<String> getAliases() {
         return aliases;
     }
 
@@ -143,7 +143,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the subcommands of the command.
      * @return The subcommands of the command.
      */
-    protected ArrayList<Command> getSubcommands() {
+    protected final ArrayList<Command<?>> getSubcommands() {
         return subcommands;
     }
 
@@ -151,7 +151,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the arguments of the command.
      * @return The arguments of the command.
      */
-    protected ArrayList<Argument> getArgs() {
+    protected final ArrayList<Argument> getArgs() {
         return args;
     }
 
@@ -159,7 +159,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the optional arguments of the command.
      * @return The optional arguments of the command.
      */
-    protected ArrayList<Argument> getOptinalArgs() {
+    protected final ArrayList<Argument> getOptinalArgs() {
         return optionalArgs;
     }
 
@@ -167,7 +167,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to check if the command is only to use in game.
      * @return If the command is only to use in game.
      */
-    protected boolean inGameOnly() {
+    protected final boolean inGameOnly() {
         return gameOnly;
     }
 
@@ -176,7 +176,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to check if the command has infinite arguments.
      * @return If the command has infinite arguments.
      */
-    protected boolean isInfiniteArgs() {
+    protected final boolean isInfiniteArgs() {
         return infiniteArgs;
     }
 
@@ -184,7 +184,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to set the description of the command
      * @param description The description of the command.
      */
-    public void setDescription(String description) {
+    public final void setDescription(String description) {
         this.description = description;
     }
 
@@ -192,7 +192,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to set if the command is only to use in game.
      * @param gameOnly If the command is only to use in game.
      */
-    public void setGameOnly(boolean gameOnly) {
+    public final void setGameOnly(boolean gameOnly) {
         this.gameOnly = gameOnly;
     }
 
@@ -200,7 +200,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to set the permission of the command.
      * @param permission The permission of the command.
      */
-    public void setPermission(String permission) {
+    public final void setPermission(String permission) {
         this.permission = permission;
     }
 
@@ -208,7 +208,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to set the usage of the command.
      * @param usage The usage of the command.
      */
-    public void setUsage(String usage) {
+    public final void setUsage(String usage) {
         this.usage = usage;
     }
 
@@ -216,7 +216,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to add aliases to the command.
      * @param aliases The aliases to add.
      */
-    public void addAlias(String... aliases) {
+    public final void addAlias(String... aliases) {
         this.aliases.addAll(Arrays.asList(aliases));
     }
 
@@ -224,7 +224,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to add a alias to the command.
      * @param alias The alias to add.
      */
-    public void addAlias(String alias) {
+    public final void addAlias(String alias) {
         this.aliases.add(alias);
     }
 
@@ -232,7 +232,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to add subcommands to the command.
      * @param commands The subcommands to add.
      */
-    public void addSubCommand(Command... commands) {
+    public final void addSubCommand(Command<?>... commands) {
         this.subcommands.addAll(Arrays.asList(commands));
     }
 
@@ -240,7 +240,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to add arguments to the command.
      * @param args The arguments to add.
      */
-    public void addArgs(String... args) {
+    public final void addArgs(String... args) {
         Arrays.asList(args).forEach(arg -> {
             this.addArgs(arg, () -> null);
         });
@@ -251,7 +251,7 @@ public abstract class Command<T extends JavaPlugin> {
      * @param arg The argument to add.
      * @param converter The converter of the argument.
      */
-    public void addArgs(String arg, TabConverter converter) {
+    public final void addArgs(String arg, TabConverter converter) {
         try {
             if (this.infiniteArgs) {
                 throw new ArgsWithInfiniteArgumentException(false);
@@ -270,7 +270,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to add optional arguments to the command.
      * @param args The optional arguments to add.
      */
-    public void addOptinalArgs(String... args) {
+    public final void addOptinalArgs(String... args) {
         for (String a : args) {
             this.addOptinalArgs(a, () -> null);
         }
@@ -281,7 +281,7 @@ public abstract class Command<T extends JavaPlugin> {
      * @param arg The optional argument to add.
      * @param converter The converter of the argument.
      */
-    public void addOptinalArgs(String arg, TabConverter converter) {
+    public final void addOptinalArgs(String arg, TabConverter converter) {
         try {
             if (this.infiniteArgs) {
                 throw new ArgsWithInfiniteArgumentException(true);
@@ -296,7 +296,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the plugin that owns the command.
      * @return The plugin that owns the command.
      */
-    public T getPlugin() {
+    public final T getPlugin() {
         return plugin;
     }
 }

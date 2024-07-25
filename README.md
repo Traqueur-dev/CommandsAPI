@@ -44,6 +44,19 @@ dependencies {
 ```
 Be sure to relocate commandsAPI in to prevent bugs with other plugins.
 
+### Language Support
+
+CommandsAPI generate a `commands.yml` file to configure the errors messages lang. You can modify this file to change the language of the errors messages.
+`arg_not_recognized` message can use `%arg%` to display the argument that is not recognized.
+```yaml
+# This is the default language file for CommandsAPI
+# You can modify this file to change the language of the errors messages
+no_permission: "&cYou do not have permission to use this command."
+only_in_game: "&cYou can only use this command in-game."
+missing_args: "&cMissing arguments."
+arg_not_recognized: "&cArgument &e%arg% &cnot recognized."
+```
+
 ### Instantiate the CommandManager
 
 In your plugin's `onEnable` method, create a new instance of the `CommandManager` class and register your commands.

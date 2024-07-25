@@ -1,0 +1,7 @@
+# This is the default language file for CommandsAPI
+# You can modify this file to change the language of the errors messages
+
+no_permission: "&cYou do not have permission to use this command."
+only_in_game: "&cYou can only use this command in-game."
+missing_args: "&cMissing arguments."
+arg_not_recognized: "&cArgument &e%arg% &cnot recognized."
