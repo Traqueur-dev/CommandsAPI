@@ -1,4 +1,6 @@
-package fr.traqueur.commands.api.lang;
+package fr.traqueur.commands.api.lang.impl;
+
+import fr.traqueur.commands.api.lang.MessageHandler;
 
 public class InternalMessageHandler implements MessageHandler {
 

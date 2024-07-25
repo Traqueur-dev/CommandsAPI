@@ -8,8 +8,4 @@ public enum Messages {
     ARG_NOT_RECOGNIZED,
     ;
 
-    public String getKey() {
-        return this.name().toLowerCase();
-    }
-
 }

@@ -46,16 +46,49 @@ Be sure to relocate commandsAPI in to prevent bugs with other plugins.
 
 ### Language Support
 
-CommandsAPI generate a `commands.yml` file to configure the errors messages lang. You can modify this file to change the language of the errors messages.
-`arg_not_recognized` message can use `%arg%` to display the argument that is not recognized.
-```yaml
-# This is the default language file for CommandsAPI
-# You can modify this file to change the language of the errors messages
-no_permission: "&cYou do not have permission to use this command."
-only_in_game: "&cYou can only use this command in-game."
-missing_args: "&cMissing arguments."
-arg_not_recognized: "&cArgument &e%arg% &cnot recognized."
+CommandsAPI use the class `MessageHandler` to manage the language of messages. You can override this Handler to implements your own language system.
+
+```java
+public class MyMessageHandler extends MessageHandler {
+
+    @Override
+    public String getNoPermissionMessage() {
+        return /* your implementation */;
+    }
+
+    @Override
+    public String getOnlyInGameMessage() {
+        return /* your implementation */;
+    }
+
+    @Override
+    public String getMissingArgsMessage() {
+        return /* your implementation */;
+    }
+
+    @Override
+    public String getArgNotRecognized() {
+        return /* your implementation */;
+    }
+}
 ```
+
+```java
+public class MyPlugin extends JavaPlugin {
+
+    private final CommandManager commandManager;
+
+    @Override
+    public void onEnable() {
+        commandManager = new CommandManager(this);
+        commandManager.setMessageHandler(new MyMessageHandler());
+        //or
+        Lang.setMessageHandler(new MyMessageHandler());
+    }
+}
+```
+
+Thanks to [Robotv2](https://github.com/Robotv2) for the idea.
 
 ### Instantiate the CommandManager
 
