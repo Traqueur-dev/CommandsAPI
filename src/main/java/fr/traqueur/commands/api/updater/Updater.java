@@ -1,7 +1,4 @@
-package fr.traqueur.commands.updater;
-
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.java.JavaPlugin;
+package fr.traqueur.commands.api.updater;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;

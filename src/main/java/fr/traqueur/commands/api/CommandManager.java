@@ -7,12 +7,16 @@ import fr.traqueur.commands.api.arguments.TabConverter;
 import fr.traqueur.commands.api.arguments.impl.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
-import fr.traqueur.commands.updater.Updater;
+import fr.traqueur.commands.api.lang.Lang;
+import fr.traqueur.commands.api.lang.Messages;
+import fr.traqueur.commands.api.updater.Updater;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -60,7 +64,12 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * The constructor of the command manager.
      * @param plugin The plugin that owns the command manager.
      */
-    public CommandManager(Plugin plugin) {
+    public CommandManager(JavaPlugin plugin) {
+        Updater.checkUpdates();
+
+        plugin.saveResource("commands.yml", false);
+        Lang.setupMessages(plugin);
+
         this.plugin = plugin;
         this.commands = new HashMap<>();
         this.typeConverters = new HashMap<>();
@@ -82,8 +91,6 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.registerConverter(Player.class, "player", new PlayerArgument());
         this.registerConverter(OfflinePlayer.class, "offlineplayer", new OfflinePlayerArgument());
         this.registerConverter(String.class, "infinite", s -> s);
-
-        Updater.checkUpdates();
     }
 
 
@@ -111,7 +118,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @param subcommands The list of subcommands to register.
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      */
-    public void registerSubCommands(String parentLabel, List<Command> subcommands) throws TypeArgumentNotExistException {
+    public void registerSubCommands(String parentLabel, List<Command<?>> subcommands) throws TypeArgumentNotExistException {
         if(subcommands == null || subcommands.isEmpty()) {
             return;
         }
@@ -371,12 +378,12 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             String cmdLabel = buffer.toString();
             if (commands.containsKey(cmdLabel)) {
                 Command<?> commandFramework = commands.get(cmdLabel);
-                if (!command.getPermission().isEmpty() && !sender.hasPermission(command.getPermission())) {
-                    sender.sendMessage("§cTu n'as pas la permission de faire cette commande.");
+                if (!commandFramework.getPermission().isEmpty() && !sender.hasPermission(commandFramework.getPermission())) {
+                    sender.sendMessage(Lang.translate(Messages.NO_PERMISSION));
                     return true;
                 }
                 if (commandFramework.inGameOnly() && !(sender instanceof Player)) {
-                    sender.sendMessage("§cCette commande n'est disponible qu'en jeu.");
+                    sender.sendMessage(Lang.translate(Messages.ONLY_IN_GAME));
                     return true;
                 }
                 int subCommand = cmdLabel.split("\\.").length - 1;
@@ -387,7 +394,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 if (modArgs.length < commandFramework.getArgs().size()) {
                     String usage = command.getUsage();
                     if (usage.isEmpty()) {
-                        usage = "La commande n'a pas le bon nombre d'arguments.";
+                        usage = Lang.translate(Messages.MISSING_ARGS);
                     }
                     sender.sendMessage("§c" +usage);
                     return true;
@@ -396,7 +403,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 if (!commandFramework.isInfiniteArgs() && (modArgs.length > commandFramework.getArgs().size() + commandFramework.getOptinalArgs().size())) {
                     String usage = command.getUsage();
                     if (usage.isEmpty()) {
-                        usage = "La commande n'a pas le bon nombre d'arguments.";
+                        usage = Lang.translate(Messages.MISSING_ARGS);
                     }
                     sender.sendMessage("§c" + usage);
                     return true;
@@ -408,7 +415,9 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 } catch (TypeArgumentNotExistException e) {
                     throw new RuntimeException(e);
                 } catch (ArgumentIncorrectException e) {
-                    sender.sendMessage("§cL'argument "+ "§a" + e.getInput() + "§c n'est pas reconnu dans l'usage de la commande.");
+                    String message = Lang.translate(Messages.ARG_NOT_RECOGNIZED);
+                    message = message.replace("%arg%", e.getInput());
+                    sender.sendMessage( message);
                     return true;
                 }
 
