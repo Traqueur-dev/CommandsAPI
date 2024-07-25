@@ -1,21 +1,28 @@
 # CommandsAPI
 
-CommandsAPI is a Java library designed to simplify the creation and management of commands in Spigot plugins. It provides a robust framework for defining commands, subcommands, and custom arguments with automatic validation and conversion.
+CommandsAPI is a powerful and flexible Java library for creating and managing commands in Bukkit/Spigot plugins. It provides a robust framework for handling command arguments, permissions, subcommands, and auto-completion, making it easier to build complex command structures in your Minecraft plugins.
 
 ## Features
 
-- **Easy Command Creation**: Quickly define commands with arguments, permissions, and descriptions.
-- **Subcommand Management**: Organize your commands into subcommands for better structure.
-- **Argument Conversion**: Automatically convert and validate command arguments.
-- **Auto-Completion**: Add auto-completion for commands and their arguments.
+- **Customizable Commands:** Easily create commands with custom arguments, descriptions, usage, and permissions.
+- **Subcommands Support:** Organize your commands with subcommands and handle complex command structures effortlessly.
+- **Argument Handling:** Support for various argument types including custom types and auto-completion for a better user experience.
+- **Permissions and Aliases:** Define permissions and aliases for your commands to control access and provide alternative command names.
+- **In-Game/Console Command Support:** Specify whether a command can only be executed in-game or from the console.
 
 ## Getting Started
 
-### Adding CommandsAPI to Your Project
+### Prerequisites
 
-Ensure CommandsAPI is included in your project. If you're using Maven or Gradle, add the corresponding dependency to your configuration file.
+- **Java 21** or higher
+- **Paper/Spigot API** - Compatible with various Minecraft server versions
+- **CommandsAPI Library** - Add it to your project dependencies
 
-#### For Gradle
+### Installation
+
+To use CommandsAPI in your project, add the dependency to your build configuration. For Maven, include:
+
+#### For Gradle include 
 ```groovy
 repositories {
     maven { url 'https://jitpack.io' }
@@ -25,7 +32,7 @@ dependencies {
 }
 ```
 
-#### For Maven
+#### For Maven include
 ```xml 
 <repositories>
     <repository>
@@ -44,80 +51,17 @@ dependencies {
 ```
 Be sure to relocate commandsAPI in to prevent bugs with other plugins.
 
-### Language Support
+### Basic Usage
 
-CommandsAPI use the class `MessageHandler` to manage the language of messages. You can override this Handler to implements your own language system.
-
-```java
-public class MyMessageHandler extends MessageHandler {
-
-    @Override
-    public String getNoPermissionMessage() {
-        return /* your implementation */;
-    }
-
-    @Override
-    public String getOnlyInGameMessage() {
-        return /* your implementation */;
-    }
-
-    @Override
-    public String getMissingArgsMessage() {
-        return /* your implementation */;
-    }
-
-    @Override
-    public String getArgNotRecognized() {
-        return /* your implementation */;
-    }
-}
-```
+To get started with CommandsAPI, create a new command by extending the `Command<T extends JavaPlugin>` class. Here’s a simple example:
 
 ```java
-public class MyPlugin extends JavaPlugin {
+public class HelloWorldCommand extends SimpleCommand {
 
-    private final CommandManager commandManager;
-
-    @Override
-    public void onEnable() {
-        commandManager = new CommandManager(this);
-        commandManager.setMessageHandler(new MyMessageHandler());
-        //or
-        Lang.setMessageHandler(new MyMessageHandler());
-    }
-}
-```
-
-Thanks to [Robotv2](https://github.com/Robotv2) for the idea.
-
-### Instantiate the CommandManager
-
-In your plugin's `onEnable` method, create a new instance of the `CommandManager` class and register your commands.
-
-```java
-public class MyPlugin extends JavaPlugin {
-
-    private final CommandManager commandManager;
-
-    @Override
-    public void onEnable() {
-        commandManager = new CommandManager(this);
-    }
-}
-```
-
-### Creating a Command
-
-To create a command, extend the `Command` class and implement the `execute` method. If you want simple command with no specific JavaPlugin subclass, you can use the `SimpleCommand` class instead.
-Here's a simple example:
-
-```java
-public class HelloCommand extends Command<JavaPlugin> {
-
-    public HelloCommand(JavaPlugin plugin) {
-        super(plugin, "hello");
-        setDescription("A greeting command");
-        setUsage("/hello");
+    public HelloWorldCommand(JavaPlugin plugin) {
+        super(plugin, "helloworld");
+        setDescription("A simple hello world command");
+        setUsage("/helloworld");
     }
 
     @Override
@@ -127,203 +71,41 @@ public class HelloCommand extends Command<JavaPlugin> {
 }
 ```
 
-```java
-public class HelloCommand extends SimpleCommand {
-
-    public HelloCommand(JavaPlugin plugin) {
-        super(plugin, "hello");
-        setDescription("A greeting command");
-        setUsage("/hello");
-    }
-
-    @Override
-    public void execute(CommandSender sender, Arguments args) {
-        sender.sendMessage("Hello, world!");
-    }
-}
-```
-
-### Registering Subcommands
-
-To create a subcommand, extend the `Command` or `SimpleCommand` class and implement the `execute` method. Then, add the subcommand to the parent command using the `addSubcommand` method.
-The framework will automatically handle the subcommand routing for you.
-Exemple: name of the subcommand is "sub" and the parent command is "hello".
-
-```java
-public class SubCommand extends Command<JavaPlugin> {
-
-    public SubCommand(JavaPlugin plugin) {
-        super(plugin, "sub");
-        setDescription("A subcommand");
-        setUsage("/hello sub");
-    }
-
-    @Override
-    public void execute(CommandSender sender, Arguments args) {
-        sender.sendMessage("This is a subcommand!");
-    }
-}
-```
-
-```java
-public HelloCommand(JavaPlugin plugin) {
-        /* Some code */
-        addSubcommand(new SubCommand(plugin));
-}
-```
-
-With this exemple you can run `/hello` or `/hello sub` and it will display the message.
-
-If you just want `/hello sub` and not `/hello`, you can use register command like this:
-    
-```java
-public class SubWithDotCommand extends Command<JavaPlugin> {
-
-    public SubCommand(JavaPlugin plugin) {
-        super(plugin, "hello.sub");
-        setDescription("A subcommand");
-        setUsage("/hello sub");
-    }
-
-    @Override
-    public void execute(CommandSender sender, Arguments args) {
-        sender.sendMessage("This is a subcommand!");
-    }
-}
-```
-
-The framework will automatically parse all dot on the command name and create the subcommand for you.
-You must register only the parent command, the framework will automatically register the subcommands.
-For our exemple:
+Register the command in your plugin's `onEnable` method:
 
 ```java
 public class MyPlugin extends JavaPlugin {
 
-    private final CommandManager commandManager;
-
     @Override
     public void onEnable() {
-        commandManager = new CommandManager(this);
-        commandManager.registerCommands(new HelloCommand(this));
+        CommandManager commandManager = new CommandManager(this);
+        commandManager.registerCommands(new HelloWorldCommand(this));
     }
 }
 ```
 
-or
+### Documentation
 
-```java
-public class MyPlugin extends JavaPlugin {
+For detailed documentation and usage examples, visit me [Wiki](https://github.com/Traqueur-dev/CommandsAPI/wiki).
 
-    private final CommandManager commandManager;
+## Contributing
 
-    @Override
-    public void onEnable() {
-        commandManager = new CommandManager(this);
-        commandManager.registerCommands(new SubWithDotCommand(this));
-    }
-}
-```
+We welcome contributions to the CommandsAPI project! If you would like to contribute, please follow these steps:
 
-### Adding Arguments
+1. Fork the repository.
+2. Create a new branch for your changes.
+3. Commit your changes with clear and concise commit messages.
+4. Push your changes to your fork.
+5. Create a pull request with a description of your changes.
 
-Argument can be add with two methods `addArgs` and `addOptionalArgs`. The first one is for required argument and the second one is for optional argument.
-Argument must be have a name and a type and the framework will automatically convert the argument to the type you want with this syntax `name:type`.
+## License
 
-```java
-public class GreetCommand extends Command<JavaPlugin> {
+CommandsAPI is licensed under the [MIT License](LICENSE). See the LICENSE file for more details.
 
-    public GreetCommand(JavaPlugin plugin) {
-        super(plugin, "greet");
-        setDescription("A greeting command");
-        setUsage("/greet <name>");
-        addArgs("name:string");
-    }
+## Contact
 
-    @Override
-    public void execute(CommandSender sender, Arguments args) {
-        String name = args.get("name");
-        sender.sendMessage("Hello, " + name + "!");
-    }
-}
-```
+For any questions or support, please open an issue on the [GitHub repository](https://github.com/Traqueur-dev/CommandsAPI/issues).
 
-#### All available types:
+---
 
-| Type           | Identifier     | Description                                           |
-|----------------|----------------|-------------------------------------------------------|
-| `String`       | `string`       | Accepts any string without conversion.                |
-| `Integer`      | `int`          | Converts input to an integer.                         |
-| `Double`       | `double`       | Converts input to a double.                           |
-| `Long`         | `long`         | Converts input to a long.                             |
-| `Player`       | `player`       | Converts input to a `Player` object if the player is online. |
-| `OfflinePlayer`| `offlineplayer`| Converts input to an `OfflinePlayer` object, allowing access to players not currently online. |
-| `String`       | `infinite`     | Accepts an infinite amount of strings as a single argument. |
-
-#### Custom Argument Types
-
-You can create custom argument types by implements the `ArgumentConverter` class and implementing the `apply` methods. Then, register the custom argument type with the `CommandManager` instance.
-
-```java
-public class CustomArgument implements ArgumentConverter<CustomType> {
-
-    @Override
-    public CustomType apply(String input) {
-        return /*something custom*/;
-    }
-}
-```
-
-```java
-public class MyPlugin extends JavaPlugin {
-
-    private final CommandManager commandManager;
-
-    @Override
-    public void onEnable() {
-        commandManager = new CommandManager(this);
-        commandManager.registerArgumentType(CustomType.class, "custom", new CustomArgument());
-    }
-}
-```
-
-### Auto-Completion
-
-You can add auto-completion for commands and their arguments by implementing the `TabConverter` interface on custom `ArgumentConverter` and implements `onCompletion` method.
-You can also add auto-completion for specific arguments by using the methods `add(Optional)Args(String name, TabConverter converter)` when you register yours args.
-
-```java
-public class CustomArgument implements ArgumentConverter<CustomType>, TabConverter {
-
-    @Override
-    public CustomType apply(String input) {
-        return /*something custom*/;
-    }
-
-    @Override
-    public List<String> onCompletion() {
-        return /*list of completion*/;
-    }
-}
-```
-
-```java
-public class GreetCommand extends Command<JavaPlugin> {
-
-    public GreetCommand(JavaPlugin plugin) {
-        super(plugin, "greet");
-        setDescription("A greeting command");
-        setUsage("/greet <name>");
-        addArgs("name:custom");
-        addArgs("number:int", () -> Arrays.asList("1", "2", "3"));
-    }
-
-    @Override
-    public void execute(CommandSender sender, Arguments args) {
-        CustomType name = args.get("name");
-        int number = args.get("number");
-        for (int i = 0; i < number; i++) {
-            sender.sendMessage("Hello, " + name + "!");
-        }
-    }
-}
-```
+Happy coding and enjoy building your Minecraft plugins with CommandsAPI!
