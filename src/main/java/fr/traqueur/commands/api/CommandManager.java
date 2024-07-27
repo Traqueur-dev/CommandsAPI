@@ -121,12 +121,32 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             ArrayList<String> aliases = new ArrayList<>(command.getAliases());
             aliases.add(command.getName());
             for (String alias : aliases) {
-                this.registerCommand(command, alias);
+                this.addCommand(command, alias);
                 this.registerSubCommands(alias, command.getSubcommands());
             }
         } catch(TypeArgumentNotExistException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Unregister a command in the command manager.
+     * @param label The label of the command to unregister.
+     */
+    public void unregisterCommand(String label) {
+        this.unregisterCommand(label, true);
+    }
+
+    /**
+     * Unregister a command in the command manager.
+     * @param label The label of the command to unregister.
+     * @param subcommands If the subcommands must be unregistered.
+     */
+    public void unregisterCommand(String label, boolean subcommands) {
+        if(this.commands.get(label) == null) {
+            throw new IllegalArgumentException("The command " + label + " does not exist.");
+        }
+        this.unregisterCommand(this.commands.get(label), subcommands);
     }
 
     /**
@@ -146,32 +166,11 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         ArrayList<String> aliases = new ArrayList<>(command.getAliases());
         aliases.add(command.getName());
         for (String alias : aliases) {
-            this.unregisterCommand(alias, subcommands);
+            this.removeCommand(alias, subcommands);
             if(subcommands) {
                 this.unregisterSubCommands(alias, command.getSubcommands());
             }
         }
-    }
-
-    /**
-     * Unregister a command in the command manager.
-     * @param label The label of the command to unregister.
-     */
-    public void unregisterCommand(String label) {
-        this.unregisterCommand(label, true);
-    }
-
-    /**
-     * Unregister a command in the command manager.
-     * @param label The label of the command to unregister.
-     * @param subcommands If the subcommands must be unregistered.
-     */
-    public void unregisterCommand(String label, boolean subcommands) {
-        if(subcommands && this.commandMap.getCommand(label) != null) {
-            Objects.requireNonNull(this.commandMap.getCommand(label)).unregister(commandMap);
-        }
-        this.commands.remove(label);
-        this.completers.remove(label);
     }
 
     /**
@@ -199,7 +198,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             ArrayList<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
             aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
-                this.registerCommand(subcommand, parentLabel + "." + aliasSub);
+                this.addCommand(subcommand, parentLabel + "." + aliasSub);
                 this.registerSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());
             }
         }
@@ -218,10 +217,23 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             ArrayList<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
             aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
-                this.unregisterCommand(parentLabel + "." + aliasSub, true);
+                this.removeCommand(parentLabel + "." + aliasSub, true);
                 this.unregisterSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());
             }
         }
+    }
+
+    /**
+     * Unregister a command in the command manager.
+     * @param label The label of the command.
+     * @param subcommand If the subcommand must be unregistered.
+     */
+    private void removeCommand(String label, boolean subcommand) {
+        if(subcommand && this.commandMap.getCommand(label) != null) {
+            Objects.requireNonNull(this.commandMap.getCommand(label)).unregister(commandMap);
+        }
+        this.commands.remove(label);
+        this.completers.remove(label);
     }
 
     /**
@@ -230,7 +242,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @param label The label of the command.
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      */
-    private void registerCommand(Command<?> command, String label) throws TypeArgumentNotExistException {
+    private void addCommand(Command<?> command, String label) throws TypeArgumentNotExistException {
         try {
             plugin.getLogger().info("Register command " + label);
             ArrayList<Argument> args = command.getArgs();
