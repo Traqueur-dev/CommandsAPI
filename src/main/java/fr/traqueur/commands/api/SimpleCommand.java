@@ -2,6 +2,9 @@ package fr.traqueur.commands.api;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * Represents a simple command.
+ */
 public abstract class SimpleCommand extends Command<JavaPlugin> {
 
     /**

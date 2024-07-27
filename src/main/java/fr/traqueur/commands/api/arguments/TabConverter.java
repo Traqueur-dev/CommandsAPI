@@ -1,5 +1,7 @@
 package fr.traqueur.commands.api.arguments;
 
+import org.bukkit.command.CommandSender;
+
 import java.util.List;
 
 /**
@@ -13,8 +15,9 @@ public interface TabConverter {
     /**
      * This method is called when the tabulation is used.
      * It is used to get the completion of the command.
+     * @param sender The sender of the command.
      * @return The completion of the command.
      */
-    List<String> onCompletion();
+    List<String> onCompletion(CommandSender sender);
 
 }

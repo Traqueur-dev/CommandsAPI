@@ -7,10 +7,10 @@ import fr.traqueur.commands.api.arguments.TabConverter;
 import fr.traqueur.commands.api.arguments.impl.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
-import fr.traqueur.commands.api.lang.MessageHandler;
-import fr.traqueur.commands.api.lang.impl.InternalMessageHandler;
 import fr.traqueur.commands.api.lang.Lang;
+import fr.traqueur.commands.api.lang.MessageHandler;
 import fr.traqueur.commands.api.lang.Messages;
+import fr.traqueur.commands.api.lang.impl.InternalMessageHandler;
 import fr.traqueur.commands.api.updater.Updater;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -34,6 +34,11 @@ public class CommandManager implements CommandExecutor, TabCompleter {
 
     private static final String TYPE_PARSER = ":";
     private static final String INFINITE = "infinite";
+
+    /**
+     * The instance of the command manager. Only for internal use.
+     */
+    private static CommandManager instance;
 
     /**
      * The plugin that owns the command manager.
@@ -73,6 +78,8 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         Updater.checkUpdates();
         Lang.setMessageHandler(new InternalMessageHandler());
 
+        instance = this;
+
         this.plugin = plugin;
         this.commands = new HashMap<>();
         this.typeConverters = new HashMap<>();
@@ -96,6 +103,10 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.registerConverter(String.class, INFINITE, s -> s);
     }
 
+    /**
+     * Set the message handler of the command manager.
+     * @param messageHandler The message handler to set.
+     */
     public void setMessageHandler(MessageHandler messageHandler) {
         Lang.setMessageHandler(messageHandler);
     }
@@ -116,6 +127,51 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         } catch(TypeArgumentNotExistException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Unregister a command in the command manager.
+     * @param command The command to unregister.
+     */
+    public void unregisterCommand(Command<?> command) {
+        this.unregisterCommand(command, true);
+    }
+
+    /**
+     * Unregister a command in the command manager.
+     * @param command The command to unregister.
+     * @param subcommands If the subcommands must be unregistered.
+     */
+    public void unregisterCommand(Command<?> command, boolean subcommands) {
+        ArrayList<String> aliases = new ArrayList<>(command.getAliases());
+        aliases.add(command.getName());
+        for (String alias : aliases) {
+            this.unregisterCommand(alias, subcommands);
+            if(subcommands) {
+                this.unregisterSubCommands(alias, command.getSubcommands());
+            }
+        }
+    }
+
+    /**
+     * Unregister a command in the command manager.
+     * @param label The label of the command to unregister.
+     */
+    public void unregisterCommand(String label) {
+        this.unregisterCommand(label, true);
+    }
+
+    /**
+     * Unregister a command in the command manager.
+     * @param label The label of the command to unregister.
+     * @param subcommands If the subcommands must be unregistered.
+     */
+    public void unregisterCommand(String label, boolean subcommands) {
+        if(subcommands && this.commandMap.getCommand(label) != null) {
+            Objects.requireNonNull(this.commandMap.getCommand(label)).unregister(commandMap);
+        }
+        this.commands.remove(label);
+        this.completers.remove(label);
     }
 
     /**
@@ -145,6 +201,25 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             for (String aliasSub : aliasesSub) {
                 this.registerCommand(subcommand, parentLabel + "." + aliasSub);
                 this.registerSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());
+            }
+        }
+    }
+
+    /**
+     * Unregister the subcommands of a command.
+     * @param parentLabel The parent label of the subcommands.
+     * @param subcommandsList The list of subcommands to unregister.
+     */
+    private void unregisterSubCommands(String parentLabel, List<Command<?>> subcommandsList) {
+        if(subcommandsList == null || subcommandsList.isEmpty()) {
+            return;
+        }
+        for (Command<?> subcommand : subcommandsList) {
+            ArrayList<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
+            aliasesSub.add(subcommand.getName());
+            for (String aliasSub : aliasesSub) {
+                this.unregisterCommand(parentLabel + "." + aliasSub, true);
+                this.unregisterSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());
             }
         }
     }
@@ -208,22 +283,29 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             }
             currentLabel.append(labelParts[i]);
             String completionPart = labelParts[i + 1];
-            this.addCompletion(currentLabel.toString(), i + 1, () -> Lists.newArrayList(completionPart));
+            this.addCompletion(currentLabel.toString(), i + 1, (sender) -> Lists.newArrayList(completionPart));
         }
     }
 
+    /**
+     * Register the completions of the arguments.
+     * @param label The label of the command.
+     * @param commandSize The size of the command.
+     * @param args The arguments to register.
+     */
     private void addCompletionForArgs(String label, int commandSize, List<Argument> args) {
         for (int i = 0; i < args.size(); i++) {
             Argument arg = args.get(i);
             String[] parts = arg.arg().split(TYPE_PARSER);
             String type = parts[1].trim();
             ArgumentConverter<?> converter = this.typeConverters.get(type).getValue();
-            if (arg.completion() != null) {
-                this.addCompletion(label,commandSize + i, arg::completion);
+            TabConverter argConverter = arg.tabConverter();
+            if (argConverter != null) {
+                this.addCompletion(label,commandSize + i, argConverter);
             } else if (converter instanceof TabConverter tabConverter) {
                 this.addCompletion(label,commandSize + i, tabConverter);
             } else {
-                this.addCompletion(label, commandSize + i, ArrayList::new);
+                this.addCompletion(label, commandSize + i, (sender) -> new ArrayList<>());
             }
         }
     }
@@ -239,9 +321,9 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         TabConverter newConverter;
         TabConverter converterInner = mapInner.getOrDefault(commandSize, null);
         if(converterInner != null) {
-            newConverter = () -> {
-                List<String> completions = new ArrayList<>(converterInner.onCompletion());
-                completions.addAll(converter.onCompletion());
+            newConverter = (sender) -> {
+                List<String> completions = new ArrayList<>(converterInner.onCompletion(sender));
+                completions.addAll(converter.onCompletion(sender));
                 return completions;
             };
         } else {
@@ -457,7 +539,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 Map<Integer, TabConverter> map = this.completers.get(cmdLabel);
                 if(map.containsKey(args.length)) {
                     TabConverter converter = map.get(args.length);
-                    List<String> completer = converter.onCompletion().stream().filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg)).toList();
+                    List<String> completer = converter.onCompletion(commandSender).stream().filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg)).toList();
                     return completer.stream().filter(str -> {
                         String cmdLabelInner = cmdLabel + "." + str.toLowerCase();
                         if(this.commands.containsKey(cmdLabelInner)) {
@@ -479,5 +561,13 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      */
     public Map<String, Command<?>> getCommands() {
         return commands;
+    }
+
+    /**
+     * Get the instance of the command manager. Only for internal use, it's why it's protected.
+     * @return The instance of the command manager.
+     */
+    protected static CommandManager getInstance() {
+        return instance;
     }
 }

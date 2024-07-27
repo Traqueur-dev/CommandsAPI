@@ -1,11 +1,9 @@
 package fr.traqueur.commands.api.arguments;
 
-import java.util.List;
-
 /**
  * The class Argument.
  * <p> This class is used to represent an argument of a command. </p>
  * @param arg The argument.
- * @param completion The list of completion.
+ * @param tabConverter The tab converter of the argument.
  */
-public record Argument(String arg, List<String> completion) {}
+public record Argument(String arg, TabConverter tabConverter) {}

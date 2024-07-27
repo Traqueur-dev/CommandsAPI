@@ -17,6 +17,7 @@ import java.util.Arrays;
  */
 public abstract class Command<T extends JavaPlugin> {
 
+    private final CommandManager manager;
     // Attributs de la classe
     /**
      * The plugin that owns the command.
@@ -79,6 +80,7 @@ public abstract class Command<T extends JavaPlugin> {
      * @param name The name of the command.
      */
     public Command(T plugin, String name) {
+        this.manager = CommandManager.getInstance();
         this.plugin = plugin;
         this.name = name;
         this.permission = "";
@@ -97,6 +99,21 @@ public abstract class Command<T extends JavaPlugin> {
      * @param args The arguments of the command.
      */
     public abstract void execute(CommandSender sender, Arguments args);
+
+    /**
+     * This method is called to unregister the command.
+     */
+    public void unregister() {
+        this.unregister(true);
+    }
+
+    /**
+     * This method is called to unregister the command.
+     * @param subcommands If the subcommands must be unregistered.
+     */
+    public void unregister(boolean subcommands) {
+        this.manager.unregisterCommand(this, subcommands);
+    }
 
     /**
      * This method is called to get the name of the command.
@@ -241,9 +258,7 @@ public abstract class Command<T extends JavaPlugin> {
      * @param args The arguments to add.
      */
     public final void addArgs(String... args) {
-        Arrays.asList(args).forEach(arg -> {
-            this.addArgs(arg, () -> null);
-        });
+        Arrays.asList(args).forEach(arg -> this.addArgs(arg, null));
     }
 
     /**
@@ -260,7 +275,7 @@ public abstract class Command<T extends JavaPlugin> {
             if (arg.contains(":infinite")) {
                 this.infiniteArgs = true;
             }
-            this.args.add(new Argument(arg, converter.onCompletion()));
+            this.args.add(new Argument(arg, converter));
         } catch (ArgsWithInfiniteArgumentException e) {
             this.plugin.getLogger().severe(e.getMessage());
         }
@@ -271,9 +286,7 @@ public abstract class Command<T extends JavaPlugin> {
      * @param args The optional arguments to add.
      */
     public final void addOptinalArgs(String... args) {
-        for (String a : args) {
-            this.addOptinalArgs(a, () -> null);
-        }
+        Arrays.asList(args).forEach(arg -> this.addOptinalArgs(arg, null));
     }
 
     /**
@@ -286,7 +299,7 @@ public abstract class Command<T extends JavaPlugin> {
             if (this.infiniteArgs) {
                 throw new ArgsWithInfiniteArgumentException(true);
             }
-            this.optionalArgs.add(new Argument(arg, converter.onCompletion()));
+            this.optionalArgs.add(new Argument(arg, converter));
         } catch (ArgsWithInfiniteArgumentException e) {
             this.plugin.getLogger().severe(e.getMessage());
         }
