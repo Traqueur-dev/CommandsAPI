@@ -3,6 +3,7 @@ package fr.traqueur.commands.api.arguments.impl;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.TabConverter;
 import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class PlayerArgument implements ArgumentConverter<Player>, TabConverter {
      * This implementation returns a list of all online player names.
      */
     @Override
-    public List<String> onCompletion() {
+    public List<String> onCompletion(CommandSender sender) {
         return Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList());
     }
 }

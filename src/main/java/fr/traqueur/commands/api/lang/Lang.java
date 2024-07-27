@@ -1,22 +1,15 @@
 package fr.traqueur.commands.api.lang;
 
-import fr.traqueur.commands.api.updater.Updater;
 import org.bukkit.ChatColor;
-import org.bukkit.Color;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
-
-import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * The lang class
  */
 public class Lang {
 
+    /**
+     * The message handler
+     */
     private static MessageHandler handler;
 
     /**
@@ -28,6 +21,10 @@ public class Lang {
         return ChatColor.translateAlternateColorCodes('&', handler.getMessage(message));
     }
 
+    /**
+     * Set the message handler
+     * @param handler The message handler
+     */
     public static void setMessageHandler(MessageHandler handler) {
         Lang.handler = handler;
     }
