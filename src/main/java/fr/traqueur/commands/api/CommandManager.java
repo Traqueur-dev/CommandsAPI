@@ -132,17 +132,23 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     /**
      * Unregister a command in the command manager.
      * @param command The command to unregister.
+     */
+    public void unregisterCommand(Command<?> command) {
+        this.unregisterCommand(command, true);
+    }
+
+    /**
+     * Unregister a command in the command manager.
+     * @param command The command to unregister.
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregisterCommand(Command<?> command, boolean subcommands) {
         ArrayList<String> aliases = new ArrayList<>(command.getAliases());
         aliases.add(command.getName());
         for (String alias : aliases) {
-            this.unregisterCommand(alias);
-        }
-        if(subcommands) {
-            for (Command<?> subcommand : command.getSubcommands()) {
-                this.unregisterCommand(subcommand, true);
+            this.unregisterCommand(alias, subcommands);
+            if(subcommands) {
+                this.unregisterSubCommands(alias, command.getSubcommands());
             }
         }
     }
@@ -152,6 +158,18 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @param label The label of the command to unregister.
      */
     public void unregisterCommand(String label) {
+        this.unregisterCommand(label, true);
+    }
+
+    /**
+     * Unregister a command in the command manager.
+     * @param label The label of the command to unregister.
+     * @param subcommands If the subcommands must be unregistered.
+     */
+    public void unregisterCommand(String label, boolean subcommands) {
+        if(subcommands && this.commandMap.getCommand(label) != null) {
+            Objects.requireNonNull(this.commandMap.getCommand(label)).unregister(commandMap);
+        }
         this.commands.remove(label);
         this.completers.remove(label);
     }
@@ -183,6 +201,25 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             for (String aliasSub : aliasesSub) {
                 this.registerCommand(subcommand, parentLabel + "." + aliasSub);
                 this.registerSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());
+            }
+        }
+    }
+
+    /**
+     * Unregister the subcommands of a command.
+     * @param parentLabel The parent label of the subcommands.
+     * @param subcommandsList The list of subcommands to unregister.
+     */
+    private void unregisterSubCommands(String parentLabel, List<Command<?>> subcommandsList) {
+        if(subcommandsList == null || subcommandsList.isEmpty()) {
+            return;
+        }
+        for (Command<?> subcommand : subcommandsList) {
+            ArrayList<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
+            aliasesSub.add(subcommand.getName());
+            for (String aliasSub : aliasesSub) {
+                this.unregisterCommand(parentLabel + "." + aliasSub, true);
+                this.unregisterSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());
             }
         }
     }

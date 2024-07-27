@@ -102,6 +102,13 @@ public abstract class Command<T extends JavaPlugin> {
 
     /**
      * This method is called to unregister the command.
+     */
+    public void unregister() {
+        this.unregister(true);
+    }
+
+    /**
+     * This method is called to unregister the command.
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregister(boolean subcommands) {
