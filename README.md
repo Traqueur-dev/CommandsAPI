@@ -9,6 +9,7 @@ CommandsAPI is a powerful and flexible Java library for creating and managing co
 - **Argument Handling:** Support for various argument types including custom types and auto-completion for a better user experience.
 - **Permissions and Aliases:** Define permissions and aliases for your commands to control access and provide alternative command names.
 - **In-Game/Console Command Support:** Specify whether a command can only be executed in-game or from the console.
+- **Commands Requirements:** Set requirements for commands to be executed, use specific conditions like in specific world.
 
 ## Getting Started
 
