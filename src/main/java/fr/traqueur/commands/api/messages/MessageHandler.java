@@ -1,4 +1,4 @@
-package fr.traqueur.commands.api.lang;
+package fr.traqueur.commands.api.messages;
 
 /**
  * The class MessageHandler.
@@ -33,6 +33,12 @@ public interface MessageHandler {
     String getArgNotRecognized();
 
     /**
+     * This method is used to get the requirement message.
+     * @return The requirement message.
+     */
+    String getRequirementMessage();
+
+    /**
      * This method is used to get a message by a type.
      * @param type The type of the message.
      * @return The message.
@@ -43,6 +49,7 @@ public interface MessageHandler {
             case ONLY_IN_GAME -> getOnlyInGameMessage();
             case MISSING_ARGS -> getMissingArgsMessage();
             case ARG_NOT_RECOGNIZED -> getArgNotRecognized();
+            case REQUIREMENT_ERROR -> getRequirementMessage();
         };
     }
 }

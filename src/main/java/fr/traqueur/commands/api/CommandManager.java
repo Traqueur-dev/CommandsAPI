@@ -7,12 +7,13 @@ import fr.traqueur.commands.api.arguments.TabConverter;
 import fr.traqueur.commands.api.arguments.impl.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
-import fr.traqueur.commands.api.lang.Lang;
-import fr.traqueur.commands.api.lang.MessageHandler;
-import fr.traqueur.commands.api.lang.Messages;
-import fr.traqueur.commands.api.lang.impl.InternalMessageHandler;
+import fr.traqueur.commands.api.messages.MessageHandler;
+import fr.traqueur.commands.api.messages.Messages;
+import fr.traqueur.commands.api.messages.impl.InternalMessageHandler;
+import fr.traqueur.commands.api.requirements.Requirement;
 import fr.traqueur.commands.api.updater.Updater;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
@@ -76,7 +77,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      */
     public CommandManager(JavaPlugin plugin) {
         Updater.checkUpdates();
-        Lang.setMessageHandler(new InternalMessageHandler());
+        Messages.setMessageHandler(new InternalMessageHandler());
 
         instance = this;
 
@@ -108,7 +109,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @param messageHandler The message handler to set.
      */
     public void setMessageHandler(MessageHandler messageHandler) {
-        Lang.setMessageHandler(messageHandler);
+        Messages.setMessageHandler(messageHandler);
     }
 
 
@@ -118,7 +119,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      */
     public void registerCommand(Command<?> command) {
         try {
-            ArrayList<String> aliases = new ArrayList<>(command.getAliases());
+            List<String> aliases = new ArrayList<>(command.getAliases());
             aliases.add(command.getName());
             for (String alias : aliases) {
                 this.addCommand(command, alias);
@@ -163,7 +164,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregisterCommand(Command<?> command, boolean subcommands) {
-        ArrayList<String> aliases = new ArrayList<>(command.getAliases());
+        List<String> aliases = new ArrayList<>(command.getAliases());
         aliases.add(command.getName());
         for (String alias : aliases) {
             this.removeCommand(alias, subcommands);
@@ -195,7 +196,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             return;
         }
         for (Command<?> subcommand : subcommands) {
-            ArrayList<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
+            List<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
             aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
                 this.addCommand(subcommand, parentLabel + "." + aliasSub);
@@ -214,7 +215,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             return;
         }
         for (Command<?> subcommand : subcommandsList) {
-            ArrayList<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
+            List<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
             aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
                 this.removeCommand(parentLabel + "." + aliasSub, true);
@@ -245,8 +246,8 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     private void addCommand(Command<?> command, String label) throws TypeArgumentNotExistException {
         try {
             plugin.getLogger().info("Register command " + label);
-            ArrayList<Argument> args = command.getArgs();
-            ArrayList<Argument> optArgs = command.getOptinalArgs();
+            List<Argument> args = command.getArgs();
+            List<Argument> optArgs = command.getOptinalArgs();
             String[] labelParts = label.split("\\.");
             String cmdLabel = labelParts[0].toLowerCase();
             int labelSize = labelParts.length;
@@ -262,7 +263,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 cmd.setExecutor(this);
                 cmd.setTabCompleter(this);
 
-                if(!commandMap.register(cmdLabel, cmd)) {
+                if(!commandMap.register(cmdLabel, this.plugin.getName(), cmd)) {
                     plugin.getLogger().severe("Unable to add the command " + cmdLabel);
                     return;
                 }
@@ -349,7 +350,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * Check if the type of the argument exists.
      * @param args The arguments to check.
      */
-    private boolean checkTypeForArgs(ArrayList<Argument> args) throws TypeArgumentNotExistException {
+    private boolean checkTypeForArgs(List<Argument> args) throws TypeArgumentNotExistException {
         for(String arg: args.stream().map(Argument::arg).toList()) {
             String[] parts = arg.split(TYPE_PARSER);
 
@@ -383,13 +384,13 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      */
     private Arguments parse(Command<?> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
         Arguments arguments = new Arguments();
-        ArrayList<Argument> templates = command.getArgs();
+        List<Argument> templates = command.getArgs();
         for (int i = 0; i < templates.size(); i++) {
             String input = args[i];
             if (applyParsing(args, arguments, templates, i, input)) break;
         }
 
-        ArrayList<Argument> optArgs = command.getOptinalArgs();
+        List<Argument> optArgs = command.getOptinalArgs();
         if (optArgs.isEmpty()) {
             return arguments;
         }
@@ -415,7 +416,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      * @throws ArgumentIncorrectException If the argument is incorrect.
      */
-    private boolean applyParsing(String[] args, Arguments arguments, ArrayList<Argument> templates, int argIndex,
+    private boolean applyParsing(String[] args, Arguments arguments, List<Argument> templates, int argIndex,
                                  String input) throws TypeArgumentNotExistException, ArgumentIncorrectException {
         String template = templates.get(argIndex).arg();
         String[] parts = template.split(TYPE_PARSER);
@@ -479,11 +480,11 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             if (commands.containsKey(cmdLabel)) {
                 Command<?> commandFramework = commands.get(cmdLabel);
                 if (!commandFramework.getPermission().isEmpty() && !sender.hasPermission(commandFramework.getPermission())) {
-                    sender.sendMessage(Lang.translate(Messages.NO_PERMISSION));
+                    sender.sendMessage(Messages.NO_PERMISSION.message());
                     return true;
                 }
                 if (commandFramework.inGameOnly() && !(sender instanceof Player)) {
-                    sender.sendMessage(Lang.translate(Messages.ONLY_IN_GAME));
+                    sender.sendMessage(Messages.ONLY_IN_GAME.message());
                     return true;
                 }
                 int subCommand = cmdLabel.split("\\.").length - 1;
@@ -494,7 +495,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 if (modArgs.length < commandFramework.getArgs().size()) {
                     String usage = command.getUsage();
                     if (usage.isEmpty()) {
-                        usage = Lang.translate(Messages.MISSING_ARGS);
+                        usage = Messages.MISSING_ARGS.message();
                     }
                     sender.sendMessage(usage);
                     return true;
@@ -503,7 +504,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 if (!commandFramework.isInfiniteArgs() && (modArgs.length > commandFramework.getArgs().size() + commandFramework.getOptinalArgs().size())) {
                     String usage = command.getUsage();
                     if (usage.isEmpty()) {
-                        usage = Lang.translate(Messages.MISSING_ARGS);
+                        usage = Messages.MISSING_ARGS.message();
                     }
                     sender.sendMessage(usage);
                     return true;
@@ -515,10 +516,22 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 } catch (TypeArgumentNotExistException e) {
                     throw new RuntimeException(e);
                 } catch (ArgumentIncorrectException e) {
-                    String message = Lang.translate(Messages.ARG_NOT_RECOGNIZED);
+                    String message = Messages.ARG_NOT_RECOGNIZED.message();
                     message = message.replace("%arg%", e.getInput());
                     sender.sendMessage( message);
                     return true;
+                }
+
+                List<Requirement> requirements = commandFramework.getRequirements();
+                for (Requirement requirement : requirements) {
+                    if (!requirement.check(sender)) {
+                        String error = requirement.errorMessage().isEmpty()
+                                ? Messages.REQUIREMENT_ERROR.message()
+                                : ChatColor.translateAlternateColorCodes('&', requirement.errorMessage());
+                        error = error.replace("%requirement%", requirement.getClass().getSimpleName());
+                        sender.sendMessage(error);
+                        return true;
+                    }
                 }
 
                 commandFramework.execute(sender, arguments);
@@ -556,6 +569,12 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                         String cmdLabelInner = cmdLabel + "." + str.toLowerCase();
                         if(this.commands.containsKey(cmdLabelInner)) {
                             Command<?> frameworkCommand = this.commands.get(cmdLabelInner);
+                            List<Requirement> requirements = frameworkCommand.getRequirements();
+                            for (Requirement requirement : requirements) {
+                                if (!requirement.check(commandSender)) {
+                                    return false;
+                                }
+                            }
                             return frameworkCommand.getPermission().isEmpty() || commandSender.hasPermission(frameworkCommand.getPermission());
                         }
                         return true;

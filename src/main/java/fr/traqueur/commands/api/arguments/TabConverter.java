@@ -10,6 +10,7 @@ import java.util.List;
  *     This class is used to represent a tabulation command converter.
  * </p>
  */
+@FunctionalInterface
 public interface TabConverter {
 
     /**
