@@ -1,6 +1,6 @@
-package fr.traqueur.commands.api.lang.impl;
+package fr.traqueur.commands.api.messages.impl;
 
-import fr.traqueur.commands.api.lang.MessageHandler;
+import fr.traqueur.commands.api.messages.MessageHandler;
 
 /**
  * This class is the default implementation of the MessageHandler interface.
@@ -46,5 +46,10 @@ public class InternalMessageHandler implements MessageHandler {
     @Override
     public String getArgNotRecognized() {
         return "&cArgument &e%arg% &cnot recognized.";
+    }
+
+    @Override
+    public String getRequirementMessage() {
+        return "The requirement %requirement% was not met";
     }
 }

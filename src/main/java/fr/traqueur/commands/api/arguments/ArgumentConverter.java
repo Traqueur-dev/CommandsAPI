@@ -7,6 +7,7 @@ import java.util.function.Function;
  * <p> This class is used to convert a string to an object. </p>
  * @param <T> The type of the object.
  */
+@FunctionalInterface
 public interface ArgumentConverter<T> extends Function<String, T> {
 
     /**
