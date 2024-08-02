@@ -3,11 +3,13 @@ package fr.traqueur.commands.api;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.TabConverter;
 import fr.traqueur.commands.api.exceptions.ArgsWithInfiniteArgumentException;
+import fr.traqueur.commands.api.requirements.Requirement;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class is the base class for all commands.
@@ -32,22 +34,27 @@ public abstract class Command<T extends JavaPlugin> {
     /**
      * The aliases of the command.
      */
-    private final ArrayList<String> aliases;
+    private final List<String> aliases;
 
     /**
      * The subcommands of the command.
      */
-    private final ArrayList<Command<?>> subcommands;
+    private final List<Command<?>> subcommands;
 
     /**
      * The arguments of the command.
      */
-    private final ArrayList<Argument> args;
+    private final List<Argument> args;
 
     /**
      * The optional arguments of the command.
      */
-    private final ArrayList<Argument> optionalArgs;
+    private final List<Argument> optionalArgs;
+
+    /**
+     * The requirements of the command.
+     */
+    private final List<Requirement> requirements;
 
     /**
      * The description of the command.
@@ -91,6 +98,7 @@ public abstract class Command<T extends JavaPlugin> {
         this.subcommands = new ArrayList<>();
         this.args = new ArrayList<>();
         this.optionalArgs = new ArrayList<>();
+        this.requirements = new ArrayList<>();
     }
 
     /**
@@ -151,7 +159,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the aliases of the command.
      * @return The aliases of the command.
      */
-    protected final ArrayList<String> getAliases() {
+    protected final List<String> getAliases() {
         return aliases;
     }
 
@@ -160,7 +168,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the subcommands of the command.
      * @return The subcommands of the command.
      */
-    protected final ArrayList<Command<?>> getSubcommands() {
+    protected final List<Command<?>> getSubcommands() {
         return subcommands;
     }
 
@@ -168,7 +176,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the arguments of the command.
      * @return The arguments of the command.
      */
-    protected final ArrayList<Argument> getArgs() {
+    protected final List<Argument> getArgs() {
         return args;
     }
 
@@ -176,7 +184,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the optional arguments of the command.
      * @return The optional arguments of the command.
      */
-    protected final ArrayList<Argument> getOptinalArgs() {
+    protected final List<Argument> getOptinalArgs() {
         return optionalArgs;
     }
 
@@ -188,6 +196,13 @@ public abstract class Command<T extends JavaPlugin> {
         return gameOnly;
     }
 
+    /**
+     * This method is called to get the requirements of the command.
+     * @return The requirements of the command.
+     */
+    protected final List<Requirement> getRequirements() {
+        return requirements;
+    }
 
     /**
      * This method is called to check if the command has infinite arguments.
@@ -303,6 +318,14 @@ public abstract class Command<T extends JavaPlugin> {
         } catch (ArgsWithInfiniteArgumentException e) {
             this.plugin.getLogger().severe(e.getMessage());
         }
+    }
+
+    /**
+     * This method is called to add requirements to the command.
+     * @param requirement The requirements to add.
+     */
+    public final void addRequirements(Requirement... requirement) {
+        requirements.addAll(Arrays.asList(requirement));
     }
 
     /**
