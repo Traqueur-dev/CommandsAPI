@@ -96,6 +96,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         }
 
         this.registerConverter(String.class, "string", (s) -> s);
+        this.registerConverter(Boolean.class, "boolean", new BooleanArgument());
         this.registerConverter(Integer.class, "int",new IntegerArgument());
         this.registerConverter(Double.class, "double",new DoubleArgument());
         this.registerConverter(Long.class, "long", new LongArgument());
