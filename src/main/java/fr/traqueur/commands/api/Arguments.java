@@ -26,6 +26,7 @@ public class Arguments {
 
     /**
      * Constructor of the class.
+     * @param logger The logger of the class.
      */
     public Arguments(Logger logger) {
         this.arguments = new HashMap<>();

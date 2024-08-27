@@ -10,6 +10,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class is the base class for all commands.
@@ -82,6 +84,11 @@ public abstract class Command<T extends JavaPlugin> {
     private boolean infiniteArgs;
 
     /**
+     * If the command is subcommand
+     */
+    private boolean subcommand;
+
+    /**
      * The constructor of the command.
      * @param plugin The plugin that owns the command.
      * @param name The name of the command.
@@ -99,6 +106,7 @@ public abstract class Command<T extends JavaPlugin> {
         this.args = new ArrayList<>();
         this.optionalArgs = new ArrayList<>();
         this.requirements = new ArrayList<>();
+        this.subcommand = false;
     }
 
     /**
@@ -265,7 +273,9 @@ public abstract class Command<T extends JavaPlugin> {
      * @param commands The subcommands to add.
      */
     public final void addSubCommand(Command<?>... commands) {
-        this.subcommands.addAll(Arrays.asList(commands));
+        List<Command<?>> commandsList = Arrays.asList(commands);
+        commandsList.forEach(command -> command.setSubcommand(true));
+        this.subcommands.addAll(commandsList);
     }
 
     /**
@@ -326,6 +336,22 @@ public abstract class Command<T extends JavaPlugin> {
      */
     public final void addRequirements(Requirement... requirement) {
         requirements.addAll(Arrays.asList(requirement));
+    }
+
+    /**
+     * Check if the command is subcommand
+     * @return if the command is subcommand
+     */
+    public final boolean isSubCommand() {
+        return subcommand;
+    }
+
+    /**
+     * Set if the command is subcommand
+     * @param subcommand the new value
+     */
+    public final void setSubcommand(boolean subcommand) {
+        this.subcommand = subcommand;
     }
 
     /**
