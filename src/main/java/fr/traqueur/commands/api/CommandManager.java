@@ -4,30 +4,27 @@ import com.google.common.collect.Lists;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.TabConverter;
-import fr.traqueur.commands.api.logging.Logger;
-import fr.traqueur.commands.impl.arguments.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
+import fr.traqueur.commands.api.logging.Logger;
 import fr.traqueur.commands.api.logging.MessageHandler;
 import fr.traqueur.commands.api.logging.Messages;
+import fr.traqueur.commands.api.updater.Updater;
+import fr.traqueur.commands.impl.arguments.*;
 import fr.traqueur.commands.impl.logging.InternalLogger;
 import fr.traqueur.commands.impl.logging.InternalMessageHandler;
-import fr.traqueur.commands.api.requirements.Requirement;
-import fr.traqueur.commands.api.updater.Updater;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.*;
+import org.bukkit.command.CommandMap;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import javax.swing.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * This class is the command manager.
@@ -38,11 +35,6 @@ public class CommandManager {
 
     private static final String TYPE_PARSER = ":";
     private static final String INFINITE = "infinite";
-
-    /**
-     * The instance of the command manager. Only for internal use.
-     */
-    private static CommandManager instance;
 
     /**
      * The plugin that owns the command manager.
@@ -93,8 +85,6 @@ public class CommandManager {
         Messages.setMessageHandler(new InternalMessageHandler());
         this.logger = new InternalLogger(plugin.getLogger());
 
-        instance = this;
-
         this.plugin = plugin;
         this.commands = new HashMap<>();
         this.typeConverters = new HashMap<>();
@@ -109,6 +99,15 @@ public class CommandManager {
             throw new RuntimeException(e);
         }
 
+        this.registerInternalConverters();
+
+        this.executor = new Executor(plugin, this);
+    }
+
+    /**
+     * Register the internal converters of the command manager.
+     */
+    private void registerInternalConverters() {
         this.registerConverter(String.class, "string", (s) -> s);
         this.registerConverter(Boolean.class, "boolean", new BooleanArgument());
         this.registerConverter(Integer.class, "int",new IntegerArgument());
@@ -117,9 +116,8 @@ public class CommandManager {
         this.registerConverter(Player.class, "player", new PlayerArgument());
         this.registerConverter(OfflinePlayer.class, "offlineplayer", new OfflinePlayerArgument());
         this.registerConverter(String.class, INFINITE, s -> s);
-
-        this.executor = new Executor(plugin, this);
     }
+
 
     /**
      * Set the custom logger of the command manager.
@@ -280,6 +278,8 @@ public class CommandManager {
             if(!this.checkTypeForArgs(args) || !this.checkTypeForArgs(optArgs)) {
                 throw new TypeArgumentNotExistException();
             }
+
+            command.setManager(this);
 
             commands.put(label.toLowerCase(), command);
 
@@ -501,13 +501,5 @@ public class CommandManager {
      */
     public Map<String, Map<Integer, TabConverter>> getCompleters() {
         return this.completers;
-    }
-
-    /**
-     * Get the instance of the command manager. Only for internal use, it's why it's protected.
-     * @return The instance of the command manager.
-     */
-    protected static CommandManager getInstance() {
-        return instance;
     }
 }

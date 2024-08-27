@@ -10,8 +10,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This class is the base class for all commands.
@@ -21,7 +19,7 @@ import java.util.stream.Stream;
  */
 public abstract class Command<T extends JavaPlugin> {
 
-    private final CommandManager manager;
+    private CommandManager manager;
     // Attributs de la classe
     /**
      * The plugin that owns the command.
@@ -94,7 +92,6 @@ public abstract class Command<T extends JavaPlugin> {
      * @param name The name of the command.
      */
     public Command(T plugin, String name) {
-        this.manager = CommandManager.getInstance();
         this.plugin = plugin;
         this.name = name;
         this.permission = "";
@@ -107,6 +104,14 @@ public abstract class Command<T extends JavaPlugin> {
         this.optionalArgs = new ArrayList<>();
         this.requirements = new ArrayList<>();
         this.subcommand = false;
+    }
+
+    /**
+     * This method is called to set the manager of the command.
+     * @param manager The manager of the command.
+     */
+    protected void setManager(CommandManager manager) {
+        this.manager = manager;
     }
 
     /**
@@ -128,6 +133,9 @@ public abstract class Command<T extends JavaPlugin> {
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregister(boolean subcommands) {
+        if(this.manager == null) {
+            throw new IllegalArgumentException("The command is not registered.");
+        }
         this.manager.unregisterCommand(this, subcommands);
     }
 
