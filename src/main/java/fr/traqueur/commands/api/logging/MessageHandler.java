@@ -1,4 +1,4 @@
-package fr.traqueur.commands.api.messages;
+package fr.traqueur.commands.api.logging;
 
 /**
  * The class MessageHandler.

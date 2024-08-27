@@ -4,18 +4,19 @@ import com.google.common.collect.Lists;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.TabConverter;
-import fr.traqueur.commands.api.arguments.impl.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
-import fr.traqueur.commands.api.messages.MessageHandler;
-import fr.traqueur.commands.api.messages.Messages;
-import fr.traqueur.commands.api.messages.impl.InternalMessageHandler;
-import fr.traqueur.commands.api.requirements.Requirement;
+import fr.traqueur.commands.api.logging.Logger;
+import fr.traqueur.commands.api.logging.MessageHandler;
+import fr.traqueur.commands.api.logging.Messages;
 import fr.traqueur.commands.api.updater.Updater;
+import fr.traqueur.commands.impl.arguments.*;
+import fr.traqueur.commands.impl.logging.InternalLogger;
+import fr.traqueur.commands.impl.logging.InternalMessageHandler;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.*;
+import org.bukkit.command.CommandMap;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -24,22 +25,16 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * This class is the command manager.
  * It allows you to register commands and subcommands.
  * It also allows you to register argument converters and tab completers.
  */
-public class CommandManager implements CommandExecutor, TabCompleter {
+public class CommandManager {
 
     private static final String TYPE_PARSER = ":";
     private static final String INFINITE = "infinite";
-
-    /**
-     * The instance of the command manager. Only for internal use.
-     */
-    private static CommandManager instance;
 
     /**
      * The plugin that owns the command manager.
@@ -72,14 +67,23 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     private final Map<String, Map<Integer, TabConverter>> completers;
 
     /**
+     * The executor of the command manager.
+     */
+    private final Executor executor;
+
+
+    /**
+     * The logger of the command manager.
+     */
+    private Logger logger;
+    /**
      * The constructor of the command manager.
      * @param plugin The plugin that owns the command manager.
      */
     public CommandManager(JavaPlugin plugin) {
         Updater.checkUpdates();
         Messages.setMessageHandler(new InternalMessageHandler());
-
-        instance = this;
+        this.logger = new InternalLogger(plugin.getLogger());
 
         this.plugin = plugin;
         this.commands = new HashMap<>();
@@ -95,6 +99,15 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             throw new RuntimeException(e);
         }
 
+        this.registerInternalConverters();
+
+        this.executor = new Executor(plugin, this);
+    }
+
+    /**
+     * Register the internal converters of the command manager.
+     */
+    private void registerInternalConverters() {
         this.registerConverter(String.class, "string", (s) -> s);
         this.registerConverter(Boolean.class, "boolean", new BooleanArgument());
         this.registerConverter(Integer.class, "int",new IntegerArgument());
@@ -103,6 +116,15 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.registerConverter(Player.class, "player", new PlayerArgument());
         this.registerConverter(OfflinePlayer.class, "offlineplayer", new OfflinePlayerArgument());
         this.registerConverter(String.class, INFINITE, s -> s);
+    }
+
+
+    /**
+     * Set the custom logger of the command manager.
+     * @param logger The logger to set.
+     */
+    public void setLogger(Logger logger) {
+        this.logger = logger;
     }
 
     /**
@@ -246,7 +268,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      */
     private void addCommand(Command<?> command, String label) throws TypeArgumentNotExistException {
         try {
-            plugin.getLogger().info("Register command " + label);
+            this.logger.info("Register command " + label);
             List<Argument> args = command.getArgs();
             List<Argument> optArgs = command.getOptinalArgs();
             String[] labelParts = label.split("\\.");
@@ -256,24 +278,35 @@ public class CommandManager implements CommandExecutor, TabCompleter {
             if(!this.checkTypeForArgs(args) || !this.checkTypeForArgs(optArgs)) {
                 throw new TypeArgumentNotExistException();
             }
+
+            command.setManager(this);
+
             commands.put(label.toLowerCase(), command);
 
-            if (commandMap.getCommand(cmdLabel) == null) {
-                PluginCommand cmd = pluginConstructor.newInstance(cmdLabel, command.getPlugin());
+            String originCmdLabel = cmdLabel;
+            for (Command<?> value : commands.values().stream().filter(commandInner -> !commandInner.isSubCommand()).toList()) {
+                if(value.getAliases().contains(cmdLabel)) {
+                    originCmdLabel = value.getName();
+                }
+            }
 
-                cmd.setExecutor(this);
-                cmd.setTabCompleter(this);
+            if (commandMap.getCommand(originCmdLabel) == null) {
+                PluginCommand cmd = pluginConstructor.newInstance(originCmdLabel, command.getPlugin());
 
-                if(!commandMap.register(cmdLabel, this.plugin.getName(), cmd)) {
-                    plugin.getLogger().severe("Unable to add the command " + cmdLabel);
+                cmd.setExecutor(this.executor);
+                cmd.setTabCompleter(this.executor);
+                cmd.setAliases(command.getAliases());
+
+                if(!commandMap.register(originCmdLabel, this.plugin.getName(), cmd)) {
+                    this.logger.error("Unable to add the command " + originCmdLabel);
                     return;
                 }
             }
             if (!command.getDescription().equalsIgnoreCase("") && cmdLabel.equals(label)) {
-                Objects.requireNonNull(commandMap.getCommand(cmdLabel)).setDescription(command.getDescription());
+                Objects.requireNonNull(commandMap.getCommand(originCmdLabel)).setDescription(command.getDescription());
             }
             if (!command.getUsage().equalsIgnoreCase("") && cmdLabel.equals(label)) {
-                Objects.requireNonNull(commandMap.getCommand(cmdLabel)).setUsage(command.getUsage());
+                Objects.requireNonNull(commandMap.getCommand(originCmdLabel)).setUsage(command.getUsage());
             }
 
             this.addCompletionsForLabel(labelParts);
@@ -383,8 +416,8 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      * @throws ArgumentIncorrectException If the argument is incorrect.
      */
-    private Arguments parse(Command<?> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
-        Arguments arguments = new Arguments();
+    protected Arguments parse(Command<?> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
+        Arguments arguments = new Arguments(this.logger);
         List<Argument> templates = command.getArgs();
         for (int i = 0; i < templates.size(); i++) {
             String input = args[i];
@@ -454,140 +487,6 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * This method is called when a command is executed.
-     * @param sender The sender of the command.
-     * @param command The command executed.
-     * @param label The label of the command.
-     * @param args The arguments of the command.
-     * @return If the command is executed.
-     */
-    @Override
-    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
-        if (!plugin.isEnabled()) {
-            return false;
-        }
-
-        if (!command.testPermission(sender)) {
-            return true;
-        }
-
-        for (int i = args.length; i >= 0; i--) {
-            StringBuilder buffer = new StringBuilder();
-            buffer.append(label.toLowerCase());
-            for (int x = 0; x < i; x++) {
-                buffer.append(".").append(args[x].toLowerCase());
-            }
-            String cmdLabel = buffer.toString();
-            if (commands.containsKey(cmdLabel)) {
-                Command<?> commandFramework = commands.get(cmdLabel);
-                if (!commandFramework.getPermission().isEmpty() && !sender.hasPermission(commandFramework.getPermission())) {
-                    sender.sendMessage(Messages.NO_PERMISSION.message());
-                    return true;
-                }
-                if (commandFramework.inGameOnly() && !(sender instanceof Player)) {
-                    sender.sendMessage(Messages.ONLY_IN_GAME.message());
-                    return true;
-                }
-                int subCommand = cmdLabel.split("\\.").length - 1;
-                String[] modArgs = new String[args.length - subCommand];
-                if (args.length - subCommand >= 0)
-                    System.arraycopy(args, subCommand, modArgs, 0, args.length - subCommand);
-
-                if (modArgs.length < commandFramework.getArgs().size()) {
-                    String usage = command.getUsage();
-                    if (usage.isEmpty()) {
-                        usage = Messages.MISSING_ARGS.message();
-                    }
-                    sender.sendMessage(usage);
-                    return true;
-                }
-
-                if (!commandFramework.isInfiniteArgs() && (modArgs.length > commandFramework.getArgs().size() + commandFramework.getOptinalArgs().size())) {
-                    String usage = command.getUsage();
-                    if (usage.isEmpty()) {
-                        usage = Messages.MISSING_ARGS.message();
-                    }
-                    sender.sendMessage(usage);
-                    return true;
-                }
-
-                Arguments arguments;
-                try {
-                    arguments = this.parse(commandFramework, modArgs);
-                } catch (TypeArgumentNotExistException e) {
-                    throw new RuntimeException(e);
-                } catch (ArgumentIncorrectException e) {
-                    String message = Messages.ARG_NOT_RECOGNIZED.message();
-                    message = message.replace("%arg%", e.getInput());
-                    sender.sendMessage( message);
-                    return true;
-                }
-
-                List<Requirement> requirements = commandFramework.getRequirements();
-                for (Requirement requirement : requirements) {
-                    if (!requirement.check(sender)) {
-                        String error = requirement.errorMessage().isEmpty()
-                                ? Messages.REQUIREMENT_ERROR.message()
-                                : ChatColor.translateAlternateColorCodes('&', requirement.errorMessage());
-                        error = error.replace("%requirement%", requirement.getClass().getSimpleName());
-                        sender.sendMessage(error);
-                        return true;
-                    }
-                }
-
-                commandFramework.execute(sender, arguments);
-                return true;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * This method is called when a tab is completed.
-     * @param commandSender The sender of the command.
-     * @param command The command completed.
-     * @param label The label of the command.
-     * @param args The arguments of the command.
-     * @return The list of completions.
-     */
-    @Override
-    public List<String> onTabComplete(CommandSender commandSender, org.bukkit.command.Command command, String label, String[] args) {
-        String arg = args[args.length-1];
-        for (int i = args.length; i >= 0; i--) {
-            StringBuilder buffer = new StringBuilder();
-            buffer.append(label.toLowerCase());
-            for (int x = 0; x < i; x++) {
-                buffer.append(".").append(args[x].toLowerCase());
-            }
-            String cmdLabel = buffer.toString();
-            if (this.completers.containsKey(cmdLabel)) {
-                Map<Integer, TabConverter> map = this.completers.get(cmdLabel);
-                if(map.containsKey(args.length)) {
-                    TabConverter converter = map.get(args.length);
-                    List<String> completer = converter.onCompletion(commandSender).stream().filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg)).toList();
-                    return completer.stream().filter(str -> {
-                        String cmdLabelInner = cmdLabel + "." + str.toLowerCase();
-                        if(this.commands.containsKey(cmdLabelInner)) {
-                            Command<?> frameworkCommand = this.commands.get(cmdLabelInner);
-                            List<Requirement> requirements = frameworkCommand.getRequirements();
-                            for (Requirement requirement : requirements) {
-                                if (!requirement.check(commandSender)) {
-                                    return false;
-                                }
-                            }
-                            return frameworkCommand.getPermission().isEmpty() || commandSender.hasPermission(frameworkCommand.getPermission());
-                        }
-                        return true;
-                    }).collect(Collectors.toList());
-                }
-            }
-        }
-
-        return List.of();
-    }
-
-    /**
      * Get the commands of the command manager.
      * @return The commands of the command manager.
      */
@@ -595,11 +494,12 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         return commands;
     }
 
+
     /**
-     * Get the instance of the command manager. Only for internal use, it's why it's protected.
-     * @return The instance of the command manager.
+     * Get the completers of the command manager
+     * @return The completers of command manager
      */
-    protected static CommandManager getInstance() {
-        return instance;
+    public Map<String, Map<Integer, TabConverter>> getCompleters() {
+        return this.completers;
     }
 }

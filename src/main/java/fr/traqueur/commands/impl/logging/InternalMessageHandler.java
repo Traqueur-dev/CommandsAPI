@@ -1,6 +1,6 @@
-package fr.traqueur.commands.api.messages.impl;
+package fr.traqueur.commands.impl.logging;
 
-import fr.traqueur.commands.api.messages.MessageHandler;
+import fr.traqueur.commands.api.logging.MessageHandler;
 
 /**
  * This class is the default implementation of the MessageHandler interface.

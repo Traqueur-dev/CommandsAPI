@@ -3,6 +3,7 @@ package fr.traqueur.commands.api;
 import fr.traqueur.commands.api.arguments.ArgumentKey;
 import fr.traqueur.commands.api.exceptions.ArgumentNotExistException;
 import fr.traqueur.commands.api.exceptions.NoGoodTypeArgumentException;
+import fr.traqueur.commands.api.logging.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,13 +13,24 @@ import java.util.Optional;
  * This class is used to store arguments.
  */
 public class Arguments {
+
+    /**
+     * The map of the arguments.
+     */
     private final HashMap<ArgumentKey<?>, Object> arguments;
 
     /**
-     * Constructor of the class.
+     * The logger of the class.
      */
-    public Arguments() {
+    private final Logger logger;
+
+    /**
+     * Constructor of the class.
+     * @param logger The logger of the class.
+     */
+    public Arguments(Logger logger) {
         this.arguments = new HashMap<>();
+        this.logger = logger;
     }
 
     /**
@@ -36,7 +48,8 @@ public class Arguments {
             }
             return value.get();
         } catch (ArgumentNotExistException e) {
-            e.printStackTrace();
+            logger.error("The argument " + argument + " does not exist.");
+            logger.error(e.getMessage());
         }
         return null;
     }
@@ -59,15 +72,18 @@ public class Arguments {
                 Class<?> type = argumentKey.getType();
                 Object value = entry.getValue();
 
-                if (!type.isInstance(value)) {
+                Class<T> goodType = (Class<T>) type;
+
+                if (!goodType.isInstance(value)) {
                     throw new NoGoodTypeArgumentException();
                 }
 
-                return Optional.ofNullable((T) value);
+                return Optional.of(goodType.cast(value));
             }
             return Optional.empty();
         } catch (NoGoodTypeArgumentException e) {
-            e.printStackTrace();
+            logger.error("The argument " + argument + " is not the good type.");
+            logger.error(e.getMessage());
         }
         return Optional.empty();
     }

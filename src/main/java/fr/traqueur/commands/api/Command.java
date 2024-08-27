@@ -19,7 +19,7 @@ import java.util.List;
  */
 public abstract class Command<T extends JavaPlugin> {
 
-    private final CommandManager manager;
+    private CommandManager manager;
     // Attributs de la classe
     /**
      * The plugin that owns the command.
@@ -82,12 +82,16 @@ public abstract class Command<T extends JavaPlugin> {
     private boolean infiniteArgs;
 
     /**
+     * If the command is subcommand
+     */
+    private boolean subcommand;
+
+    /**
      * The constructor of the command.
      * @param plugin The plugin that owns the command.
      * @param name The name of the command.
      */
     public Command(T plugin, String name) {
-        this.manager = CommandManager.getInstance();
         this.plugin = plugin;
         this.name = name;
         this.permission = "";
@@ -99,6 +103,15 @@ public abstract class Command<T extends JavaPlugin> {
         this.args = new ArrayList<>();
         this.optionalArgs = new ArrayList<>();
         this.requirements = new ArrayList<>();
+        this.subcommand = false;
+    }
+
+    /**
+     * This method is called to set the manager of the command.
+     * @param manager The manager of the command.
+     */
+    protected void setManager(CommandManager manager) {
+        this.manager = manager;
     }
 
     /**
@@ -120,6 +133,9 @@ public abstract class Command<T extends JavaPlugin> {
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregister(boolean subcommands) {
+        if(this.manager == null) {
+            throw new IllegalArgumentException("The command is not registered.");
+        }
         this.manager.unregisterCommand(this, subcommands);
     }
 
@@ -265,7 +281,9 @@ public abstract class Command<T extends JavaPlugin> {
      * @param commands The subcommands to add.
      */
     public final void addSubCommand(Command<?>... commands) {
-        this.subcommands.addAll(Arrays.asList(commands));
+        List<Command<?>> commandsList = Arrays.asList(commands);
+        commandsList.forEach(command -> command.setSubcommand(true));
+        this.subcommands.addAll(commandsList);
     }
 
     /**
@@ -326,6 +344,22 @@ public abstract class Command<T extends JavaPlugin> {
      */
     public final void addRequirements(Requirement... requirement) {
         requirements.addAll(Arrays.asList(requirement));
+    }
+
+    /**
+     * Check if the command is subcommand
+     * @return if the command is subcommand
+     */
+    public final boolean isSubCommand() {
+        return subcommand;
+    }
+
+    /**
+     * Set if the command is subcommand
+     * @param subcommand the new value
+     */
+    public final void setSubcommand(boolean subcommand) {
+        this.subcommand = subcommand;
     }
 
     /**

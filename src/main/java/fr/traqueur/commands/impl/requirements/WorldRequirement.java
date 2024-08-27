@@ -1,4 +1,4 @@
-package fr.traqueur.commands.api.requirements.impl;
+package fr.traqueur.commands.impl.requirements;
 
 import fr.traqueur.commands.api.requirements.Requirement;
 import org.bukkit.Bukkit;

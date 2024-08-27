@@ -1,6 +1,6 @@
 package fr.traqueur.commands.api.requirements;
 
-import fr.traqueur.commands.api.requirements.impl.WorldRequirement;
+import fr.traqueur.commands.impl.requirements.WorldRequirement;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
