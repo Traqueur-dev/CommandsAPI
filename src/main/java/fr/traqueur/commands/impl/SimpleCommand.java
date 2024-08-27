@@ -1,5 +1,6 @@
-package fr.traqueur.commands.api;
+package fr.traqueur.commands.impl;
 
+import fr.traqueur.commands.api.Command;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**

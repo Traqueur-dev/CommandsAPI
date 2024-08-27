@@ -4,12 +4,14 @@ import com.google.common.collect.Lists;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.TabConverter;
-import fr.traqueur.commands.api.arguments.impl.*;
+import fr.traqueur.commands.api.logging.Logger;
+import fr.traqueur.commands.impl.arguments.*;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
-import fr.traqueur.commands.api.messages.MessageHandler;
-import fr.traqueur.commands.api.messages.Messages;
-import fr.traqueur.commands.api.messages.impl.InternalMessageHandler;
+import fr.traqueur.commands.api.logging.MessageHandler;
+import fr.traqueur.commands.api.logging.Messages;
+import fr.traqueur.commands.impl.logging.InternalLogger;
+import fr.traqueur.commands.impl.logging.InternalMessageHandler;
 import fr.traqueur.commands.api.requirements.Requirement;
 import fr.traqueur.commands.api.updater.Updater;
 import org.bukkit.Bukkit;
@@ -72,12 +74,18 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     private final Map<String, Map<Integer, TabConverter>> completers;
 
     /**
+     * The logger of the command manager.
+     */
+    private Logger logger;
+
+    /**
      * The constructor of the command manager.
      * @param plugin The plugin that owns the command manager.
      */
     public CommandManager(JavaPlugin plugin) {
         Updater.checkUpdates();
         Messages.setMessageHandler(new InternalMessageHandler());
+        this.logger = new InternalLogger(plugin.getLogger());
 
         instance = this;
 
@@ -103,6 +111,14 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         this.registerConverter(Player.class, "player", new PlayerArgument());
         this.registerConverter(OfflinePlayer.class, "offlineplayer", new OfflinePlayerArgument());
         this.registerConverter(String.class, INFINITE, s -> s);
+    }
+
+    /**
+     * Set the custom logger of the command manager.
+     * @param logger The logger to set.
+     */
+    public void setLogger(Logger logger) {
+        this.logger = logger;
     }
 
     /**
@@ -246,7 +262,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      */
     private void addCommand(Command<?> command, String label) throws TypeArgumentNotExistException {
         try {
-            plugin.getLogger().info("Register command " + label);
+            this.logger.info("Register command " + label);
             List<Argument> args = command.getArgs();
             List<Argument> optArgs = command.getOptinalArgs();
             String[] labelParts = label.split("\\.");
@@ -265,7 +281,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
                 cmd.setTabCompleter(this);
 
                 if(!commandMap.register(cmdLabel, this.plugin.getName(), cmd)) {
-                    plugin.getLogger().severe("Unable to add the command " + cmdLabel);
+                    this.logger.error("Unable to add the command " + cmdLabel);
                     return;
                 }
             }
@@ -384,7 +400,7 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @throws ArgumentIncorrectException If the argument is incorrect.
      */
     private Arguments parse(Command<?> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
-        Arguments arguments = new Arguments();
+        Arguments arguments = new Arguments(this.logger);
         List<Argument> templates = command.getArgs();
         for (int i = 0; i < templates.size(); i++) {
             String input = args[i];
