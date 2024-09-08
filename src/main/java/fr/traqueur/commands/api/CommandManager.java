@@ -76,6 +76,12 @@ public class CommandManager {
      * The logger of the command manager.
      */
     private Logger logger;
+
+    /**
+     * If the debug mode is enabled.
+     */
+    private boolean debug;
+
     /**
      * The constructor of the command manager.
      * @param plugin The plugin that owns the command manager.
@@ -84,7 +90,7 @@ public class CommandManager {
         Updater.checkUpdates();
         Messages.setMessageHandler(new InternalMessageHandler());
         this.logger = new InternalLogger(plugin.getLogger());
-
+        this.debug = false;
         this.plugin = plugin;
         this.commands = new HashMap<>();
         this.typeConverters = new HashMap<>();
@@ -135,6 +141,21 @@ public class CommandManager {
         Messages.setMessageHandler(messageHandler);
     }
 
+    /**
+     * Set the debug mode of the command manager.
+     * @param debug If the debug mode is enabled.
+     */
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+
+    /**
+     * Get the debug mode of the command manager.
+     * @return If the debug mode is enabled.
+     */
+    public boolean isDebug() {
+        return this.debug;
+    }
 
     /**
      * Register a command in the command manager.
@@ -268,7 +289,9 @@ public class CommandManager {
      */
     private void addCommand(Command<?> command, String label) throws TypeArgumentNotExistException {
         try {
-            this.logger.info("Register command " + label);
+            if(this.isDebug()) {
+                this.logger.info("Register command " + label);
+            }
             List<Argument> args = command.getArgs();
             List<Argument> optArgs = command.getOptinalArgs();
             String[] labelParts = label.split("\\.");
