@@ -168,7 +168,15 @@ public class Executor implements CommandExecutor, TabCompleter {
             StringBuilder buffer = new StringBuilder();
             buffer.append(label.toLowerCase());
             for (int x = 0; x < i; x++) {
-                buffer.append(".").append(args[x].toLowerCase());
+                String component = args[x];
+                if(args[x].contains(":") && x == 0) {
+                    String[] split = args[x].split(":");
+                    component = split[1];
+                    if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
+                        return List.of();
+                    }
+                }
+                buffer.append(".").append(component.toLowerCase());
             }
             String cmdLabel = buffer.toString();
             if (this.completers.containsKey(cmdLabel)) {
