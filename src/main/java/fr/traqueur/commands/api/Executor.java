@@ -80,7 +80,7 @@ public class Executor implements CommandExecutor, TabCompleter {
                 if(args[x].contains(":") && x == 0) {
                     String[] split = args[x].split(":");
                     component = split[1];
-                    if(!split[0].equals(plugin.getName())) {
+                    if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
                         return false;
                     }
                 }
