@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'fr.traqueur'
-version = '1.5.1'
+version = property('version')
 
 repositories {
     mavenCentral()
