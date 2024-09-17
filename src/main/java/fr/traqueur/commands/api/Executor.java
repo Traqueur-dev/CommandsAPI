@@ -74,18 +74,17 @@ public class Executor implements CommandExecutor, TabCompleter {
 
         for (int i = args.length; i >= 0; i--) {
             StringBuilder buffer = new StringBuilder();
-            buffer.append(label.toLowerCase());
-            for (int x = 0; x < i; x++) {
-                String component = args[x];
-                if(args[x].contains(":") && x == 0) {
-                    String[] split = args[x].split(":");
-                    component = split[1];
-                    if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
-                        return false;
-                    }
+            String labelLower = label.toLowerCase();
+            if(labelLower.contains(":")) {
+                String[] split = labelLower.split(":");
+                labelLower = split[1];
+                if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
+                    return false;
                 }
-
-                buffer.append(".").append(component.toLowerCase());
+            }
+            buffer.append(labelLower);
+            for (int x = 0; x < i; x++) {
+                buffer.append(".").append(args[x].toLowerCase());
             }
             String cmdLabel = buffer.toString();
             if (commands.containsKey(cmdLabel)) {
@@ -166,17 +165,19 @@ public class Executor implements CommandExecutor, TabCompleter {
         String arg = args[args.length-1];
         for (int i = args.length; i >= 0; i--) {
             StringBuilder buffer = new StringBuilder();
-            buffer.append(label.toLowerCase());
-            for (int x = 0; x < i; x++) {
-                String component = args[x];
-                if(args[x].contains(":") && x == 0) {
-                    String[] split = args[x].split(":");
-                    component = split[1];
-                    if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
-                        return List.of();
-                    }
+
+            String labelLower = label.toLowerCase();
+            if(labelLower.contains(":")) {
+                String[] split = labelLower.split(":");
+                labelLower = split[1];
+                if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
+                    return List.of();
                 }
-                buffer.append(".").append(component.toLowerCase());
+            }
+            buffer.append(labelLower);
+
+            for (int x = 0; x < i; x++) {
+                buffer.append(".").append(args[x].toLowerCase());
             }
             String cmdLabel = buffer.toString();
             if (this.completers.containsKey(cmdLabel)) {
