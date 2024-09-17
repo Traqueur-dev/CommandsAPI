@@ -74,7 +74,15 @@ public class Executor implements CommandExecutor, TabCompleter {
 
         for (int i = args.length; i >= 0; i--) {
             StringBuilder buffer = new StringBuilder();
-            buffer.append(label.toLowerCase());
+            String labelLower = label.toLowerCase();
+            if(labelLower.contains(":")) {
+                String[] split = labelLower.split(":");
+                labelLower = split[1];
+                if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
+                    return false;
+                }
+            }
+            buffer.append(labelLower);
             for (int x = 0; x < i; x++) {
                 buffer.append(".").append(args[x].toLowerCase());
             }
@@ -157,7 +165,17 @@ public class Executor implements CommandExecutor, TabCompleter {
         String arg = args[args.length-1];
         for (int i = args.length; i >= 0; i--) {
             StringBuilder buffer = new StringBuilder();
-            buffer.append(label.toLowerCase());
+
+            String labelLower = label.toLowerCase();
+            if(labelLower.contains(":")) {
+                String[] split = labelLower.split(":");
+                labelLower = split[1];
+                if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
+                    return List.of();
+                }
+            }
+            buffer.append(labelLower);
+
             for (int x = 0; x < i; x++) {
                 buffer.append(".").append(args[x].toLowerCase());
             }
