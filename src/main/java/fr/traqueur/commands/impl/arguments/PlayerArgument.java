@@ -30,7 +30,7 @@ public class PlayerArgument implements ArgumentConverter<Player>, TabConverter {
      * This implementation returns a list of all online player names.
      */
     @Override
-    public List<String> onCompletion(CommandSender sender) {
+    public List<String> onCompletion(CommandSender sender, List<String> args) {
         return Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList());
     }
 }

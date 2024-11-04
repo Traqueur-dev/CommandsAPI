@@ -31,7 +31,7 @@ public class OfflinePlayerArgument implements ArgumentConverter<OfflinePlayer>, 
      * This implementation returns a list of all player names.
      */
     @Override
-    public List<String> onCompletion(CommandSender sender) {
+    public List<String> onCompletion(CommandSender sender, List<String> args) {
         return Arrays.stream(Bukkit.getServer().getOfflinePlayers()).map(OfflinePlayer::getName).collect(Collectors.toList());
     }
 }

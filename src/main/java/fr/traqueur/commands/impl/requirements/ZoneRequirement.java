@@ -99,7 +99,7 @@ public class ZoneRequirement implements Requirement {
 
     @Override
     public boolean check(CommandSender sender) {
-        return sender instanceof Player player && this.isInside(player);
+        return sender instanceof Player && this.isInside(((Player) sender));
     }
 
     @Override

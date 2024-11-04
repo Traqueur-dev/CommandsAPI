@@ -44,12 +44,18 @@ public interface MessageHandler {
      * @return The message.
      */
     default String getMessage(Messages type) {
-        return switch (type) {
-            case NO_PERMISSION -> getNoPermissionMessage();
-            case ONLY_IN_GAME -> getOnlyInGameMessage();
-            case MISSING_ARGS -> getMissingArgsMessage();
-            case ARG_NOT_RECOGNIZED -> getArgNotRecognized();
-            case REQUIREMENT_ERROR -> getRequirementMessage();
-        };
+        switch (type) {
+            case NO_PERMISSION:
+                return getNoPermissionMessage();
+            case ONLY_IN_GAME:
+                return getOnlyInGameMessage();
+            case MISSING_ARGS:
+                return getMissingArgsMessage();
+            case ARG_NOT_RECOGNIZED:
+                return getArgNotRecognized();
+            case REQUIREMENT_ERROR:
+                return getRequirementMessage();
+        }
+        throw new IllegalArgumentException("The message type " + type + " is not supported.");
     }
 }

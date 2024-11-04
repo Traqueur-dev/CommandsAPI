@@ -38,7 +38,7 @@ public class WorldRequirement implements Requirement {
 
     @Override
     public boolean check(CommandSender sender) {
-        return sender instanceof Player player && this.world != null  && player.getWorld().getUID().equals(this.world.getUID());
+        return sender instanceof Player && this.world != null  && ((Player) sender).getWorld().getUID().equals(this.world.getUID());
     }
 
     @Override
