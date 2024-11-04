@@ -19,6 +19,6 @@ public interface TabConverter {
      * @param sender The sender of the command.
      * @return The completion of the command.
      */
-    List<String> onCompletion(CommandSender sender);
+    List<String> onCompletion(CommandSender sender, List<String> args);
 
 }

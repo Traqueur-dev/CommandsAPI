@@ -12,8 +12,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -171,7 +170,7 @@ public class Executor implements CommandExecutor, TabCompleter {
                 String[] split = labelLower.split(":");
                 labelLower = split[1];
                 if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
-                    return List.of();
+                    return Collections.emptyList();
                 }
             }
             buffer.append(labelLower);
@@ -184,7 +183,10 @@ public class Executor implements CommandExecutor, TabCompleter {
                 Map<Integer, TabConverter> map = this.completers.get(cmdLabel);
                 if(map.containsKey(args.length)) {
                     TabConverter converter = map.get(args.length);
-                    List<String> completer = converter.onCompletion(commandSender).stream().filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg)).toList();
+                    String[] argsBefore = Arrays.copyOf(args, args.length - 1);
+                    String argsBeforeString = label + "." + String.join(".", argsBefore);
+                    argsBeforeString = argsBeforeString.replace(cmdLabel+".", "");
+                    List<String> completer = converter.onCompletion(commandSender, Arrays.asList(argsBeforeString.split("\\."))).stream().filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg)).collect(Collectors.toList());
                     return completer.stream().filter(str -> {
                         String cmdLabelInner = cmdLabel + "." + str.toLowerCase();
                         if(this.commands.containsKey(cmdLabelInner)) {
@@ -203,7 +205,7 @@ public class Executor implements CommandExecutor, TabCompleter {
             }
         }
 
-        return List.of();
+        return Collections.emptyList();
     }
 
 }

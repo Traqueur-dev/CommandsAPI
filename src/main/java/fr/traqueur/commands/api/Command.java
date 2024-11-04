@@ -143,7 +143,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the name of the command.
      * @return The name of the command.
      */
-    protected final String getName() {
+    public final String getName() {
         return name;
     }
 
@@ -151,7 +151,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the description of the command.
      * @return The description of the command.
      */
-    protected final String getDescription() {
+    public final String getDescription() {
         return description;
     }
 
@@ -159,7 +159,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the permission of the command.
      * @return The permission of the command.
      */
-    protected final String getPermission() {
+    public final String getPermission() {
         return permission;
     }
 
@@ -167,7 +167,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the usage of the command.
      * @return The usage of the command.
      */
-    protected final String getUsage() {
+    public final String getUsage() {
         return usage;
     }
 
@@ -175,7 +175,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the aliases of the command.
      * @return The aliases of the command.
      */
-    protected final List<String> getAliases() {
+    public final List<String> getAliases() {
         return aliases;
     }
 
@@ -184,7 +184,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the subcommands of the command.
      * @return The subcommands of the command.
      */
-    protected final List<Command<?>> getSubcommands() {
+    public final List<Command<?>> getSubcommands() {
         return subcommands;
     }
 
@@ -192,7 +192,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the arguments of the command.
      * @return The arguments of the command.
      */
-    protected final List<Argument> getArgs() {
+    public final List<Argument> getArgs() {
         return args;
     }
 
@@ -200,7 +200,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the optional arguments of the command.
      * @return The optional arguments of the command.
      */
-    protected final List<Argument> getOptinalArgs() {
+    public final List<Argument> getOptinalArgs() {
         return optionalArgs;
     }
 
@@ -208,7 +208,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to check if the command is only to use in game.
      * @return If the command is only to use in game.
      */
-    protected final boolean inGameOnly() {
+    public final boolean inGameOnly() {
         return gameOnly;
     }
 
@@ -216,7 +216,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the requirements of the command.
      * @return The requirements of the command.
      */
-    protected final List<Requirement> getRequirements() {
+    public final List<Requirement> getRequirements() {
         return requirements;
     }
 
@@ -224,7 +224,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to check if the command has infinite arguments.
      * @return If the command has infinite arguments.
      */
-    protected final boolean isInfiniteArgs() {
+    public final boolean isInfiniteArgs() {
         return infiniteArgs;
     }
 
@@ -290,8 +290,29 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to add arguments to the command.
      * @param args The arguments to add.
      */
-    public final void addArgs(String... args) {
-        Arrays.asList(args).forEach(arg -> this.addArgs(arg, null));
+    public final void addArgs(Object... args) {
+        if (args.length % 2 != 0 && !(args[1] instanceof String)) {
+            throw new IllegalArgumentException("You must provide a type for the argument.");
+        }
+
+        for (int i = 0; i < args.length; i += 2) {
+            if(!(args[i] instanceof String && args[i + 1] instanceof Class<?>)) {
+                throw new IllegalArgumentException("You must provide a type for the argument.");
+            }
+            this.addArgs((String) args[i], (Class<?>) args[i + 1]);
+        }
+    }
+
+    public final void addArgs(String arg) {
+        this.addArgs(arg, null, null);
+    }
+
+    public final void addArgs(String arg, Class<?> type) {
+        this.addArgs(arg, type,null);
+    }
+
+    public final void addArgs(String arg, TabConverter converter) {
+        this.addArgs(arg, null, converter);
     }
 
     /**
@@ -299,7 +320,67 @@ public abstract class Command<T extends JavaPlugin> {
      * @param arg The argument to add.
      * @param converter The converter of the argument.
      */
-    public final void addArgs(String arg, TabConverter converter) {
+    public final void addArgs(String arg, Class<?> type, TabConverter converter) {
+        if (arg.contains(CommandManager.TYPE_PARSER) && type != null) {
+            throw new IllegalArgumentException("You can't use the type parser in the command arguments.");
+        }
+        if(type == null && !arg.contains(CommandManager.TYPE_PARSER)) {
+            throw new IllegalArgumentException("You must provide a type for the argument.");
+        }
+
+        if(type != null) {
+            arg = arg + CommandManager.TYPE_PARSER + type.getSimpleName().toLowerCase();
+        }
+
+        this.add(arg, converter, false);
+    }
+
+    /**
+     * This method is called to add arguments to the command.
+     * @param args The arguments to add.
+     */
+    public final void addOptionalArgs(Object... args) {
+        if (args.length % 2 != 0 && !(args[1] instanceof String)) {
+            throw new IllegalArgumentException("You must provide a type for the argument.");
+        }
+
+        for (int i = 0; i < args.length; i += 2) {
+            if(!(args[i] instanceof String && args[i + 1] instanceof Class<?>)) {
+                throw new IllegalArgumentException("You must provide a type for the argument.");
+            }
+            this.addOptionalArgs((String) args[i], (Class<?>) args[i + 1]);
+        }
+    }
+
+    public final void addOptionalArgs(String arg) {
+        this.addOptionalArgs(arg, null, null);
+    }
+
+    public final void addOptionalArgs(String arg, Class<?> type) {
+        this.addOptionalArgs(arg, type,null);
+    }
+
+    public final void addOptionalArgs(String arg, TabConverter converter) {
+        this.addOptionalArgs(arg, null, converter);
+    }
+
+    /**
+     * This method is called to add arguments to the command.
+     * @param arg The argument to add.
+     * @param converter The converter of the argument.
+     */
+    public final void addOptionalArgs(String arg, Class<?> type, TabConverter converter) {
+        if (arg.contains(CommandManager.TYPE_PARSER) && type != null) {
+            throw new IllegalArgumentException("You can't use the type parser in the command arguments.");
+        }
+        if(type != null) {
+            arg = arg + CommandManager.TYPE_PARSER + type.getSimpleName().toLowerCase();
+        }
+
+        this.add(arg, converter, true);
+    }
+
+    private void add(String arg, TabConverter converter, boolean opt) {
         try {
             if (this.infiniteArgs) {
                 throw new ArgsWithInfiniteArgumentException(false);
@@ -308,31 +389,11 @@ public abstract class Command<T extends JavaPlugin> {
             if (arg.contains(":infinite")) {
                 this.infiniteArgs = true;
             }
-            this.args.add(new Argument(arg, converter));
-        } catch (ArgsWithInfiniteArgumentException e) {
-            this.plugin.getLogger().severe(e.getMessage());
-        }
-    }
-
-    /**
-     * This method is called to add optional arguments to the command.
-     * @param args The optional arguments to add.
-     */
-    public final void addOptinalArgs(String... args) {
-        Arrays.asList(args).forEach(arg -> this.addOptinalArgs(arg, null));
-    }
-
-    /**
-     * This method is called to add optional arguments to the command.
-     * @param arg The optional argument to add.
-     * @param converter The converter of the argument.
-     */
-    public final void addOptinalArgs(String arg, TabConverter converter) {
-        try {
-            if (this.infiniteArgs) {
-                throw new ArgsWithInfiniteArgumentException(true);
+            if(opt) {
+                this.optionalArgs.add(new Argument(arg, converter));
+            } else {
+                this.args.add(new Argument(arg, converter));
             }
-            this.optionalArgs.add(new Argument(arg, converter));
         } catch (ArgsWithInfiniteArgumentException e) {
             this.plugin.getLogger().severe(e.getMessage());
         }

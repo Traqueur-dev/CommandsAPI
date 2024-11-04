@@ -25,6 +25,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class is the command manager.
@@ -33,7 +34,7 @@ import java.util.*;
  */
 public class CommandManager {
 
-    private static final String TYPE_PARSER = ":";
+    public static final String TYPE_PARSER = ":";
     private static final String INFINITE = "infinite";
 
     /**
@@ -114,13 +115,14 @@ public class CommandManager {
      * Register the internal converters of the command manager.
      */
     private void registerInternalConverters() {
-        this.registerConverter(String.class, "string", (s) -> s);
-        this.registerConverter(Boolean.class, "boolean", new BooleanArgument());
-        this.registerConverter(Integer.class, "int",new IntegerArgument());
-        this.registerConverter(Double.class, "double",new DoubleArgument());
-        this.registerConverter(Long.class, "long", new LongArgument());
-        this.registerConverter(Player.class, "player", new PlayerArgument());
-        this.registerConverter(OfflinePlayer.class, "offlineplayer", new OfflinePlayerArgument());
+        this.registerConverter(String.class,  (s) -> s);
+        this.registerConverter(Boolean.class, new BooleanArgument());
+        this.registerConverter(Integer.class, "int", new IntegerArgument());
+        this.registerConverter(Integer.class, new IntegerArgument());
+        this.registerConverter(Double.class, new DoubleArgument());
+        this.registerConverter(Long.class,  new LongArgument());
+        this.registerConverter(Player.class,  new PlayerArgument());
+        this.registerConverter(OfflinePlayer.class,  new OfflinePlayerArgument());
         this.registerConverter(String.class, INFINITE, s -> s);
     }
 
@@ -221,11 +223,21 @@ public class CommandManager {
     /**
      * Register an argument converter in the command manager.
      * @param typeClass The class of the type.
-     * @param type The type of the argument.
      * @param converter The converter of the argument.
      * @param <T> The type of the argument.
      */
-    public <T> void registerConverter(Class<T> typeClass, String type, ArgumentConverter<T> converter) {
+    public <T> void registerConverter(Class<T> typeClass, ArgumentConverter<T> converter) {
+        this.typeConverters.put(typeClass.getSimpleName().toLowerCase(), new AbstractMap.SimpleEntry<>(typeClass, converter));
+    }
+
+    /**
+     * Register an argument converter in the command manager.
+     * @param typeClass The class of the type.
+     * @param converter The converter of the argument.
+     * @param <T> The type of the argument.
+     */
+    @Deprecated
+    public <T> void registerConverter(Class<T> typeClass, String type,  ArgumentConverter<T> converter) {
         this.typeConverters.put(type, new AbstractMap.SimpleEntry<>(typeClass, converter));
     }
 
@@ -307,7 +319,7 @@ public class CommandManager {
             commands.put(label.toLowerCase(), command);
 
             String originCmdLabel = cmdLabel;
-            for (Command<?> value : commands.values().stream().filter(commandInner -> !commandInner.isSubCommand()).toList()) {
+            for (Command<?> value : commands.values().stream().filter(commandInner -> !commandInner.isSubCommand()).collect(Collectors.toList())) {
                 if(value.getAliases().contains(cmdLabel)) {
                     originCmdLabel = value.getName();
                 }
@@ -353,7 +365,7 @@ public class CommandManager {
             }
             currentLabel.append(labelParts[i]);
             String completionPart = labelParts[i + 1];
-            this.addCompletion(currentLabel.toString(), i + 1, (sender) -> Lists.newArrayList(completionPart));
+            this.addCompletion(currentLabel.toString(), i + 1, (sender, args) -> Lists.newArrayList(completionPart));
         }
     }
 
@@ -372,10 +384,11 @@ public class CommandManager {
             TabConverter argConverter = arg.tabConverter();
             if (argConverter != null) {
                 this.addCompletion(label,commandSize + i, argConverter);
-            } else if (converter instanceof TabConverter tabConverter) {
+            } else if (converter instanceof TabConverter) {
+                TabConverter tabConverter = (TabConverter) converter;
                 this.addCompletion(label,commandSize + i, tabConverter);
             } else {
-                this.addCompletion(label, commandSize + i, (sender) -> new ArrayList<>());
+                this.addCompletion(label, commandSize + i, (sender, argsInner) -> new ArrayList<>());
             }
         }
     }
@@ -391,9 +404,9 @@ public class CommandManager {
         TabConverter newConverter;
         TabConverter converterInner = mapInner.getOrDefault(commandSize, null);
         if(converterInner != null) {
-            newConverter = (sender) -> {
-                List<String> completions = new ArrayList<>(converterInner.onCompletion(sender));
-                completions.addAll(converter.onCompletion(sender));
+            newConverter = (sender, args) -> {
+                List<String> completions = new ArrayList<>(converterInner.onCompletion(sender, args));
+                completions.addAll(converter.onCompletion(sender, args));
                 return completions;
             };
         } else {
@@ -408,7 +421,7 @@ public class CommandManager {
      * @param args The arguments to check.
      */
     private boolean checkTypeForArgs(List<Argument> args) throws TypeArgumentNotExistException {
-        for(String arg: args.stream().map(Argument::arg).toList()) {
+        for(String arg: args.stream().map(Argument::arg).collect(Collectors.toList())) {
             String[] parts = arg.split(TYPE_PARSER);
 
             if (parts.length != 2) {
