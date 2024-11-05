@@ -291,6 +291,14 @@ public abstract class Command<T extends JavaPlugin> {
      * @param args The arguments to add.
      */
     public final void addArgs(Object... args) {
+        if (Arrays.stream(args).allMatch(arg -> arg instanceof String)) {
+            for (Object arg : args) {
+                String argStr = (String) arg;
+                this.addArgs(argStr);
+            }
+            return;
+        }
+
         if (args.length % 2 != 0 && !(args[1] instanceof String)) {
             throw new IllegalArgumentException("You must provide a type for the argument.");
         }
@@ -304,7 +312,11 @@ public abstract class Command<T extends JavaPlugin> {
     }
 
     public final void addArgs(String arg) {
-        this.addArgs(arg, null, null);
+        if(!arg.contains(CommandManager.TYPE_PARSER)) {
+            this.addArgs(arg, String.class, null);
+        } else {
+            this.addArgs(arg, null, null);
+        }
     }
 
     public final void addArgs(String arg, Class<?> type) {
@@ -312,7 +324,11 @@ public abstract class Command<T extends JavaPlugin> {
     }
 
     public final void addArgs(String arg, TabConverter converter) {
-        this.addArgs(arg, null, converter);
+        if(!arg.contains(CommandManager.TYPE_PARSER)) {
+            this.addArgs(arg, String.class, converter);
+        } else {
+            this.addArgs(arg, null, converter);
+        }
     }
 
     /**
@@ -340,6 +356,14 @@ public abstract class Command<T extends JavaPlugin> {
      * @param args The arguments to add.
      */
     public final void addOptionalArgs(Object... args) {
+        if (Arrays.stream(args).allMatch(arg -> arg instanceof String)) {
+            for (Object arg : args) {
+                String argStr = (String) arg;
+                this.addOptionalArgs(argStr);
+            }
+            return;
+        }
+
         if (args.length % 2 != 0 && !(args[1] instanceof String)) {
             throw new IllegalArgumentException("You must provide a type for the argument.");
         }
@@ -353,6 +377,10 @@ public abstract class Command<T extends JavaPlugin> {
     }
 
     public final void addOptionalArgs(String arg) {
+        if (!arg.contains(CommandManager.TYPE_PARSER)) {
+            this.addOptionalArgs(arg, String.class, null);
+            return;
+        }
         this.addOptionalArgs(arg, null, null);
     }
 
@@ -361,6 +389,10 @@ public abstract class Command<T extends JavaPlugin> {
     }
 
     public final void addOptionalArgs(String arg, TabConverter converter) {
+        if (!arg.contains(CommandManager.TYPE_PARSER)) {
+            this.addOptionalArgs(arg, String.class, converter);
+            return;
+        }
         this.addOptionalArgs(arg, null, converter);
     }
 

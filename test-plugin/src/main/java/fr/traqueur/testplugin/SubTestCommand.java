@@ -10,7 +10,7 @@ public class SubTestCommand extends Command<TestPlugin> {
 
     public SubTestCommand(TestPlugin plugin) {
         super(plugin, "sub");
-        this.addArgs("test", Integer.class);
+        this.addArgs("test");
         this.addArgs("testStr", String.class, (sender, args) -> {
            args.forEach(arg -> {
                sender.sendMessage("Arg: " + arg);
@@ -21,7 +21,7 @@ public class SubTestCommand extends Command<TestPlugin> {
 
     @Override
     public void execute(CommandSender sender, Arguments args) {
-        int test = args.get("test");
+        int test = args.getAsInt("test");
         String testStr = args.get("testStr");
         sender.sendMessage("Test: " + test + " TestStr: " + testStr);
     }
