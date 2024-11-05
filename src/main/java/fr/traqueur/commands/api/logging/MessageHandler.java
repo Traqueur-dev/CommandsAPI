@@ -39,6 +39,15 @@ public interface MessageHandler {
     String getRequirementMessage();
 
     /**
+     * This method is used to get the to many args message.
+     * For backward compatibility with older versions of the API. The default implementation is the same as getArgNotRecognized.
+     * @return The to many args message.
+     */
+    default String getToManyArgsMessage() {
+        return getArgNotRecognized();
+    }
+
+    /**
      * This method is used to get a message by a type.
      * @param type The type of the message.
      * @return The message.
@@ -55,6 +64,8 @@ public interface MessageHandler {
                 return getArgNotRecognized();
             case REQUIREMENT_ERROR:
                 return getRequirementMessage();
+            case TO_MANY_ARGS:
+                return getToManyArgsMessage();
         }
         throw new IllegalArgumentException("The message type " + type + " is not supported.");
     }

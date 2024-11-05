@@ -33,7 +33,7 @@ public class Executor implements CommandExecutor, TabCompleter {
     /**
      * The commands registered.
      */
-    private final Map<String, fr.traqueur.commands.api.Command<?>> commands;
+    private final Map<String, Command<?>> commands;
 
     /**
      * The completers registered.
@@ -53,6 +53,28 @@ public class Executor implements CommandExecutor, TabCompleter {
     }
 
 
+    private String getCommandLabel(String label, String[] args, int commandLabelSize) {
+        StringBuilder buffer = new StringBuilder();
+        String labelLower = label.toLowerCase();
+        buffer.append(labelLower);
+        for (int x = 0; x <  commandLabelSize; x++) {
+            buffer.append(".").append(args[x].toLowerCase());
+        }
+        return buffer.toString();
+    }
+
+    private String parseLabel(String label) {
+        String labelLower = label.toLowerCase();
+        if(labelLower.contains(":")) {
+            String[] split = labelLower.split(":");
+            labelLower = split[1];
+            if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
+                return null;
+            }
+        }
+        return labelLower;
+    }
+
     /**
      * This method is called when a command is executed.
      * @param sender The sender of the command.
@@ -71,81 +93,75 @@ public class Executor implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        String labelLower = this.parseLabel(label);
+
+        if(labelLower == null) {
+            return false;
+        }
+
+        String cmdLabel = "";
+        Command<?> commandFramework = null;
         for (int i = args.length; i >= 0; i--) {
-            StringBuilder buffer = new StringBuilder();
-            String labelLower = label.toLowerCase();
-            if(labelLower.contains(":")) {
-                String[] split = labelLower.split(":");
-                labelLower = split[1];
-                if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
-                    return false;
-                }
+            cmdLabel = getCommandLabel(labelLower, args, i);
+            commandFramework = commands.getOrDefault(cmdLabel, null);
+            if(commandFramework != null) {
+                break;
             }
-            buffer.append(labelLower);
-            for (int x = 0; x < i; x++) {
-                buffer.append(".").append(args[x].toLowerCase());
-            }
-            String cmdLabel = buffer.toString();
-            if (commands.containsKey(cmdLabel)) {
-                fr.traqueur.commands.api.Command<?> commandFramework = commands.get(cmdLabel);
-                if (!commandFramework.getPermission().isEmpty() && !sender.hasPermission(commandFramework.getPermission())) {
-                    sender.sendMessage(Messages.NO_PERMISSION.message());
-                    return true;
-                }
-                if (commandFramework.inGameOnly() && !(sender instanceof Player)) {
-                    sender.sendMessage(Messages.ONLY_IN_GAME.message());
-                    return true;
-                }
-                int subCommand = cmdLabel.split("\\.").length - 1;
-                String[] modArgs = new String[args.length - subCommand];
-                if (args.length - subCommand >= 0)
-                    System.arraycopy(args, subCommand, modArgs, 0, args.length - subCommand);
+        }
 
-                if (modArgs.length < commandFramework.getArgs().size()) {
-                    String usage = command.getUsage();
-                    if (usage.isEmpty()) {
-                        usage = Messages.MISSING_ARGS.message();
-                    }
-                    sender.sendMessage(usage);
-                    return true;
-                }
+        if (commandFramework == null) {
+            return false;
+        }
 
-                if (!commandFramework.isInfiniteArgs() && (modArgs.length > commandFramework.getArgs().size() + commandFramework.getOptinalArgs().size())) {
-                    String usage = command.getUsage();
-                    if (usage.isEmpty()) {
-                        usage = Messages.MISSING_ARGS.message();
-                    }
-                    sender.sendMessage(usage);
-                    return true;
-                }
+        if (!commandFramework.getPermission().isEmpty() && !sender.hasPermission(commandFramework.getPermission())) {
+            sender.sendMessage(Messages.NO_PERMISSION.message());
+            return true;
+        }
 
-                Arguments arguments;
-                try {
-                    arguments = this.commandManager.parse(commandFramework, modArgs);
-                } catch (TypeArgumentNotExistException e) {
-                    throw new RuntimeException(e);
-                } catch (ArgumentIncorrectException e) {
-                    String message = Messages.ARG_NOT_RECOGNIZED.message();
-                    message = message.replace("%arg%", e.getInput());
-                    sender.sendMessage( message);
-                    return true;
-                }
-
-                List<Requirement> requirements = commandFramework.getRequirements();
-                for (Requirement requirement : requirements) {
-                    if (!requirement.check(sender)) {
-                        String error = requirement.errorMessage().isEmpty()
-                                ? Messages.REQUIREMENT_ERROR.message()
-                                : ChatColor.translateAlternateColorCodes('&', requirement.errorMessage());
-                        error = error.replace("%requirement%", requirement.getClass().getSimpleName());
-                        sender.sendMessage(error);
-                        return true;
-                    }
-                }
-
-                commandFramework.execute(sender, arguments);
+        List<Requirement> requirements = commandFramework.getRequirements();
+        for (Requirement requirement : requirements) {
+            if (!requirement.check(sender)) {
+                String error = requirement.errorMessage().isEmpty()
+                        ? Messages.REQUIREMENT_ERROR.message()
+                        : ChatColor.translateAlternateColorCodes('&', requirement.errorMessage());
+                error = error.replace("%requirement%", requirement.getClass().getSimpleName());
+                sender.sendMessage(error);
                 return true;
             }
+        }
+
+
+        int subCommand = cmdLabel.split("\\.").length - 1;
+        String[] modArgs = Arrays.copyOfRange(args, subCommand, args.length);
+
+
+        if (modArgs.length < commandFramework.getArgs().size()) {
+            String usage = command.getUsage();
+            if (usage.isEmpty()) {
+                usage = Messages.MISSING_ARGS.message();
+            }
+            sender.sendMessage(usage);
+            return true;
+        }
+
+        if (!commandFramework.isInfiniteArgs() && (modArgs.length > commandFramework.getArgs().size() + commandFramework.getOptinalArgs().size())) {
+            String usage = command.getUsage();
+            if (usage.isEmpty()) {
+                usage = Messages.TO_MANY_ARGS.message();
+            }
+            sender.sendMessage(usage);
+            return true;
+        }
+
+        try {
+            Arguments arguments = this.commandManager.parse(commandFramework, modArgs);
+            commandFramework.execute(sender, arguments);
+        } catch (TypeArgumentNotExistException e) {
+            throw new RuntimeException(e);
+        } catch (ArgumentIncorrectException e) {
+            String message = Messages.ARG_NOT_RECOGNIZED.message();
+            message = message.replace("%arg%", e.getInput());
+            sender.sendMessage(message);
         }
 
         return true;
@@ -162,50 +178,52 @@ public class Executor implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender commandSender, org.bukkit.command.Command command, String label, String[] args) {
         String arg = args[args.length-1];
+
+        String labelLower = this.parseLabel(label);
+        if(labelLower == null) {
+            return Collections.emptyList();
+        }
+
+        String cmdLabel = "";
+        Map<Integer, TabConverter> map = null;
         for (int i = args.length; i >= 0; i--) {
-            StringBuilder buffer = new StringBuilder();
-
-            String labelLower = label.toLowerCase();
-            if(labelLower.contains(":")) {
-                String[] split = labelLower.split(":");
-                labelLower = split[1];
-                if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
-                    return Collections.emptyList();
-                }
-            }
-            buffer.append(labelLower);
-
-            for (int x = 0; x < i; x++) {
-                buffer.append(".").append(args[x].toLowerCase());
-            }
-            String cmdLabel = buffer.toString();
-            if (this.completers.containsKey(cmdLabel)) {
-                Map<Integer, TabConverter> map = this.completers.get(cmdLabel);
-                if(map.containsKey(args.length)) {
-                    TabConverter converter = map.get(args.length);
-                    String[] argsBefore = Arrays.copyOf(args, args.length - 1);
-                    String argsBeforeString = label + "." + String.join(".", argsBefore);
-                    argsBeforeString = argsBeforeString.replace(cmdLabel+".", "");
-                    List<String> completer = converter.onCompletion(commandSender, Arrays.asList(argsBeforeString.split("\\."))).stream().filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg)).collect(Collectors.toList());
-                    return completer.stream().filter(str -> {
-                        String cmdLabelInner = cmdLabel + "." + str.toLowerCase();
-                        if(this.commands.containsKey(cmdLabelInner)) {
-                            fr.traqueur.commands.api.Command<?> frameworkCommand = this.commands.get(cmdLabelInner);
-                            List<Requirement> requirements = frameworkCommand.getRequirements();
-                            for (Requirement requirement : requirements) {
-                                if (!requirement.check(commandSender)) {
-                                    return false;
-                                }
-                            }
-                            return frameworkCommand.getPermission().isEmpty() || commandSender.hasPermission(frameworkCommand.getPermission());
-                        }
-                        return true;
-                    }).collect(Collectors.toList());
-                }
+            cmdLabel = getCommandLabel(labelLower, args, i);
+            map = this.completers.getOrDefault(cmdLabel, null);
+            if(map != null) {
+                break;
             }
         }
 
-        return Collections.emptyList();
+        if (map == null || !map.containsKey(args.length)) {
+            return Collections.emptyList();
+        }
+
+        TabConverter converter = map.get(args.length);
+        String argsBeforeString = (label +
+                "." +
+                String.join(".", Arrays.copyOf(args, args.length - 1)))
+                .replaceFirst("^" + cmdLabel + "\\.", "");
+
+        List<String> completer = converter.onCompletion(commandSender, Arrays.asList(argsBeforeString.split("\\."))).stream()
+                .filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg))
+                .collect(Collectors.toList());
+
+        String finalCmdLabel = cmdLabel;
+        return completer.stream().filter(str -> {
+            String cmdLabelInner = finalCmdLabel + "." + str.toLowerCase();
+            if(this.commands.containsKey(cmdLabelInner)) {
+                Command<?> frameworkCommand = this.commands.get(cmdLabelInner);
+                List<Requirement> requirements = frameworkCommand.getRequirements();
+                for (Requirement requirement : requirements) {
+                    if (!requirement.check(commandSender)) {
+                        return false;
+                    }
+                }
+                return frameworkCommand.getPermission().isEmpty() || commandSender.hasPermission(frameworkCommand.getPermission());
+            }
+            return true;
+        }).collect(Collectors.toList());
+
     }
 
 }

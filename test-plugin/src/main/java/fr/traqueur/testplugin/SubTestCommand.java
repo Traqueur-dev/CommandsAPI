@@ -21,7 +21,7 @@ public class SubTestCommand extends Command<TestPlugin> {
 
     @Override
     public void execute(CommandSender sender, Arguments args) {
-        int test = args.getAsInt("test");
+        int test = args.getAsInt("test", -1);
         String testStr = args.get("testStr");
         sender.sendMessage("Test: " + test + " TestStr: " + testStr);
     }

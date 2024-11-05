@@ -34,7 +34,7 @@ public enum Messages {
      * The message when a requirement is not met.
      */
     REQUIREMENT_ERROR,
-    ;
+    TO_MANY_ARGS;
 
     /**
      * The message handler

@@ -54,216 +54,117 @@ public class Arguments {
         return null;
     }
 
-    public int getAsInt(String argument) {
-        Optional<Integer> value = this.getOptionalAsInt(argument);
-        try {
-            if (!value.isPresent()) {
-                throw new ArgumentNotExistException();
-            }
-        } catch (ArgumentNotExistException e) {
-            logger.error("The argument " + argument + " does not exist.");
-            logger.error(e.getMessage());
-            return -1;
-        }
-        return value.get();
+    public int getAsInt(String argument, int defaultValue) {
+        Optional<Integer> value = this.getAsInt(argument);
+        return value.orElse(defaultValue);
     }
 
-    public double getAsDouble(String argument) {
-        Optional<Double> value = this.getOptionalAsDouble(argument);
-        try {
-            if (!value.isPresent()) {
-                throw new ArgumentNotExistException();
-            }
-        } catch (ArgumentNotExistException e) {
-            logger.error("The argument " + argument + " does not exist.");
-            logger.error(e.getMessage());
-            return -1;
-        }
-        return value.get();
+    public double getAsDouble(String argument, double defaultValue) {
+        Optional<Double> value = this.getAsDouble(argument);
+        return value.orElse(defaultValue);
     }
 
-    public boolean getAsBoolean(String argument) {
-        Optional<Boolean> value = this.getOptionalAsBoolean(argument);
-        try {
-            if (!value.isPresent()) {
-                throw new ArgumentNotExistException();
-            }
-        } catch (ArgumentNotExistException e) {
-            logger.error("The argument " + argument + " does not exist.");
-            logger.error(e.getMessage());
-            return false;
-        }
-        return value.get();
+    public boolean getAsBoolean(String argument, boolean defaultValue) {
+        Optional<Boolean> value = this.getAsBoolean(argument);
+        return value.orElse(defaultValue);
     }
 
-    public String getAsString(String argument) {
-        Optional<String> value = this.getOptionalAsString(argument);
-        try {
-            if (!value.isPresent()) {
-                throw new ArgumentNotExistException();
-            }
-        } catch (ArgumentNotExistException e) {
-            logger.error("The argument " + argument + " does not exist.");
-            logger.error(e.getMessage());
-            return null;
-        }
-        return value.get();
+    public String getAsString(String argument, String defaultValue) {
+        Optional<String> value = this.getAsString(argument);
+        return value.orElse(defaultValue);
     }
 
-    public long getAsLong(String argument) {
-        Optional<Long> value = this.getOptionalAsLong(argument);
-        try {
-            if (!value.isPresent()) {
-                throw new ArgumentNotExistException();
-            }
-        } catch (ArgumentNotExistException e) {
-            logger.error("The argument " + argument + " does not exist.");
-            logger.error(e.getMessage());
-            return -1;
-        }
-        return value.get();
+    public long getAsLong(String argument, long defaultValue) {
+        Optional<Long> value = this.getAsLong(argument);
+        return value.orElse(defaultValue);
     }
 
-    public float getAsFloat(String argument) {
-        Optional<Float> value = this.getOptionalAsFloat(argument);
-        try {
-            if (!value.isPresent()) {
-                throw new ArgumentNotExistException();
-            }
-        } catch (ArgumentNotExistException e) {
-            logger.error("The argument " + argument + " does not exist.");
-            logger.error(e.getMessage());
-            return -1;
-        }
-        return value.get();
+    public float getAsFloat(String argument, float defaultValue) {
+        Optional<Float> value = this.getAsFloat(argument);
+        return value.orElse(defaultValue);
     }
 
-    public short getAsShort(String argument) {
-        Optional<Short> value = this.getOptionalAsShort(argument);
-        try {
-            if (!value.isPresent()) {
-                throw new ArgumentNotExistException();
-            }
-        } catch (ArgumentNotExistException e) {
-            logger.error("The argument " + argument + " does not exist.");
-            logger.error(e.getMessage());
-            return -1;
-        }
-        return value.get();
+    public short getAsShort(String argument, short defaultValue) {
+        Optional<Short> value = this.getAsShort(argument);
+        return value.orElse(defaultValue);
     }
 
-    public byte getAsByte(String argument) {
-        Optional<Byte> value = this.getOptionalAsByte(argument);
-        try {
-            if (!value.isPresent()) {
-                throw new ArgumentNotExistException();
-            }
-        } catch (ArgumentNotExistException e) {
-            logger.error("The argument " + argument + " does not exist.");
-            logger.error(e.getMessage());
-            return -1;
-        }
-        return value.get();
+    public byte getAsByte(String argument, byte defaultValue) {
+        Optional<Byte> value = this.getAsByte(argument);
+        return value.orElse(defaultValue);
     }
 
-    public char getAsChar(String argument) {
-        Optional<Character> value = this.getOptionalAsChar(argument);
-        try {
-            if (!value.isPresent()) {
-                throw new ArgumentNotExistException();
-            }
-        } catch (ArgumentNotExistException e) {
-            logger.error("The argument " + argument + " does not exist.");
-            logger.error(e.getMessage());
-            return ' ';
-        }
-        return value.get();
+    public char getAsChar(String argument, char defaultValue) {
+        Optional<Character> value = this.getAsChar(argument);
+        return value.orElse(defaultValue);
     }
 
+    public Optional<Integer> getAsInt(String argument) {
+       try {
+           return this.getAs(argument, String.class).map(Integer::parseInt);
+       } catch (NumberFormatException e) {
+           return Optional.empty();
+       }
+    }
 
-    public Optional<Integer> getOptionalAsInt(String argument) {
-        String value = this.getAs(argument, String.class);
+    public Optional<Double> getAsDouble(String argument) {
         try {
-            return Optional.of(Integer.parseInt(value));
+            return this.getAs(argument, String.class).map(Double::parseDouble);
         } catch (NumberFormatException e) {
             return Optional.empty();
         }
     }
 
-    public Optional<Double> getOptionalAsDouble(String argument) {
-        String value = this.getAs(argument, String.class);
+    public Optional<Boolean> getAsBoolean(String argument) {
+        return this.getAs(argument, String.class).map(Boolean::parseBoolean);
+    }
+
+    public Optional<String> getAsString(String argument) {
+        return this.getAs(argument, String.class);
+    }
+
+    public Optional<Long> getAsLong(String argument) {
+       try {
+           return this.getAs(argument, String.class).map(Long::parseLong);
+       } catch (NumberFormatException e) {
+           return Optional.empty();
+       }
+    }
+
+    public Optional<Float> getAsFloat(String argument) {
         try {
-            return Optional.of(Double.parseDouble(value));
+            return this.getAs(argument, String.class).map(Float::parseFloat);
         } catch (NumberFormatException e) {
             return Optional.empty();
         }
     }
 
-    public Optional<Boolean> getOptionalAsBoolean(String argument) {
-        String value = this.getAs(argument, String.class);
-        return Optional.of(Boolean.parseBoolean(value));
-    }
-
-    public Optional<String> getOptionalAsString(String argument) {
-        return Optional.of(this.getAs(argument, String.class));
-    }
-
-    public Optional<Long> getOptionalAsLong(String argument) {
-        String value = this.getAs(argument, String.class);
+    public Optional<Short> getAsShort(String argument) {
         try {
-            return Optional.of(Long.parseLong(value));
+            return this.getAs(argument, String.class).map(Short::parseShort);
         } catch (NumberFormatException e) {
             return Optional.empty();
         }
     }
 
-    public Optional<Float> getOptionalAsFloat(String argument) {
-        String value = this.getAs(argument, String.class);
+    public Optional<Byte> getAsByte(String argument) {
         try {
-            return Optional.of(Float.parseFloat(value));
+            return this.getAs(argument, String.class).map(Byte::parseByte);
         } catch (NumberFormatException e) {
             return Optional.empty();
         }
     }
 
-    public Optional<Short> getOptionalAsShort(String argument) {
-        String value = this.getAs(argument, String.class);
-        try {
-            return Optional.of(Short.parseShort(value));
-        } catch (NumberFormatException e) {
-            return Optional.empty();
-        }
+    public Optional<Character> getAsChar(String argument) {
+        return this.getAs(argument, String.class).map(s -> s.charAt(0));
     }
 
-    public Optional<Byte> getOptionalAsByte(String argument) {
-        String value = this.getAs(argument, String.class);
-        try {
-            return Optional.of(Byte.parseByte(value));
-        } catch (NumberFormatException e) {
-            return Optional.empty();
-        }
+    public <T> T getAs(String argument, Class<T> typeRef, T defaultValue) {
+        Optional<T> value = this.getAs(argument, typeRef);
+        return value.orElse(defaultValue);
     }
 
-    public Optional<Character> getOptionalAsChar(String argument) {
-        String value = this.getAs(argument, String.class);
-        return Optional.of(value.charAt(0));
-    }
-
-    public <T> T getAs(String argument, Class<T> typeRef) {
-        try {
-            Optional<T> value = this.getOptionalAs(argument, typeRef);
-            if (!value.isPresent()) {
-                throw new ArgumentNotExistException();
-            }
-            return value.get();
-        } catch (ArgumentNotExistException e) {
-            logger.error("The argument " + argument + " does not exist.");
-            logger.error(e.getMessage());
-        }
-        return null;
-    }
-
-    public <T> Optional<T> getOptionalAs(String argument, Class<T> typeRef) {
+    public <T> Optional<T> getAs(String argument, Class<T> typeRef) {
         if(typeRef.isPrimitive()) {
             throw new IllegalArgumentException("The type " + typeRef.getName() + " is a primitive type. You must use the primitive methode");
         }
@@ -288,11 +189,10 @@ public class Arguments {
                 throw new NoGoodTypeArgumentException();
             }
         } catch (NoGoodTypeArgumentException e) {
-            logger.error("The argument " + argument + " is not the good type.");
-            logger.error(e.getMessage());
+            return Optional.empty();
         }
 
-        return Optional.ofNullable(typeRef.cast(value));
+        return Optional.of(typeRef.cast(value));
     }
 
     /**
