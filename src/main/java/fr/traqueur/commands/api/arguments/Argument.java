@@ -7,19 +7,19 @@ package fr.traqueur.commands.api.arguments;
 public class Argument {
 
     private final String arg;
-    private final TabConverter tabConverter;
+    private final TabCompleter tabCompleter;
 
-    public Argument(String arg, TabConverter tabConverter) {
+    public Argument(String arg, TabCompleter tabCompleter) {
         this.arg = arg;
-        this.tabConverter = tabConverter;
+        this.tabCompleter = tabCompleter;
     }
 
     public String arg() {
         return this.arg;
     }
 
-    public TabConverter tabConverter() {
-        return this.tabConverter;
+    public TabCompleter tabConverter() {
+        return this.tabCompleter;
     }
 
 }

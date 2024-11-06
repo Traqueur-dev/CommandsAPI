@@ -1,7 +1,7 @@
 package fr.traqueur.commands.impl.arguments;
 
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
-import fr.traqueur.commands.api.arguments.TabConverter;
+import fr.traqueur.commands.api.arguments.TabCompleter;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  * Argument converter for {@link Player}.
  */
-public class PlayerArgument implements ArgumentConverter<Player>, TabConverter {
+public class PlayerArgument implements ArgumentConverter<Player>, TabCompleter {
 
     /**
      * {@inheritDoc}

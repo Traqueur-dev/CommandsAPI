@@ -1,7 +1,7 @@
 package fr.traqueur.commands.api;
 
 import fr.traqueur.commands.api.arguments.Argument;
-import fr.traqueur.commands.api.arguments.TabConverter;
+import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgsWithInfiniteArgumentException;
 import fr.traqueur.commands.api.requirements.Requirement;
 import org.bukkit.command.CommandSender;
@@ -323,7 +323,7 @@ public abstract class Command<T extends JavaPlugin> {
         this.addArgs(arg, type,null);
     }
 
-    public final void addArgs(String arg, TabConverter converter) {
+    public final void addArgs(String arg, TabCompleter converter) {
         if(!arg.contains(CommandManager.TYPE_PARSER)) {
             this.addArgs(arg, String.class, converter);
         } else {
@@ -336,7 +336,7 @@ public abstract class Command<T extends JavaPlugin> {
      * @param arg The argument to add.
      * @param converter The converter of the argument.
      */
-    public final void addArgs(String arg, Class<?> type, TabConverter converter) {
+    public final void addArgs(String arg, Class<?> type, TabCompleter converter) {
         if (arg.contains(CommandManager.TYPE_PARSER) && type != null) {
             throw new IllegalArgumentException("You can't use the type parser in the command arguments.");
         }
@@ -388,7 +388,7 @@ public abstract class Command<T extends JavaPlugin> {
         this.addOptionalArgs(arg, type,null);
     }
 
-    public final void addOptionalArgs(String arg, TabConverter converter) {
+    public final void addOptionalArgs(String arg, TabCompleter converter) {
         if (!arg.contains(CommandManager.TYPE_PARSER)) {
             this.addOptionalArgs(arg, String.class, converter);
             return;
@@ -401,7 +401,7 @@ public abstract class Command<T extends JavaPlugin> {
      * @param arg The argument to add.
      * @param converter The converter of the argument.
      */
-    public final void addOptionalArgs(String arg, Class<?> type, TabConverter converter) {
+    public final void addOptionalArgs(String arg, Class<?> type, TabCompleter converter) {
         if (arg.contains(CommandManager.TYPE_PARSER) && type != null) {
             throw new IllegalArgumentException("You can't use the type parser in the command arguments.");
         }
@@ -412,7 +412,7 @@ public abstract class Command<T extends JavaPlugin> {
         this.add(arg, converter, true);
     }
 
-    private void add(String arg, TabConverter converter, boolean opt) {
+    private void add(String arg, TabCompleter converter, boolean opt) {
         try {
             if (this.infiniteArgs) {
                 throw new ArgsWithInfiniteArgumentException(false);

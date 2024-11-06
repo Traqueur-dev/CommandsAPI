@@ -1,6 +1,6 @@
 package fr.traqueur.commands.api;
 
-import fr.traqueur.commands.api.arguments.TabConverter;
+import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Messages;
@@ -8,8 +8,6 @@ import fr.traqueur.commands.api.requirements.Requirement;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
@@ -18,7 +16,7 @@ import java.util.stream.Collectors;
 /**
  * Represents the executor of the commands.
  */
-public class Executor implements CommandExecutor, TabCompleter {
+public class Executor implements CommandExecutor, org.bukkit.command.TabCompleter {
 
     /**
      * The plugin that owns the executor.
@@ -38,7 +36,7 @@ public class Executor implements CommandExecutor, TabCompleter {
     /**
      * The completers registered.
      */
-    private final Map<String, Map<Integer, TabConverter>> completers;
+    private final Map<String, Map<Integer, TabCompleter>> completers;
 
     /**
      * The constructor of the executor.
@@ -185,7 +183,7 @@ public class Executor implements CommandExecutor, TabCompleter {
         }
 
         String cmdLabel = "";
-        Map<Integer, TabConverter> map = null;
+        Map<Integer, TabCompleter> map = null;
         for (int i = args.length; i >= 0; i--) {
             cmdLabel = getCommandLabel(labelLower, args, i);
             map = this.completers.getOrDefault(cmdLabel, null);
@@ -198,7 +196,7 @@ public class Executor implements CommandExecutor, TabCompleter {
             return Collections.emptyList();
         }
 
-        TabConverter converter = map.get(args.length);
+        TabCompleter converter = map.get(args.length);
         String argsBeforeString = (label +
                 "." +
                 String.join(".", Arrays.copyOf(args, args.length - 1)))

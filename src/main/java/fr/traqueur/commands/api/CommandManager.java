@@ -3,7 +3,7 @@ package fr.traqueur.commands.api;
 import com.google.common.collect.Lists;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
-import fr.traqueur.commands.api.arguments.TabConverter;
+import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
@@ -65,7 +65,7 @@ public class CommandManager {
     /**
      * The tab completers registered in the command manager.
      */
-    private final Map<String, Map<Integer, TabConverter>> completers;
+    private final Map<String, Map<Integer, TabCompleter>> completers;
 
     /**
      * The executor of the command manager.
@@ -381,12 +381,12 @@ public class CommandManager {
             String[] parts = arg.arg().split(TYPE_PARSER);
             String type = parts[1].trim();
             ArgumentConverter<?> converter = this.typeConverters.get(type).getValue();
-            TabConverter argConverter = arg.tabConverter();
+            TabCompleter argConverter = arg.tabConverter();
             if (argConverter != null) {
                 this.addCompletion(label,commandSize + i, argConverter);
-            } else if (converter instanceof TabConverter) {
-                TabConverter tabConverter = (TabConverter) converter;
-                this.addCompletion(label,commandSize + i, tabConverter);
+            } else if (converter instanceof TabCompleter) {
+                TabCompleter tabCompleter = (TabCompleter) converter;
+                this.addCompletion(label,commandSize + i, tabCompleter);
             } else {
                 this.addCompletion(label, commandSize + i, (sender, argsInner) -> new ArrayList<>());
             }
@@ -399,10 +399,10 @@ public class CommandManager {
      * @param commandSize The size of the command.
      * @param converter The converter of the tab completer.
      */
-    private void addCompletion(String label, int commandSize, TabConverter converter) {
-        Map<Integer, TabConverter> mapInner = this.completers.getOrDefault(label, new HashMap<>());
-        TabConverter newConverter;
-        TabConverter converterInner = mapInner.getOrDefault(commandSize, null);
+    private void addCompletion(String label, int commandSize, TabCompleter converter) {
+        Map<Integer, TabCompleter> mapInner = this.completers.getOrDefault(label, new HashMap<>());
+        TabCompleter newConverter;
+        TabCompleter converterInner = mapInner.getOrDefault(commandSize, null);
         if(converterInner != null) {
             newConverter = (sender, args) -> {
                 List<String> completions = new ArrayList<>(converterInner.onCompletion(sender, args));
@@ -535,7 +535,7 @@ public class CommandManager {
      * Get the completers of the command manager
      * @return The completers of command manager
      */
-    public Map<String, Map<Integer, TabConverter>> getCompleters() {
+    public Map<String, Map<Integer, TabCompleter>> getCompleters() {
         return this.completers;
     }
 }
