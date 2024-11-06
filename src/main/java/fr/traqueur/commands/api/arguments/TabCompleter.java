@@ -11,7 +11,7 @@ import java.util.List;
  * </p>
  */
 @FunctionalInterface
-public interface TabConverter {
+public interface TabCompleter {
 
     /**
      * This method is called when the tabulation is used.

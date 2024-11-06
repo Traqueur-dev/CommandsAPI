@@ -52,4 +52,9 @@ public class InternalMessageHandler implements MessageHandler {
     public String getRequirementMessage() {
         return "The requirement %requirement% was not met";
     }
+
+    @Override
+    public String getToManyArgsMessage() {
+        return "&cToo many arguments.";
+    }
 }

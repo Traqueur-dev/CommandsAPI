@@ -1,7 +1,7 @@
 package fr.traqueur.commands.impl.arguments;
 
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
-import fr.traqueur.commands.api.arguments.TabConverter;
+import fr.traqueur.commands.api.arguments.TabCompleter;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 /**
  * Argument used to parse an {@link OfflinePlayer} from a string.
  */
-public class OfflinePlayerArgument implements ArgumentConverter<OfflinePlayer>, TabConverter {
+public class OfflinePlayerArgument implements ArgumentConverter<OfflinePlayer>, TabCompleter {
 
     /**
      * {@inheritDoc}
