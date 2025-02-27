@@ -8,7 +8,6 @@ import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
 import fr.traqueur.commands.api.logging.MessageHandler;
-import fr.traqueur.commands.api.logging.Messages;
 import fr.traqueur.commands.api.updater.Updater;
 import fr.traqueur.commands.impl.arguments.*;
 import fr.traqueur.commands.impl.logging.InternalLogger;
@@ -19,12 +18,12 @@ import org.bukkit.command.CommandMap;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -32,7 +31,7 @@ import java.util.stream.Collectors;
  * It allows you to register commands and subcommands.
  * It also allows you to register argument converters and tab completers.
  */
-public class CommandManager {
+public class CommandManager<T extends Plugin> {
 
     public static final String TYPE_PARSER = ":";
     private static final String INFINITE = "infinite";
@@ -40,22 +39,22 @@ public class CommandManager {
     /**
      * The plugin that owns the command manager.
      */
-    private final Plugin plugin;
+    private final T plugin;
 
     /**
      * The command map of the server.
      */
-    private final CommandMap commandMap;
+    private CommandMap commandMap;
 
     /**
      * The constructor of the plugin command.
      */
-    private final Constructor<? extends PluginCommand> pluginConstructor;
+    private Constructor<? extends PluginCommand> pluginConstructor;
 
     /**
      * The commands registered in the command manager.
      */
-    private final Map<String, Command<?>> commands;
+    private final Map<String, Command<T>> commands;
 
     /**
      * The argument converters registered in the command manager.
@@ -70,8 +69,13 @@ public class CommandManager {
     /**
      * The executor of the command manager.
      */
-    private final Executor executor;
+    private final Executor<T> executor;
 
+
+    /**
+     * The message handler of the command manager.
+     */
+    private MessageHandler messageHandler;
 
     /**
      * The logger of the command manager.
@@ -87,15 +91,17 @@ public class CommandManager {
      * The constructor of the command manager.
      * @param plugin The plugin that owns the command manager.
      */
-    public CommandManager(JavaPlugin plugin) {
+    public CommandManager(T plugin) {
         Updater.checkUpdates();
-        Messages.setMessageHandler(new InternalMessageHandler());
+        this.messageHandler = new InternalMessageHandler();
         this.logger = new InternalLogger(plugin.getLogger());
         this.debug = false;
         this.plugin = plugin;
         this.commands = new HashMap<>();
         this.typeConverters = new HashMap<>();
         this.completers = new HashMap<>();
+        this.executor = new Executor<>(plugin, this);
+
         try {
             Field bukkitCommandMap = Bukkit.getServer().getClass().getDeclaredField("commandMap");
             bukkitCommandMap.setAccessible(true);
@@ -103,27 +109,12 @@ public class CommandManager {
             pluginConstructor = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
             pluginConstructor.setAccessible(true);
         } catch (IllegalArgumentException | SecurityException | IllegalAccessException | NoSuchFieldException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            this.logger.error("Unable to get the command map.");
+            plugin.getServer().getPluginManager().disablePlugin(plugin);
+            return;
         }
 
         this.registerInternalConverters();
-
-        this.executor = new Executor(plugin, this);
-    }
-
-    /**
-     * Register the internal converters of the command manager.
-     */
-    private void registerInternalConverters() {
-        this.registerConverter(String.class,  (s) -> s);
-        this.registerConverter(Boolean.class, new BooleanArgument());
-        this.registerConverter(Integer.class, "int", new IntegerArgument());
-        this.registerConverter(Integer.class, new IntegerArgument());
-        this.registerConverter(Double.class, new DoubleArgument());
-        this.registerConverter(Long.class,  new LongArgument());
-        this.registerConverter(Player.class,  new PlayerArgument());
-        this.registerConverter(OfflinePlayer.class,  new OfflinePlayerArgument());
-        this.registerConverter(String.class, INFINITE, s -> s);
     }
 
 
@@ -140,7 +131,15 @@ public class CommandManager {
      * @param messageHandler The message handler to set.
      */
     public void setMessageHandler(MessageHandler messageHandler) {
-        Messages.setMessageHandler(messageHandler);
+        this.messageHandler = messageHandler;
+    }
+
+    /**
+     * Get the message handler of the command manager.
+     * @return The message handler of the command manager.
+     */
+    public MessageHandler getMessageHandler() {
+        return messageHandler;
     }
 
     /**
@@ -163,7 +162,7 @@ public class CommandManager {
      * Register a command in the command manager.
      * @param command The command to register.
      */
-    public void registerCommand(Command<?> command) {
+    public void registerCommand(Command<T> command) {
         try {
             List<String> aliases = new ArrayList<>(command.getAliases());
             aliases.add(command.getName());
@@ -200,7 +199,7 @@ public class CommandManager {
      * Unregister a command in the command manager.
      * @param command The command to unregister.
      */
-    public void unregisterCommand(Command<?> command) {
+    public void unregisterCommand(Command<T> command) {
         this.unregisterCommand(command, true);
     }
 
@@ -209,7 +208,7 @@ public class CommandManager {
      * @param command The command to unregister.
      * @param subcommands If the subcommands must be unregistered.
      */
-    public void unregisterCommand(Command<?> command, boolean subcommands) {
+    public void unregisterCommand(Command<T> command, boolean subcommands) {
         List<String> aliases = new ArrayList<>(command.getAliases());
         aliases.add(command.getName());
         for (String alias : aliases) {
@@ -224,9 +223,9 @@ public class CommandManager {
      * Register an argument converter in the command manager.
      * @param typeClass The class of the type.
      * @param converter The converter of the argument.
-     * @param <T> The type of the argument.
+     * @param <C> The type of the argument.
      */
-    public <T> void registerConverter(Class<T> typeClass, ArgumentConverter<T> converter) {
+    public <C> void registerConverter(Class<C> typeClass, ArgumentConverter<C> converter) {
         this.typeConverters.put(typeClass.getSimpleName().toLowerCase(), new AbstractMap.SimpleEntry<>(typeClass, converter));
     }
 
@@ -234,11 +233,59 @@ public class CommandManager {
      * Register an argument converter in the command manager.
      * @param typeClass The class of the type.
      * @param converter The converter of the argument.
-     * @param <T> The type of the argument.
+     * @param <C> The type of the argument.
      */
     @Deprecated
-    public <T> void registerConverter(Class<T> typeClass, String type,  ArgumentConverter<T> converter) {
+    public <C> void registerConverter(Class<C> typeClass, String type,  ArgumentConverter<C> converter) {
         this.typeConverters.put(type, new AbstractMap.SimpleEntry<>(typeClass, converter));
+    }
+
+    /**
+     * Get the commands of the command manager.
+     * @return The commands of the command manager.
+     */
+    public Map<String, Command<T>> getCommands() {
+        return commands;
+    }
+
+
+    /**
+     * Get the completers of the command manager
+     * @return The completers of command manager
+     */
+    public Map<String, Map<Integer, TabCompleter>> getCompleters() {
+        return this.completers;
+    }
+
+    /**
+     * Parse the arguments of the command.
+     * @param command The command to parse.
+     * @param args The arguments to parse.
+     * @return The arguments parsed.
+     * @throws TypeArgumentNotExistException If the type of the argument does not exist.
+     * @throws ArgumentIncorrectException If the argument is incorrect.
+     */
+    protected Arguments parse(Command<T> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
+        Arguments arguments = new Arguments(this.logger);
+        List<Argument> templates = command.getArgs();
+        for (int i = 0; i < templates.size(); i++) {
+            String input = args[i];
+            if (applyParsing(args, arguments, templates, i, input)) break;
+        }
+
+        List<Argument> optArgs = command.getOptinalArgs();
+        if (optArgs.isEmpty()) {
+            return arguments;
+        }
+
+        for (int i = 0; i < optArgs.size(); i++) {
+            if (args.length > templates.size() + i) {
+                String input = args[templates.size() + i];
+                if (applyParsing(args, arguments, optArgs, i, input)) break;
+            }
+        }
+
+        return arguments;
     }
 
     /**
@@ -247,11 +294,11 @@ public class CommandManager {
      * @param subcommands The list of subcommands to register.
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      */
-    private void registerSubCommands(String parentLabel, List<Command<?>> subcommands) throws TypeArgumentNotExistException {
+    private void registerSubCommands(String parentLabel, List<Command<T>> subcommands) throws TypeArgumentNotExistException {
         if(subcommands == null || subcommands.isEmpty()) {
             return;
         }
-        for (Command<?> subcommand : subcommands) {
+        for (Command<T> subcommand : subcommands) {
             List<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
             aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
@@ -266,11 +313,11 @@ public class CommandManager {
      * @param parentLabel The parent label of the subcommands.
      * @param subcommandsList The list of subcommands to unregister.
      */
-    private void unregisterSubCommands(String parentLabel, List<Command<?>> subcommandsList) {
+    private void unregisterSubCommands(String parentLabel, List<Command<T>> subcommandsList) {
         if(subcommandsList == null || subcommandsList.isEmpty()) {
             return;
         }
-        for (Command<?> subcommand : subcommandsList) {
+        for (Command<T> subcommand : subcommandsList) {
             List<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
             aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
@@ -299,7 +346,7 @@ public class CommandManager {
      * @param label The label of the command.
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      */
-    private void addCommand(Command<?> command, String label) throws TypeArgumentNotExistException {
+    private void addCommand(Command<T> command, String label) throws TypeArgumentNotExistException {
         try {
             if(this.isDebug()) {
                 this.logger.info("Register command " + label);
@@ -318,30 +365,31 @@ public class CommandManager {
 
             commands.put(label.toLowerCase(), command);
 
-            String originCmdLabel = cmdLabel;
-            for (Command<?> value : commands.values().stream().filter(commandInner -> !commandInner.isSubCommand()).collect(Collectors.toList())) {
-                if(value.getAliases().contains(cmdLabel)) {
-                    originCmdLabel = value.getName();
-                }
-            }
+            AtomicReference<String> originCmdLabel = new AtomicReference<>(cmdLabel);
+            commands.values().stream()
+                    .filter(commandInner -> !commandInner.isSubCommand())
+                    .filter(commandInner -> commandInner.getAliases().contains(cmdLabel))
+                    .findAny()
+                    .ifPresent(commandInner -> originCmdLabel.set(commandInner.getName()));
 
-            if (commandMap.getCommand(originCmdLabel) == null) {
-                PluginCommand cmd = pluginConstructor.newInstance(originCmdLabel, command.getPlugin());
+            if (commandMap.getCommand(originCmdLabel.get()) == null) {
+                PluginCommand cmd = pluginConstructor.newInstance(originCmdLabel.get(), command.getPlugin());
 
                 cmd.setExecutor(this.executor);
                 cmd.setTabCompleter(this.executor);
                 cmd.setAliases(command.getAliases());
 
-                if(!commandMap.register(originCmdLabel, this.plugin.getName(), cmd)) {
-                    this.logger.error("Unable to add the command " + originCmdLabel);
+                if(!commandMap.register(originCmdLabel.get(), this.plugin.getName(), cmd)) {
+                    this.logger.error("Unable to add the command " + originCmdLabel.get());
                     return;
                 }
             }
             if (!command.getDescription().equalsIgnoreCase("") && cmdLabel.equals(label)) {
-                Objects.requireNonNull(commandMap.getCommand(originCmdLabel)).setDescription(command.getDescription());
+                Objects.requireNonNull(commandMap.getCommand(originCmdLabel.get())).setDescription(command.getDescription());
             }
+
             if (!command.getUsage().equalsIgnoreCase("") && cmdLabel.equals(label)) {
-                Objects.requireNonNull(commandMap.getCommand(originCmdLabel)).setUsage(command.getUsage());
+                Objects.requireNonNull(commandMap.getCommand(originCmdLabel.get())).setUsage(command.getUsage());
             }
 
             this.addCompletionsForLabel(labelParts);
@@ -445,37 +493,6 @@ public class CommandManager {
     }
 
     /**
-     * Parse the arguments of the command.
-     * @param command The command to parse.
-     * @param args The arguments to parse.
-     * @return The arguments parsed.
-     * @throws TypeArgumentNotExistException If the type of the argument does not exist.
-     * @throws ArgumentIncorrectException If the argument is incorrect.
-     */
-    protected Arguments parse(Command<?> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
-        Arguments arguments = new Arguments(this.logger);
-        List<Argument> templates = command.getArgs();
-        for (int i = 0; i < templates.size(); i++) {
-            String input = args[i];
-            if (applyParsing(args, arguments, templates, i, input)) break;
-        }
-
-        List<Argument> optArgs = command.getOptinalArgs();
-        if (optArgs.isEmpty()) {
-            return arguments;
-        }
-
-        for (int i = 0; i < optArgs.size(); i++) {
-            if (args.length > templates.size() + i) {
-                String input = args[templates.size() + i];
-                if (applyParsing(args, arguments, optArgs, i, input)) break;
-            }
-        }
-
-        return arguments;
-    }
-
-    /**
      * Apply the parsing of the arguments.
      * @param args The arguments to parse.
      * @param arguments The arguments parsed.
@@ -523,19 +540,17 @@ public class CommandManager {
     }
 
     /**
-     * Get the commands of the command manager.
-     * @return The commands of the command manager.
+     * Register the internal converters of the command manager.
      */
-    public Map<String, Command<?>> getCommands() {
-        return commands;
+    private void registerInternalConverters() {
+        this.registerConverter(String.class,  (s) -> s);
+        this.registerConverter(Boolean.class, new BooleanArgument());
+        this.registerConverter(Integer.class, new IntegerArgument());
+        this.registerConverter(Double.class, new DoubleArgument());
+        this.registerConverter(Long.class,  new LongArgument());
+        this.registerConverter(Player.class,  new PlayerArgument());
+        this.registerConverter(OfflinePlayer.class,  new OfflinePlayerArgument());
+        this.registerConverter(String.class, INFINITE, s -> s);
     }
 
-
-    /**
-     * Get the completers of the command manager
-     * @return The completers of command manager
-     */
-    public Map<String, Map<Integer, TabCompleter>> getCompleters() {
-        return this.completers;
-    }
 }

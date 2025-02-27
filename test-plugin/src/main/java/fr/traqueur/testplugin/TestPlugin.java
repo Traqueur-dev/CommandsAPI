@@ -7,7 +7,7 @@ public final class TestPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        CommandManager commandManager = new CommandManager(this);
+        CommandManager<TestPlugin> commandManager = new CommandManager<>(this);
         commandManager.setDebug(true);
         commandManager.registerCommand(new TestCommand(this));
     }

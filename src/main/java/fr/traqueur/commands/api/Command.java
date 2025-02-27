@@ -5,11 +5,12 @@ import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgsWithInfiniteArgumentException;
 import fr.traqueur.commands.api.requirements.Requirement;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This class is the base class for all commands.
@@ -17,10 +18,10 @@ import java.util.List;
  * It is abstract and must be inherited to be used.
  * @param <T> The plugin that owns the command.
  */
-public abstract class Command<T extends JavaPlugin> {
+public abstract class Command<T extends Plugin> {
 
-    private CommandManager manager;
-    // Attributs de la classe
+    private CommandManager<T> manager;
+
     /**
      * The plugin that owns the command.
      */
@@ -39,7 +40,7 @@ public abstract class Command<T extends JavaPlugin> {
     /**
      * The subcommands of the command.
      */
-    private final List<Command<?>> subcommands;
+    private final List<Command<T>> subcommands;
 
     /**
      * The arguments of the command.
@@ -110,7 +111,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to set the manager of the command.
      * @param manager The manager of the command.
      */
-    protected void setManager(CommandManager manager) {
+    protected void setManager(CommandManager<T> manager) {
         this.manager = manager;
     }
 
@@ -184,7 +185,7 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to get the subcommands of the command.
      * @return The subcommands of the command.
      */
-    public final List<Command<?>> getSubcommands() {
+    public final List<Command<T>> getSubcommands() {
         return subcommands;
     }
 
@@ -280,9 +281,10 @@ public abstract class Command<T extends JavaPlugin> {
      * This method is called to add subcommands to the command.
      * @param commands The subcommands to add.
      */
-    public final void addSubCommand(Command<?>... commands) {
-        List<Command<?>> commandsList = Arrays.asList(commands);
-        commandsList.forEach(command -> command.setSubcommand(true));
+    @SafeVarargs
+    public final void addSubCommand(Command<T>... commands) {
+        List<Command<T>> commandsList = Arrays.asList(commands);
+        commandsList.forEach(Command::setSubcommand);
         this.subcommands.addAll(commandsList);
     }
 
@@ -448,18 +450,44 @@ public abstract class Command<T extends JavaPlugin> {
     }
 
     /**
-     * Set if the command is subcommand
-     * @param subcommand the new value
-     */
-    public final void setSubcommand(boolean subcommand) {
-        this.subcommand = subcommand;
-    }
-
-    /**
      * This method is called to get the plugin that owns the command.
      * @return The plugin that owns the command.
      */
     public final T getPlugin() {
         return plugin;
+    }
+
+    /**
+     * This method is called to generate a default usage for the command.
+     * @return The default usage of the command.
+     */
+    protected String generateDefaultUsage(CommandSender sender, String label) {
+        StringBuilder usage = new StringBuilder();
+        usage.append("/");
+        Arrays.stream(label.split("\\.")).forEach(s -> usage.append(s).append(" "));
+
+        StringBuilder firstArg = new StringBuilder();
+        this.getSubcommands()
+                .stream().filter(subCommand -> subCommand.getPermission().isEmpty() || sender.hasPermission(subCommand.getPermission()))
+                .forEach(subCommand -> firstArg.append(subCommand.getName()).append("|"));
+        if(firstArg.length() > 0) {
+            firstArg.deleteCharAt(firstArg.length() - 1);
+            usage.append("<").append(firstArg).append(">");
+        }
+        if((!this.getArgs().isEmpty() || !this.getOptinalArgs().isEmpty()) && firstArg.length() > 0) {
+            usage.append("|");
+        }
+
+        usage.append(this.getArgs().stream().map(argument -> "<" + argument.arg() + ">").collect(Collectors.joining(" ")));
+        usage.append(" ");
+        usage.append(this.getOptinalArgs().stream().map(argument -> "[" + argument.arg() + "]").collect(Collectors.joining(" ")));
+        return usage.toString();
+    }
+
+    /**
+     * Set if the command is subcommand
+     */
+    private void setSubcommand() {
+        this.subcommand = true;
     }
 }

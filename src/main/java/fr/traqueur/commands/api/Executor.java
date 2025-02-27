@@ -3,12 +3,11 @@ package fr.traqueur.commands.api;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
-import fr.traqueur.commands.api.logging.Messages;
 import fr.traqueur.commands.api.requirements.Requirement;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.Plugin;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,38 +15,26 @@ import java.util.stream.Collectors;
 /**
  * Represents the executor of the commands.
  */
-public class Executor implements CommandExecutor, org.bukkit.command.TabCompleter {
+public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.command.TabCompleter {
 
     /**
      * The plugin that owns the executor.
      */
-    private final JavaPlugin plugin;
+    private final T plugin;
 
     /**
      * The command manager.
      */
-    private final CommandManager commandManager;
-
-    /**
-     * The commands registered.
-     */
-    private final Map<String, Command<?>> commands;
-
-    /**
-     * The completers registered.
-     */
-    private final Map<String, Map<Integer, TabCompleter>> completers;
+    private final CommandManager<T> commandManager;
 
     /**
      * The constructor of the executor.
      * @param plugin The plugin that owns the executor.
      * @param commandManager The command manager.
      */
-    public Executor(JavaPlugin plugin, CommandManager commandManager) {
+    public Executor(T plugin, CommandManager<T> commandManager) {
         this.plugin = plugin;
         this.commandManager = commandManager;
-        this.commands = this.commandManager.getCommands();
-        this.completers = this.commandManager.getCompleters();
     }
 
 
@@ -87,18 +74,16 @@ public class Executor implements CommandExecutor, org.bukkit.command.TabComplete
             return false;
         }
 
-        if (!command.testPermission(sender)) {
-            return true;
-        }
-
         String labelLower = this.parseLabel(label);
 
         if(labelLower == null) {
             return false;
         }
 
+        Map<String, Command<T>> commands = this.commandManager.getCommands();
+
         String cmdLabel = "";
-        Command<?> commandFramework = null;
+        Command<T> commandFramework = null;
         for (int i = args.length; i >= 0; i--) {
             cmdLabel = getCommandLabel(labelLower, args, i);
             commandFramework = commands.getOrDefault(cmdLabel, null);
@@ -111,8 +96,13 @@ public class Executor implements CommandExecutor, org.bukkit.command.TabComplete
             return false;
         }
 
+        if(commandFramework.inGameOnly() && !(sender instanceof org.bukkit.entity.Player)) {
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', this.commandManager.getMessageHandler().getOnlyInGameMessage()));
+            return true;
+        }
+
         if (!commandFramework.getPermission().isEmpty() && !sender.hasPermission(commandFramework.getPermission())) {
-            sender.sendMessage(Messages.NO_PERMISSION.message());
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', this.commandManager.getMessageHandler().getNoPermissionMessage()));
             return true;
         }
 
@@ -120,10 +110,10 @@ public class Executor implements CommandExecutor, org.bukkit.command.TabComplete
         for (Requirement requirement : requirements) {
             if (!requirement.check(sender)) {
                 String error = requirement.errorMessage().isEmpty()
-                        ? Messages.REQUIREMENT_ERROR.message()
-                        : ChatColor.translateAlternateColorCodes('&', requirement.errorMessage());
+                        ? this.commandManager.getMessageHandler().getRequirementMessage()
+                        : requirement.errorMessage();
                 error = error.replace("%requirement%", requirement.getClass().getSimpleName());
-                sender.sendMessage(error);
+                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', error));
                 return true;
             }
         }
@@ -132,22 +122,19 @@ public class Executor implements CommandExecutor, org.bukkit.command.TabComplete
         int subCommand = cmdLabel.split("\\.").length - 1;
         String[] modArgs = Arrays.copyOfRange(args, subCommand, args.length);
 
-
         if (modArgs.length < commandFramework.getArgs().size()) {
-            String usage = command.getUsage();
-            if (usage.isEmpty()) {
-                usage = Messages.MISSING_ARGS.message();
-            }
-            sender.sendMessage(usage);
+            String usage = commandFramework.getUsage().equalsIgnoreCase("")
+                    ? commandFramework.generateDefaultUsage(sender, cmdLabel)
+                    : commandFramework.getUsage();
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', usage));
             return true;
         }
 
         if (!commandFramework.isInfiniteArgs() && (modArgs.length > commandFramework.getArgs().size() + commandFramework.getOptinalArgs().size())) {
-            String usage = command.getUsage();
-            if (usage.isEmpty()) {
-                usage = Messages.TO_MANY_ARGS.message();
-            }
-            sender.sendMessage(usage);
+            String usage = commandFramework.getUsage().equalsIgnoreCase("")
+                    ? commandFramework.generateDefaultUsage(sender, cmdLabel)
+                    : commandFramework.getUsage();
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', usage));
             return true;
         }
 
@@ -157,9 +144,9 @@ public class Executor implements CommandExecutor, org.bukkit.command.TabComplete
         } catch (TypeArgumentNotExistException e) {
             throw new RuntimeException(e);
         } catch (ArgumentIncorrectException e) {
-            String message = Messages.ARG_NOT_RECOGNIZED.message();
+            String message = this.commandManager.getMessageHandler().getArgNotRecognized();
             message = message.replace("%arg%", e.getInput());
-            sender.sendMessage(message);
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
         }
 
         return true;
@@ -182,11 +169,14 @@ public class Executor implements CommandExecutor, org.bukkit.command.TabComplete
             return Collections.emptyList();
         }
 
+        Map<String, Map<Integer, TabCompleter>> completers = this.commandManager.getCompleters();
+        Map<String, Command<T>> commands = this.commandManager.getCommands();
+
         String cmdLabel = "";
         Map<Integer, TabCompleter> map = null;
         for (int i = args.length; i >= 0; i--) {
             cmdLabel = getCommandLabel(labelLower, args, i);
-            map = this.completers.getOrDefault(cmdLabel, null);
+            map = completers.getOrDefault(cmdLabel, null);
             if(map != null) {
                 break;
             }
@@ -209,8 +199,8 @@ public class Executor implements CommandExecutor, org.bukkit.command.TabComplete
         String finalCmdLabel = cmdLabel;
         return completer.stream().filter(str -> {
             String cmdLabelInner = finalCmdLabel + "." + str.toLowerCase();
-            if(this.commands.containsKey(cmdLabelInner)) {
-                Command<?> frameworkCommand = this.commands.get(cmdLabelInner);
+            if(commands.containsKey(cmdLabelInner)) {
+                Command<?> frameworkCommand = commands.get(cmdLabelInner);
                 List<Requirement> requirements = frameworkCommand.getRequirements();
                 for (Requirement requirement : requirements) {
                     if (!requirement.check(commandSender)) {

@@ -57,7 +57,7 @@ Be sure to relocate commandsAPI in to prevent bugs with other plugins.
 To get started with CommandsAPI, create a new command by extending the `Command<T extends JavaPlugin>` class. Here’s a simple example:
 
 ```java
-public class HelloWorldCommand extends SimpleCommand {
+public class HelloWorldCommand extends Command<MyPlugin> {
 
     public HelloWorldCommand(JavaPlugin plugin) {
         super(plugin, "helloworld");
@@ -79,7 +79,7 @@ public class MyPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        CommandManager commandManager = new CommandManager(this);
+        CommandManager<MyPlugin> commandManager = new CommandManager<>(this);
         commandManager.registerCommands(new HelloWorldCommand(this));
     }
 }

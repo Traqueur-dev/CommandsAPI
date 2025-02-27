@@ -3,6 +3,7 @@ package fr.traqueur.testplugin;
 import fr.traqueur.commands.api.Arguments;
 import fr.traqueur.commands.api.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 
@@ -24,5 +25,6 @@ public class SubTestCommand extends Command<TestPlugin> {
         int test = args.getAsInt("test", -1);
         String testStr = args.get("testStr");
         sender.sendMessage("Test: " + test + " TestStr: " + testStr);
+        sender.sendMessage(this.getUsage());
     }
 }

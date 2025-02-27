@@ -9,9 +9,7 @@ import fr.traqueur.commands.api.logging.MessageHandler;
 public class InternalMessageHandler implements MessageHandler {
 
     /**
-     * Get the message to send when the player does not have permission to use a command.
-     *
-     * @return the message
+     * {@inheritDoc}
      */
     @Override
     public String getNoPermissionMessage() {
@@ -19,9 +17,7 @@ public class InternalMessageHandler implements MessageHandler {
     }
 
     /**
-     * Get the message to send when the sender is not a player.
-     *
-     * @return the message
+     * {@inheritDoc}
      */
     @Override
     public String getOnlyInGameMessage() {
@@ -29,32 +25,19 @@ public class InternalMessageHandler implements MessageHandler {
     }
 
     /**
-     * Get the message to send when an argument is missing.
-     *
-     * @return the message
-     */
-    @Override
-    public String getMissingArgsMessage() {
-        return "&cMissing arguments.";
-    }
-
-    /**
-     * Get the message to send when an argument is not recognized.
-     *
-     * @return the message
+     * {@inheritDoc}
      */
     @Override
     public String getArgNotRecognized() {
         return "&cArgument &e%arg% &cnot recognized.";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getRequirementMessage() {
         return "The requirement %requirement% was not met";
     }
 
-    @Override
-    public String getToManyArgsMessage() {
-        return "&cToo many arguments.";
-    }
 }
