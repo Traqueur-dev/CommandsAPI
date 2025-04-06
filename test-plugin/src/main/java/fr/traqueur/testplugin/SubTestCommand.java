@@ -10,7 +10,7 @@ import java.util.List;
 public class SubTestCommand extends Command<TestPlugin> {
 
     public SubTestCommand(TestPlugin plugin) {
-        super(plugin, "sub");
+        super(plugin, "sub.inner");
         this.addArgs("test");
         this.addArgs("testStr", String.class, (sender, args) -> {
            args.forEach(arg -> {
@@ -18,6 +18,7 @@ public class SubTestCommand extends Command<TestPlugin> {
            });
            return List.of();
         });
+        this.addAlias("sub");
     }
 
     @Override

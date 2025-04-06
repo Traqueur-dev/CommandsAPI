@@ -12,6 +12,7 @@ public class Sub2TestCommand extends Command<TestPlugin> {
     public Sub2TestCommand(TestPlugin plugin) {
         super(plugin, "sub2");
         this.addArgs("test");
+        this.addAlias("sub2.inner");
     }
 
     @Override
