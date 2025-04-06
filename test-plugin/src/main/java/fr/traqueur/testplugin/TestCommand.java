@@ -11,6 +11,7 @@ public class TestCommand extends Command<TestPlugin> {
         super(plugin, "test");
         this.addSubCommand(new SubTestCommand(plugin), new Sub2TestCommand(plugin));
         this.addArgs("test");
+        this.addAlias("inner.in");
     }
 
     @Override
