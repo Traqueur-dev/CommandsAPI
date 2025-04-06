@@ -366,11 +366,16 @@ public class CommandManager<T extends Plugin> {
             commands.put(label.toLowerCase(), command);
 
             AtomicReference<String> originCmdLabel = new AtomicReference<>(cmdLabel);
-            commands.values().stream()
-                    .filter(commandInner -> !commandInner.isSubCommand())
-                    .filter(commandInner -> commandInner.getAliases().contains(cmdLabel))
-                    .findAny()
-                    .ifPresent(commandInner -> originCmdLabel.set(commandInner.getName()));
+
+            if(labelSize > 1) {
+                commands.values().stream()
+                        .filter(commandInner -> !commandInner.isSubCommand())
+                        .filter(commandInner -> commandInner.getAliases().contains(cmdLabel))
+                        .findAny()
+                        .ifPresent(commandInner -> originCmdLabel.set(commandInner.getName()));
+            } else {
+                originCmdLabel.set(label);
+            }
 
             if (commandMap.getCommand(originCmdLabel.get()) == null) {
                 PluginCommand cmd = pluginConstructor.newInstance(originCmdLabel.get(), command.getPlugin());
@@ -384,11 +389,12 @@ public class CommandManager<T extends Plugin> {
                     return;
                 }
             }
-            if (!command.getDescription().equalsIgnoreCase("") && cmdLabel.equals(label)) {
+
+            if (!command.getDescription().equalsIgnoreCase("") && labelParts.length == 1) {
                 Objects.requireNonNull(commandMap.getCommand(originCmdLabel.get())).setDescription(command.getDescription());
             }
 
-            if (!command.getUsage().equalsIgnoreCase("") && cmdLabel.equals(label)) {
+            if (!command.getUsage().equalsIgnoreCase("") && labelParts.length == 1) {
                 Objects.requireNonNull(commandMap.getCommand(originCmdLabel.get())).setUsage(command.getUsage());
             }
 
