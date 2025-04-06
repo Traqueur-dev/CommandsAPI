@@ -382,7 +382,7 @@ public class CommandManager<T extends Plugin> {
 
                 cmd.setExecutor(this.executor);
                 cmd.setTabCompleter(this.executor);
-                cmd.setAliases(command.getAliases());
+                cmd.setAliases(command.getAliases().stream().map(s -> s.split("\\.")[0]).collect(Collectors.toList()));
 
                 if(!commandMap.register(originCmdLabel.get(), this.plugin.getName(), cmd)) {
                     this.logger.error("Unable to add the command " + originCmdLabel.get());
