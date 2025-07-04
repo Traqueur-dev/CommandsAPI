@@ -1,0 +1,19 @@
+plugins {
+    id 'maven-publish'
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            groupId = project.group
+            artifactId = 'CommandsAPI-core'
+            version = project.version
+        }
+    }
+}

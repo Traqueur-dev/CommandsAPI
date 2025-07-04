@@ -3,18 +3,19 @@ package fr.traqueur.commands.api;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.TabCompleter;
-import fr.traqueur.commands.api.arguments.TabContext;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
 import fr.traqueur.commands.api.logging.MessageHandler;
 import fr.traqueur.commands.api.updater.Updater;
-import fr.traqueur.commands.impl.arguments.*;
+import fr.traqueur.commands.impl.arguments.BooleanArgument;
+import fr.traqueur.commands.impl.arguments.DoubleArgument;
+import fr.traqueur.commands.impl.arguments.IntegerArgument;
+import fr.traqueur.commands.impl.arguments.LongArgument;
 import fr.traqueur.commands.impl.logging.InternalLogger;
 import fr.traqueur.commands.impl.logging.InternalMessageHandler;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**

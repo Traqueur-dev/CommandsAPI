@@ -3,14 +3,10 @@ package fr.traqueur.commands.spigot;
 import fr.traqueur.commands.api.Command;
 import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.CommandPlatform;
-import fr.traqueur.commands.spigot.arguments.OfflinePlayerArgument;
-import fr.traqueur.commands.spigot.arguments.PlayerArgument;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 

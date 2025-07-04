@@ -4,7 +4,6 @@ import fr.traqueur.commands.api.Arguments;
 import fr.traqueur.commands.api.CommandContext;
 import fr.traqueur.commands.spigot.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 

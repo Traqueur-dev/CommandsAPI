@@ -1,2 +1,6 @@
+jdk:
+  - openjdk8
+
 build:
-  gradle: spigot:build
+  commands:
+    - ./gradlew core:publishToMavenLocal spigot:publishToMavenLocal

@@ -1,16 +1,35 @@
 plugins {
-    id 'java-library'
     id 'maven-publish'
 }
 
-group = 'com.github.Traqueur-dev'
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+}
 
 dependencies {
-    implementation rootProject
+    implementation project(":core")
     compileOnly "org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT"
 }
 
 java {
     withSourcesJar()
     withJavadocJar()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            groupId = project.group
+            artifactId = 'CommandsAPI-spigot'
+            version = project.version
+        }
+    }
 }
