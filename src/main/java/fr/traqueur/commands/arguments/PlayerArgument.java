@@ -1,4 +1,4 @@
-package fr.traqueur.commands.impl.arguments;
+package fr.traqueur.commands.arguments;
 
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.TabCompleter;

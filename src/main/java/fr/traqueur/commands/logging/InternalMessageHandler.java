@@ -1,4 +1,4 @@
-package fr.traqueur.commands.impl.logging;
+package fr.traqueur.commands.logging;
 
 import fr.traqueur.commands.api.logging.MessageHandler;
 

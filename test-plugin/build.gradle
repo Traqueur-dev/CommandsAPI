@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'io.github.goooler.shadow' version '8.1.8'
+    id 'xyz.jpenilla.run-paper' version '2.3.1'
 }
 
 group = 'fr.traqueur'
@@ -19,8 +20,15 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT")
+    compileOnly("org.spigotmc:spigot-api:1.21.3-R0.1-SNAPSHOT")
     implementation rootProject
+    implementation project(':annotations-addon')
+}
+
+tasks {
+    runServer {
+        minecraftVersion("1.21.3")
+    }
 }
 
 def targetJavaVersion = 21

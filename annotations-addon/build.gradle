@@ -1,0 +1,22 @@
+plugins {
+    id 'maven-publish'
+}
+
+group = 'fr.traqueur'
+version = '3.0.1'
+
+dependencies {
+    compileOnly(rootProject)
+}
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
+}

@@ -6,19 +6,24 @@ plugins {
 group = 'fr.traqueur'
 version = property('version')
 
-repositories {
-    mavenCentral()
-    maven {
-        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-    }
-    maven {
-        name = "sonatype"
-        url = "https://oss.sonatype.org/content/groups/public/"
-    }
-}
+allprojects {
 
-dependencies {
-    compileOnly "org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT"
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+        maven {
+            url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+        }
+        maven {
+            name = "sonatype"
+            url = "https://oss.sonatype.org/content/groups/public/"
+        }
+    }
+
+    dependencies {
+        compileOnly "org.spigotmc:spigot-api:1.21.3-R0.1-SNAPSHOT"
+    }
 }
 
 def targetJavaVersion = 8
@@ -47,7 +52,6 @@ java {
     withSourcesJar()
     withJavadocJar()
 }
-
 
 publishing {
     publications {
