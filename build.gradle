@@ -1,58 +1,15 @@
-plugins {
-    id 'java'
-    id 'maven-publish'
-}
+allprojects {
+    group = 'fr.traqueur.commands'
+    version = property('version')
 
-group = 'fr.traqueur'
-version = property('version')
-
-repositories {
-    mavenCentral()
-    maven {
-        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+    apply {
+        plugin 'java-library'
     }
-    maven {
-        name = "sonatype"
-        url = "https://oss.sonatype.org/content/groups/public/"
-    }
-}
 
-dependencies {
-    compileOnly "org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT"
-}
-
-def targetJavaVersion = 8
-java {
-    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
-}
-
-tasks.register('generateVersionProperties') {
-    doLast {
-        def file = new File("$projectDir/src/main/resources/version.properties")
-        if (!file.parentFile.exists()) {
-            file.parentFile.mkdirs()
-        }
-        file.text = "version=${project.version}"
-    }
-}
-
-processResources.dependsOn generateVersionProperties
-
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from components.java
+    repositories {
+        mavenCentral()
+        maven {
+            url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
         }
     }
 }
