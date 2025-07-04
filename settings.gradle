@@ -1,5 +1,6 @@
 rootProject.name = 'CommandsAPI'
 
-include 'test-plugin'
+include 'spigot-test-plugin'
 include 'spigot'
 include 'core'
+include 'velocity'
