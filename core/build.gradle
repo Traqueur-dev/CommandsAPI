@@ -36,7 +36,7 @@ publishing {
         maven(MavenPublication) {
             from components.java
             groupId = project.group
-            artifactId = 'CommandsAPI-core'
+            artifactId = 'core'
             version = project.version
         }
     }
