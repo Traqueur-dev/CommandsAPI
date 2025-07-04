@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T> {
+public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, CommandSender> {
 
     private final T plugin;
 
@@ -61,9 +61,9 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T> 
     }
 
     @Override
-    public void injectManager(CommandManager<T, ?> commandManager) {
+    public void injectManager(CommandManager<T, CommandSender> commandManager) {
         //noinspection unchecked
-        this.commandManager = (CommandManager<T, CommandSender>)  commandManager;
+        this.commandManager = commandManager;
         this.executor = new Executor<>(plugin, this.commandManager);
     }
 
@@ -73,16 +73,15 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T> 
     }
 
     @Override
-    public boolean hasPermission(Object sender, String permission) {
-        if (sender instanceof org.bukkit.command.CommandSender) {
-            org.bukkit.command.CommandSender commandSender = (org.bukkit.command.CommandSender) sender;
-            return commandSender.hasPermission(permission);
+    public boolean hasPermission(CommandSender sender, String permission) {
+        if (sender != null) {
+            return sender.hasPermission(permission);
         }
         return false;
     }
 
     @Override
-    public void addCommand(Command<T, ?> command, String label) {
+    public void addCommand(Command<T, CommandSender> command, String label) {
         String[] labelParts = label.split("\\.");
         String cmdLabel = labelParts[0].toLowerCase();
         AtomicReference<String> originCmdLabelRef = new AtomicReference<>(cmdLabel);

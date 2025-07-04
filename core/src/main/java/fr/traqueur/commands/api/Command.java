@@ -458,7 +458,7 @@ public abstract class Command<T, S> {
      * This method is called to generate a default usage for the command.
      * @return The default usage of the command.
      */
-    public String generateDefaultUsage(CommandPlatform<T> platform, S sender, String label) {
+    public String generateDefaultUsage(CommandPlatform<T,S> platform, S sender, String label) {
         StringBuilder usage = new StringBuilder();
         usage.append("/");
         Arrays.stream(label.split("\\.")).forEach(s -> usage.append(s).append(" "));

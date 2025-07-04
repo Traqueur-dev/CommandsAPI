@@ -29,7 +29,7 @@ public abstract class CommandManager<T, S> {
     public static final String TYPE_PARSER = ":";
     private static final String INFINITE = "infinite";
 
-    private final CommandPlatform<T> platform;
+    private final CommandPlatform<T,S> platform;
 
     /**
      * The commands registered in the command manager.
@@ -63,7 +63,7 @@ public abstract class CommandManager<T, S> {
     private boolean debug;
 
 
-    public CommandManager(CommandPlatform<T> platform) {
+    public CommandManager(CommandPlatform<T,S> platform) {
         Updater.checkUpdates();
         this.platform = platform;
         this.platform.injectManager(this);
@@ -481,7 +481,7 @@ public abstract class CommandManager<T, S> {
         this.registerConverter(String.class, INFINITE, s -> s);
     }
 
-    public CommandPlatform<T> getPlatform() {
+    public CommandPlatform<T,S> getPlatform() {
         return platform;
     }
 

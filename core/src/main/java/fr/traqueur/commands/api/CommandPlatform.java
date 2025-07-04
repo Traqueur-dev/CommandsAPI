@@ -2,17 +2,17 @@ package fr.traqueur.commands.api;
 
 import java.util.logging.Logger;
 
-public interface CommandPlatform<T> {
+public interface CommandPlatform<T, S> {
 
     T getPlugin();
 
-    void injectManager(CommandManager<T, ?> commandManager);
+    void injectManager(CommandManager<T, S> commandManager);
 
     Logger getLogger();
 
-    boolean hasPermission(Object sender, String permission);
+    boolean hasPermission(S sender, String permission);
 
-    void addCommand(Command<T, ?> command, String label);
+    void addCommand(Command<T, S> command, String label);
 
     void removeCommand(String label, boolean subcommand);
 }
