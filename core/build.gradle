@@ -7,6 +7,28 @@ java {
     withJavadocJar()
 }
 
+def generatedResourcesDir = "$buildDir/generated-resources"
+
+task generateCommandsProperties {
+    doLast {
+        def outputDir = file("$generatedResourcesDir")
+        outputDir.mkdirs()
+        def propsFile = new File(outputDir, "commands.properties")
+        propsFile.text = "version=${project.version}"
+    }
+}
+
+processResources.dependsOn(generateCommandsProperties)
+
+// Inclure dans les ressources du build
+sourceSets {
+    main {
+        resources {
+            srcDir generatedResourcesDir
+        }
+    }
+}
+
 publishing {
     publications {
         maven(MavenPublication) {

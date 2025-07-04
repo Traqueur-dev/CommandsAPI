@@ -29,7 +29,7 @@ public class Updater {
     public static String getVersion() {
         Properties prop = new Properties();
         try {
-            prop.load(Updater.class.getClassLoader().getResourceAsStream("version.properties"));
+            prop.load(Updater.class.getClassLoader().getResourceAsStream("commands.properties"));
             return prop.getProperty("version");
         } catch (IOException e) {
             throw new RuntimeException(e);
