@@ -156,7 +156,7 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
 
         try {
             Arguments arguments = this.commandManager.parse(commandFramework, modArgs);
-            commandFramework.execute(new SpigotCommandContext(sender, arguments));
+            commandFramework.execute(sender, arguments);
         } catch (TypeArgumentNotExistException e) {
             throw new RuntimeException(e);
         } catch (ArgumentIncorrectException e) {
@@ -208,7 +208,7 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
                 String.join(".", Arrays.copyOf(args, args.length - 1)))
                 .replaceFirst("^" + cmdLabel + "\\.", "");
 
-        List<String> completer = converter.onCompletion(new SpigotTabContext(commandSender, Arrays.asList(argsBeforeString.split("\\."))))
+        List<String> completer = converter.onCompletion(commandSender, Arrays.asList(argsBeforeString.split("\\.")))
                 .stream()
                 .filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg))
                 .collect(Collectors.toList());

@@ -1,7 +1,7 @@
 package fr.traqueur.velocityTestPlugin;
 
 import com.velocitypowered.api.command.CommandSource;
-import fr.traqueur.commands.api.CommandContext;
+import fr.traqueur.commands.api.Arguments;
 import fr.traqueur.commands.velocity.Command;
 import net.kyori.adventure.text.Component;
 
@@ -12,9 +12,9 @@ public class SubTestCommand extends Command<VelocityTestPlugin> {
     public SubTestCommand(VelocityTestPlugin plugin) {
         super(plugin, "sub.inner");
         this.addArgs("test");
-        this.addArgs("testStr", String.class, (context) -> {
-           context.args().forEach(arg -> {
-               context.sender().sendMessage(Component.text("Arg: " + arg));
+        this.addArgs("testStr", String.class, (sender, args) -> {
+           args.forEach(arg -> {
+               sender.sendMessage(Component.text("Arg: " + arg));
            });
            return List.of();
         });
@@ -22,10 +22,10 @@ public class SubTestCommand extends Command<VelocityTestPlugin> {
     }
 
     @Override
-    public void execute(CommandContext<CommandSource> context) {
-        int test = context.args().getAsInt("test", -1);
-        String testStr = context.args().get("testStr");
-        context.sender().sendMessage(Component.text("Test: " + test + " TestStr: " + testStr));
-        context.sender().sendMessage(Component.text(this.getUsage()));
+    public void execute(CommandSource sender, Arguments args) {
+        int test = args.getAsInt("test", -1);
+        String testStr = args.get("testStr");
+        sender.sendMessage(Component.text("Test: " + test + " TestStr: " + testStr));
+        sender.sendMessage(Component.text(this.getUsage()));
     }
 }

@@ -1,8 +1,6 @@
 package fr.traqueur.commands.spigot.arguments;
 
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
-import fr.traqueur.commands.api.arguments.TabContext;
-import fr.traqueur.commands.spigot.arguments.completions.TabCompleter;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -14,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  * Argument used to parse an {@link OfflinePlayer} from a string.
  */
-public class OfflinePlayerArgument implements ArgumentConverter<OfflinePlayer>, TabCompleter {
+public class OfflinePlayerArgument implements ArgumentConverter<OfflinePlayer>, fr.traqueur.commands.api.arguments.TabCompleter<CommandSender> {
 
     /**
      * Creates a new OfflinePlayerArgument.
@@ -34,11 +32,10 @@ public class OfflinePlayerArgument implements ArgumentConverter<OfflinePlayer>, 
 
     /**
      * {@inheritDoc}
-     * <p>
      * This implementation returns a list of all player names.
      */
     @Override
-    public List<String> onCompletion(TabContext<CommandSender> context) {
+    public List<String> onCompletion(CommandSender sender, List<String> args) {
         return Arrays.stream(Bukkit.getServer().getOfflinePlayers()).map(OfflinePlayer::getName).collect(Collectors.toList());
     }
 }

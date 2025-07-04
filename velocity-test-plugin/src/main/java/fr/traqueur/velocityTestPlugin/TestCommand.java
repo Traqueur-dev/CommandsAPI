@@ -1,7 +1,7 @@
 package fr.traqueur.velocityTestPlugin;
 
 import com.velocitypowered.api.command.CommandSource;
-import fr.traqueur.commands.api.CommandContext;
+import fr.traqueur.commands.api.Arguments;
 import fr.traqueur.commands.velocity.Command;
 import net.kyori.adventure.text.Component;
 
@@ -15,9 +15,9 @@ public class TestCommand extends Command<VelocityTestPlugin> {
     }
 
     @Override
-    public void execute(CommandContext<CommandSource> context) {
-        int test = context.args().getAsInt("test", -1);
-        context.sender().sendMessage(Component.text("Test command executed! " + test));
-        context.sender().sendMessage(Component.text(this.getUsage()));
+    public void execute(CommandSource sender, Arguments args) {
+        int test = args.getAsInt("test", -1);
+        sender.sendMessage(Component.text("Test command executed! " + test));
+        sender.sendMessage(Component.text(this.getUsage()));
     }
 }
