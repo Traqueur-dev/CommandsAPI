@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
  */
 public class OfflinePlayerArgument implements ArgumentConverter<OfflinePlayer>, TabCompleter {
 
+    @SuppressWarnings(value = "deprecation")
     /**
      * {@inheritDoc}
      * <p>

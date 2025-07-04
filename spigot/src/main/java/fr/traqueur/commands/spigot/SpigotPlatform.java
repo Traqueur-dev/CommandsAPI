@@ -18,6 +18,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * {@inheritDoc}
+ *
+ * The Spigot implementation of the CommandPlatform interface.
+ * This class handles the registration and management of commands in a Spigot environment.
+ *
+ * @param <T> The type of the JavaPlugin that this platform is associated with.
+ */
 public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, CommandSender> {
 
     private final T plugin;
@@ -27,6 +35,10 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
      */
     private CommandMap commandMap;
 
+    /**
+     * The command manager of the plugin.
+     * This is used to manage commands and their execution.
+     */
     private CommandManager<T, CommandSender> commandManager;
 
     /**
@@ -39,6 +51,12 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
      */
     private Constructor<? extends PluginCommand> pluginConstructor;
 
+    /**
+     * Constructor for the SpigotPlatform.
+     * Initializes the command map and plugin command constructor.
+     *
+     * @param plugin The JavaPlugin instance associated with this platform.
+     */
     public SpigotPlatform(T plugin) {
         this.plugin = plugin;
         try {
@@ -54,12 +72,17 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
     }
 
 
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public T getPlugin() {
         return this.plugin;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void injectManager(CommandManager<T, CommandSender> commandManager) {
         //noinspection unchecked
@@ -67,11 +90,17 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
         this.executor = new Executor<>(plugin, this.commandManager);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Logger getLogger() {
         return this.plugin.getLogger();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean hasPermission(CommandSender sender, String permission) {
         if (sender != null) {
@@ -80,6 +109,9 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void addCommand(Command<T, CommandSender> command, String label) {
         String[] labelParts = label.split("\\.");
@@ -125,6 +157,9 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void removeCommand(String label, boolean subcommand) {
         if(subcommand && this.commandMap.getCommand(label) != null) {

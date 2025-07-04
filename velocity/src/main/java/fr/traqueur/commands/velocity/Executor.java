@@ -1,6 +1,5 @@
 package fr.traqueur.commands.velocity;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.RawCommand;
 import com.velocitypowered.api.proxy.Player;
@@ -21,17 +20,44 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * The command executor for Velocity.
+ * This class implements the RawCommand interface and handles command execution and suggestions.
+ *
+ * @param <T> The type of the command manager.
+ */
 public class Executor<T> implements RawCommand {
 
+    /**
+     * The serializer used to convert legacy components to Adventure components.
+     */
     private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
+
+    /**
+     * The MiniMessage instance used for parsing messages.
+     */
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
+    /**
+     * The command manager that this executor uses to manage commands.
+     */
     private final CommandManager<T, CommandSource> manager;
 
+    /**
+     * Constructs a new Executor with the given command manager.
+     *
+     * @param manager The command manager to use for this executor.
+     */
     public Executor(CommandManager<T, CommandSource> manager) {
         this.manager = manager;
     }
 
+    /**
+     * Executes the command based on the provided invocation.
+     * It checks permissions, requirements, and executes the command if all conditions are met.
+     *
+     * @param invocation The invocation containing the command source and arguments.
+     */
     @Override
     public void execute(Invocation invocation) {
         CommandSource source = invocation.source();
@@ -109,6 +135,13 @@ public class Executor<T> implements RawCommand {
         }
     }
 
+    /**
+     * Suggests completions for the command based on the provided invocation.
+     * It checks the command label and returns a list of suggestions based on the current arguments.
+     *
+     * @param invocation The invocation containing the command source and arguments.
+     * @return A list of suggested completions for the command.
+     */
     @Override
     public List<String> suggest(Invocation invocation) {
         CommandSource source = invocation.source();
@@ -161,12 +194,26 @@ public class Executor<T> implements RawCommand {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Parses a message from legacy format to Adventure format.
+     *
+     * @param message The message in legacy format.
+     * @return The parsed message in Adventure format.
+     */
     private Component parse(String message) {
         Component legacy = SERIALIZER.deserialize(message);
         String asMini = MINI_MESSAGE.serialize(legacy);
         return MINI_MESSAGE.deserialize(asMini);
     }
 
+    /**
+     * Constructs a command label by appending the arguments to the base label.
+     *
+     * @param label The base command label.
+     * @param args The arguments to append.
+     * @param commandLabelSize The number of arguments to include in the label.
+     * @return The constructed command label.
+     */
     private String getCommandLabel(String label, String[] args, int commandLabelSize) {
         StringBuilder buffer = new StringBuilder();
         String labelLower = label.toLowerCase();

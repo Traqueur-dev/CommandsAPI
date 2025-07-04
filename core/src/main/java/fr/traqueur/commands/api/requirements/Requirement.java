@@ -3,7 +3,7 @@ package fr.traqueur.commands.api.requirements;
 /**
  * The interface Requirement.
  * <p>
- *     This interface is used to represent a requirement for commandsender externaly of command execution environement.
+ *     This interface is used to represent a requirement for commandsender externally of command execution environement.
  * </p>
  */
 public interface Requirement<T> {

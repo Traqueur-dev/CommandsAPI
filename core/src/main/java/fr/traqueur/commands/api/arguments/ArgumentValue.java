@@ -1,9 +1,19 @@
 package fr.traqueur.commands.api.arguments;
 
+/**
+ * Represents a value of an argument with its type.
+ * This class is used to store the type and value of an argument.
+ */
 public class ArgumentValue {
 
-    private Class<?> type;
-    private Object value;
+    /**
+     * The type of the argument.
+     */
+    private final Class<?> type;
+    /**
+     * The value of the argument.
+     */
+    private final Object value;
 
     public ArgumentValue(Class<?> type, Object value) {
         this.type = type;

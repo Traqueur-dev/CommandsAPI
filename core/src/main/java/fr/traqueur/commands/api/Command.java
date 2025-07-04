@@ -43,12 +43,12 @@ public abstract class Command<T, S> {
     /**
      * The arguments of the command.
      */
-    private final List<Argument> args;
+    private final List<Argument<S>> args;
 
     /**
      * The optional arguments of the command.
      */
-    private final List<Argument> optionalArgs;
+    private final List<Argument<S>> optionalArgs;
 
     /**
      * The requirements of the command.
@@ -190,7 +190,7 @@ public abstract class Command<T, S> {
      * This method is called to get the arguments of the command.
      * @return The arguments of the command.
      */
-    public final List<Argument> getArgs() {
+    public final List<Argument<S>> getArgs() {
         return args;
     }
 
@@ -198,7 +198,7 @@ public abstract class Command<T, S> {
      * This method is called to get the optional arguments of the command.
      * @return The optional arguments of the command.
      */
-    public final List<Argument> getOptinalArgs() {
+    public final List<Argument<S>> getOptinalArgs() {
         return optionalArgs;
     }
 
@@ -421,9 +421,9 @@ public abstract class Command<T, S> {
                 this.infiniteArgs = true;
             }
             if(opt) {
-                this.optionalArgs.add(new Argument(arg, converter));
+                this.optionalArgs.add(new Argument<>(arg, converter));
             } else {
-                this.args.add(new Argument(arg, converter));
+                this.args.add(new Argument<>(arg, converter));
             }
         } catch (ArgsWithInfiniteArgumentException e) {
             this.manager.getLogger().error(e.getMessage());

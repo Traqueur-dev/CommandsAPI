@@ -2,6 +2,11 @@ package fr.traqueur.commands.velocity;
 
 import com.velocitypowered.api.command.CommandSource;
 
+/**
+ * {@inheritDoc}
+ *
+ * This implementation of {@link fr.traqueur.commands.api.Command} is used to provide a command in Spigot.
+ */
 public abstract class Command<T> extends fr.traqueur.commands.api.Command<T, CommandSource> {
     /**
      * The constructor of the command.

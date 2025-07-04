@@ -21,12 +21,20 @@ import java.util.stream.Collectors;
 /**
  * This class is the command manager.
  * It allows you to register commands and subcommands.
- * It also allows you to register argument converters and tab completers.
+ * It also allows you to register argument converters and tab completer.
  */
 public abstract class CommandManager<T, S> {
 
-    
+    /**
+     * The parser used to separate the type of the argument from its name.
+     * <p> For example: "player:Player" will be parsed as "player" and "Player". </p>
+     */
     public static final String TYPE_PARSER = ":";
+
+    /**
+     * The parser used to separate the infinite argument from its name.
+     * <p> For example: "args:infinite" will be parsed as "args" and "infinite". </p>
+     */
     private static final String INFINITE = "infinite";
 
     private final CommandPlatform<T,S> platform;
@@ -42,7 +50,7 @@ public abstract class CommandManager<T, S> {
     private final Map<String, Map.Entry<Class<?>, ArgumentConverter<?>>> typeConverters;
 
     /**
-     * The tab completers registered in the command manager.
+     * The tab completer registered in the command manager.
      */
     private final Map<String, Map<Integer, TabCompleter<S>>> completers;
 
@@ -63,6 +71,10 @@ public abstract class CommandManager<T, S> {
     private boolean debug;
 
 
+    /**
+     * Create a new command manager.
+     * @param platform The platform of the command manager.
+     */
     public CommandManager(CommandPlatform<T,S> platform) {
         Updater.checkUpdates();
         this.platform = platform;
@@ -200,6 +212,37 @@ public abstract class CommandManager<T, S> {
     }
 
     /**
+     * Parse the arguments of the command.
+     * @param command The command to parse.
+     * @param args The arguments to parse.
+     * @return The arguments parsed.
+     * @throws TypeArgumentNotExistException If the type of the argument does not exist.
+     * @throws ArgumentIncorrectException If the argument is incorrect.
+     */
+    public Arguments parse(Command<T,S> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
+        Arguments arguments = new Arguments(this.logger);
+        List<Argument<S>> templates = command.getArgs();
+        for (int i = 0; i < templates.size(); i++) {
+            String input = args[i];
+            if (applyParsing(args, arguments, templates, i, input)) break;
+        }
+
+        List<Argument<S>> optArgs = command.getOptinalArgs();
+        if (optArgs.isEmpty()) {
+            return arguments;
+        }
+
+        for (int i = 0; i < optArgs.size(); i++) {
+            if (args.length > templates.size() + i) {
+                String input = args[templates.size() + i];
+                if (applyParsing(args, arguments, optArgs, i, input)) break;
+            }
+        }
+
+        return arguments;
+    }
+
+    /**
      * Get the commands of the command manager.
      * @return The commands of the command manager.
      */
@@ -217,34 +260,19 @@ public abstract class CommandManager<T, S> {
     }
 
     /**
-     * Parse the arguments of the command.
-     * @param command The command to parse.
-     * @param args The arguments to parse.
-     * @return The arguments parsed.
-     * @throws TypeArgumentNotExistException If the type of the argument does not exist.
-     * @throws ArgumentIncorrectException If the argument is incorrect.
+     * Get the platform of the command manager.
+     * @return The platform of the command manager.
      */
-    public Arguments parse(Command<T,S> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
-        Arguments arguments = new Arguments(this.logger);
-        List<Argument> templates = command.getArgs();
-        for (int i = 0; i < templates.size(); i++) {
-            String input = args[i];
-            if (applyParsing(args, arguments, templates, i, input)) break;
-        }
+    public CommandPlatform<T,S> getPlatform() {
+        return platform;
+    }
 
-        List<Argument> optArgs = command.getOptinalArgs();
-        if (optArgs.isEmpty()) {
-            return arguments;
-        }
-
-        for (int i = 0; i < optArgs.size(); i++) {
-            if (args.length > templates.size() + i) {
-                String input = args[templates.size() + i];
-                if (applyParsing(args, arguments, optArgs, i, input)) break;
-            }
-        }
-
-        return arguments;
+    /**
+     * Get the logger of the command manager.
+     * @return The logger of the command manager.
+     */
+    public Logger getLogger() {
+        return this.logger;
     }
 
     /**
@@ -307,8 +335,8 @@ public abstract class CommandManager<T, S> {
         if(this.isDebug()) {
             this.logger.info("Register command " + label);
         }
-        List<Argument> args = command.getArgs();
-        List<Argument> optArgs = command.getOptinalArgs();
+        List<Argument<S>> args = command.getArgs();
+        List<Argument<S>> optArgs = command.getOptinalArgs();
         String[] labelParts = label.split("\\.");
         int labelSize = labelParts.length;
 
@@ -349,9 +377,9 @@ public abstract class CommandManager<T, S> {
      * @param commandSize The size of the command.
      * @param args The arguments to register.
      */
-    private void addCompletionForArgs(String label, int commandSize, List<Argument> args) {
+    private void addCompletionForArgs(String label, int commandSize, List<Argument<S>> args) {
         for (int i = 0; i < args.size(); i++) {
-            Argument arg = args.get(i);
+            Argument<S> arg = args.get(i);
             String[] parts = arg.arg().split(TYPE_PARSER);
             String type = parts[1].trim();
             ArgumentConverter<?> converter = this.typeConverters.get(type).getValue();
@@ -398,7 +426,7 @@ public abstract class CommandManager<T, S> {
      * Check if the type of the argument exists.
      * @param args The arguments to check.
      */
-    private boolean checkTypeForArgs(List<Argument> args) throws TypeArgumentNotExistException {
+    private boolean checkTypeForArgs(List<Argument<S>> args) throws TypeArgumentNotExistException {
         for(String arg: args.stream().map(Argument::arg).collect(Collectors.toList())) {
             String[] parts = arg.split(TYPE_PARSER);
 
@@ -433,7 +461,7 @@ public abstract class CommandManager<T, S> {
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
      * @throws ArgumentIncorrectException If the argument is incorrect.
      */
-    private boolean applyParsing(String[] args, Arguments arguments, List<Argument> templates, int argIndex,
+    private boolean applyParsing(String[] args, Arguments arguments, List<Argument<S>> templates, int argIndex,
                                  String input) throws TypeArgumentNotExistException, ArgumentIncorrectException {
         String template = templates.get(argIndex).arg();
         String[] parts = template.split(TYPE_PARSER);
@@ -474,18 +502,10 @@ public abstract class CommandManager<T, S> {
      */
     private void registerInternalConverters() {
         this.registerConverter(String.class,  (s) -> s);
-        this.registerConverter(Boolean.class, new BooleanArgument());
+        this.registerConverter(Boolean.class, new BooleanArgument<>());
         this.registerConverter(Integer.class, new IntegerArgument());
         this.registerConverter(Double.class, new DoubleArgument());
         this.registerConverter(Long.class,  new LongArgument());
         this.registerConverter(String.class, INFINITE, s -> s);
-    }
-
-    public CommandPlatform<T,S> getPlatform() {
-        return platform;
-    }
-
-    public Logger getLogger() {
-        return this.logger;
     }
 }

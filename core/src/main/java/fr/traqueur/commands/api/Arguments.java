@@ -54,51 +54,120 @@ public class Arguments {
         return null;
     }
 
+    /**
+     * Get an argument from the map as an integer.
+     *
+     * @param argument The key of the argument.
+     * @param defaultValue The default value to return if the argument is not present.
+     * @return The integer or the default value if not present.
+     */
     public int getAsInt(String argument, int defaultValue) {
         Optional<Integer> value = this.getAsInt(argument);
         return value.orElse(defaultValue);
     }
 
+    /**
+     * Get an argument from the map as a double.
+     *
+     * @param argument The key of the argument.
+     * @param defaultValue The default value to return if the argument is not present.
+     * @return The double or the default value if not present.
+     */
     public double getAsDouble(String argument, double defaultValue) {
         Optional<Double> value = this.getAsDouble(argument);
         return value.orElse(defaultValue);
     }
 
+    /**
+     * Get an argument from the map as a boolean.
+     *
+     * @param argument The key of the argument.
+     * @param defaultValue The default value to return if the argument is not present.
+     * @return The boolean or the default value if not present.
+     */
     public boolean getAsBoolean(String argument, boolean defaultValue) {
         Optional<Boolean> value = this.getAsBoolean(argument);
         return value.orElse(defaultValue);
     }
 
+    /**
+     * Get an argument from the map as a string.
+     *
+     * @param argument The key of the argument.
+     * @param defaultValue The default value to return if the argument is not present.
+     * @return The string or the default value if not present.
+     */
     public String getAsString(String argument, String defaultValue) {
         Optional<String> value = this.getAsString(argument);
         return value.orElse(defaultValue);
     }
 
+    /**
+     * Get an argument from the map as a long.
+     *
+     * @param argument The key of the argument.
+     * @param defaultValue The default value to return if the argument is not present.
+     * @return The long or the default value if not present.
+     */
     public long getAsLong(String argument, long defaultValue) {
         Optional<Long> value = this.getAsLong(argument);
         return value.orElse(defaultValue);
     }
 
+    /**
+     * Get an argument from the map as a float.
+     *
+     * @param argument The key of the argument.
+     * @param defaultValue The default value to return if the argument is not present.
+     * @return The float or the default value if not present.
+     */
     public float getAsFloat(String argument, float defaultValue) {
         Optional<Float> value = this.getAsFloat(argument);
         return value.orElse(defaultValue);
     }
 
+    /**
+     * Get an argument from the map as a short.
+     *
+     * @param argument The key of the argument.
+     * @param defaultValue The default value to return if the argument is not present.
+     * @return The short or the default value if not present.
+     */
     public short getAsShort(String argument, short defaultValue) {
         Optional<Short> value = this.getAsShort(argument);
         return value.orElse(defaultValue);
     }
 
+    /**
+     * Get an argument from the map as a byte.
+     *
+     * @param argument The key of the argument.
+     * @param defaultValue The default value to return if the argument is not present.
+     * @return The byte or the default value if not present.
+     */
     public byte getAsByte(String argument, byte defaultValue) {
         Optional<Byte> value = this.getAsByte(argument);
         return value.orElse(defaultValue);
     }
 
+    /**
+     * Get an argument from the map as a character.
+     *
+     * @param argument The key of the argument.
+     * @param defaultValue The default value to return if the argument is not present.
+     * @return The character or the default value if not present.
+     */
     public char getAsChar(String argument, char defaultValue) {
         Optional<Character> value = this.getAsChar(argument);
         return value.orElse(defaultValue);
     }
 
+    /**
+     * Get an argument from the map as an integer.
+     *
+     * @param argument The key of the argument.
+     * @return The integer or empty if not present.
+     */
     public Optional<Integer> getAsInt(String argument) {
        try {
            return this.getAs(argument, String.class).map(Integer::parseInt);
@@ -107,6 +176,12 @@ public class Arguments {
        }
     }
 
+    /**
+     * Get an argument from the map as a double.
+     *
+     * @param argument The key of the argument.
+     * @return The double or empty if not present.
+     */
     public Optional<Double> getAsDouble(String argument) {
         try {
             return this.getAs(argument, String.class).map(Double::parseDouble);
@@ -115,14 +190,32 @@ public class Arguments {
         }
     }
 
+    /**
+     * Get an argument from the map as a boolean.
+     *
+     * @param argument The key of the argument.
+     * @return The boolean or empty if not present.
+     */
     public Optional<Boolean> getAsBoolean(String argument) {
         return this.getAs(argument, String.class).map(Boolean::parseBoolean);
     }
 
+    /**
+     * Get an argument from the map as a string.
+     *
+     * @param argument The key of the argument.
+     * @return The string or empty if not present.
+     */
     public Optional<String> getAsString(String argument) {
         return this.getAs(argument, String.class);
     }
 
+    /**
+     * Get an argument from the map as a long.
+     *
+     * @param argument The key of the argument.
+     * @return The long or empty if not present.
+     */
     public Optional<Long> getAsLong(String argument) {
        try {
            return this.getAs(argument, String.class).map(Long::parseLong);
@@ -131,6 +224,12 @@ public class Arguments {
        }
     }
 
+    /**
+     * Get an argument from the map as a float.
+     *
+     * @param argument The key of the argument.
+     * @return The float or empty if not present.
+     */
     public Optional<Float> getAsFloat(String argument) {
         try {
             return this.getAs(argument, String.class).map(Float::parseFloat);
@@ -139,6 +238,12 @@ public class Arguments {
         }
     }
 
+    /**
+     * Get an argument from the map as a short.
+     *
+     * @param argument The key of the argument.
+     * @return The short or empty if not present.
+     */
     public Optional<Short> getAsShort(String argument) {
         try {
             return this.getAs(argument, String.class).map(Short::parseShort);
@@ -147,6 +252,12 @@ public class Arguments {
         }
     }
 
+    /**
+     * Get an argument from the map as a byte.
+     *
+     * @param argument The key of the argument.
+     * @return The byte or empty if not present.
+     */
     public Optional<Byte> getAsByte(String argument) {
         try {
             return this.getAs(argument, String.class).map(Byte::parseByte);
@@ -155,15 +266,38 @@ public class Arguments {
         }
     }
 
+    /**
+     * Get an argument from the map as a character.
+     *
+     * @param argument The key of the argument.
+     * @return The character or empty if not present.
+     */
     public Optional<Character> getAsChar(String argument) {
         return this.getAs(argument, String.class).map(s -> s.charAt(0));
     }
 
+    /**
+     * Get an argument from the map as a specific type.
+     *
+     * @param argument The key of the argument.
+     * @param typeRef The type of the argument.
+     * @param defaultValue The default value to return if the argument is not present.
+     * @param <T> The type of the argument.
+     * @return The argument or the default value if not present.
+     */
     public <T> T getAs(String argument, Class<T> typeRef, T defaultValue) {
         Optional<T> value = this.getAs(argument, typeRef);
         return value.orElse(defaultValue);
     }
 
+    /**
+     * Get an argument from the map as optional.
+     *
+     * @param argument The key of the argument.
+     * @param typeRef The type of the argument.
+     * @param <T> The type of the argument.
+     * @return The argument.
+     */
     public <T> Optional<T> getAs(String argument, Class<T> typeRef) {
         if(typeRef.isPrimitive()) {
             throw new IllegalArgumentException("The type " + typeRef.getName() + " is a primitive type. You must use the primitive methode");
