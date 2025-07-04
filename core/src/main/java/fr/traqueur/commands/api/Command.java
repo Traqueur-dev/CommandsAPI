@@ -116,9 +116,10 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called when the command is executed.
-     * @param context The context of the command execution.
+     * @param sender The sender of the command.
+     * @param arguments The arguments of the command.
      */
-    public abstract void execute(CommandContext<S> context);
+    public abstract void execute(S sender, Arguments arguments);
 
     /**
      * This method is called to unregister the command.

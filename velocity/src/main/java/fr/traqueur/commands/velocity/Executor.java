@@ -125,7 +125,7 @@ public class Executor<T> implements RawCommand {
 
         try {
             Arguments arguments = this.manager.parse(commandFramework, modArgs);
-            commandFramework.execute(new VelocityCommandContext(source, arguments));
+            commandFramework.execute(source, arguments);
         } catch (TypeArgumentNotExistException e) {
             throw new RuntimeException(e);
         } catch (ArgumentIncorrectException e) {
@@ -172,7 +172,7 @@ public class Executor<T> implements RawCommand {
                 String.join(".", Arrays.copyOf(args, args.length - 1)))
                 .replaceFirst("^" + cmdLabel + "\\.", "");
 
-        List<String> completer = converter.onCompletion(new VelocityTabContext(source, Arrays.asList(argsBeforeString.split("\\."))))
+        List<String> completer = converter.onCompletion(source, Arrays.asList(argsBeforeString.split("\\.")))
                 .stream()
                 .filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg))
                 .toList();

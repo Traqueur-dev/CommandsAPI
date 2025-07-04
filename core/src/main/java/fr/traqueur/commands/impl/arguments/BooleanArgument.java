@@ -2,7 +2,6 @@ package fr.traqueur.commands.impl.arguments;
 
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.TabCompleter;
-import fr.traqueur.commands.api.arguments.TabContext;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,7 +29,7 @@ public class BooleanArgument<S> implements ArgumentConverter<Boolean>, TabComple
     }
 
     @Override
-    public List<String> onCompletion(TabContext<S> context) {
+    public List<String> onCompletion(S sender, List<String> args) {
         return Arrays.asList("true", "false");
     }
 }
