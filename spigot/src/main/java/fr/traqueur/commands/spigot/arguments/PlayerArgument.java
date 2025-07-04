@@ -1,8 +1,6 @@
 package fr.traqueur.commands.spigot.arguments;
 
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
-import fr.traqueur.commands.api.arguments.TabContext;
-import fr.traqueur.commands.spigot.arguments.completions.TabCompleter;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -13,7 +11,7 @@ import java.util.stream.Collectors;
 /**
  * Argument converter for {@link Player}.
  */
-public class PlayerArgument implements ArgumentConverter<Player>, TabCompleter {
+public class PlayerArgument implements ArgumentConverter<Player>, fr.traqueur.commands.api.arguments.TabCompleter<CommandSender> {
 
     /**
      * Creates a new PlayerArgument.
@@ -32,11 +30,10 @@ public class PlayerArgument implements ArgumentConverter<Player>, TabCompleter {
 
     /**
      * {@inheritDoc}
-     * <p>
      * This implementation returns a list of all online player names.
      */
     @Override
-    public List<String> onCompletion(TabContext<CommandSender> context) {
+    public List<String> onCompletion(CommandSender sender, List<String> args) {
         return Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList());
     }
 }

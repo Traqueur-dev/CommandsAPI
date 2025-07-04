@@ -1,6 +1,6 @@
 package fr.traqueur.testplugin;
 
-import fr.traqueur.commands.api.CommandContext;
+import fr.traqueur.commands.api.Arguments;
 import fr.traqueur.commands.spigot.Command;
 import org.bukkit.command.CommandSender;
 
@@ -14,9 +14,9 @@ public class TestCommand extends Command<TestPlugin> {
     }
 
     @Override
-    public void execute(CommandContext<CommandSender> context) {
-        int test = context.args().getAsInt("test", -1);
-        context.sender().sendMessage("Test command executed! " + test);
-        context.sender().sendMessage(this.getUsage());
+    public void execute(CommandSender sender, Arguments arguments) {
+        int test = arguments.getAsInt("test", -1);
+        sender.sendMessage("Test command executed! " + test);
+        sender.sendMessage(this.getUsage());
     }
 }

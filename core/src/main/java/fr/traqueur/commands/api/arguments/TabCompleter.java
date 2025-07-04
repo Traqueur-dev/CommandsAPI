@@ -15,9 +15,10 @@ public interface TabCompleter<S> {
     /**
      * This method is called when the tabulation is used.
      * It is used to get the completion of the command.
-     * @param context The context of the command.
+     * @param sender The sender that will use this tab completer.
+     * @param args The arguments of the command.
      * @return The completion of the command.
      */
-    List<String> onCompletion(TabContext<S> context);
+    List<String> onCompletion(S sender, List<String> args);
 
 }

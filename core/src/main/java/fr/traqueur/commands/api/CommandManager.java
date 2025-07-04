@@ -370,7 +370,7 @@ public abstract class CommandManager<T, S> {
             }
             currentLabel.append(labelParts[i]);
             String completionPart = labelParts[i + 1];
-            this.addCompletion(currentLabel.toString(), i + 1, (context) -> new ArrayList<>(Collections.singleton(completionPart)));
+            this.addCompletion(currentLabel.toString(), i + 1, (s, args) -> new ArrayList<>(Collections.singleton(completionPart)));
         }
     }
 
@@ -394,7 +394,7 @@ public abstract class CommandManager<T, S> {
                 TabCompleter<S> tabCompleter = (TabCompleter<S>) converter;
                 this.addCompletion(label,commandSize + i, tabCompleter);
             } else {
-                this.addCompletion(label, commandSize + i, (context) -> new ArrayList<>());
+                this.addCompletion(label, commandSize + i, (s, argsInner) -> new ArrayList<>());
             }
         }
     }
@@ -412,9 +412,9 @@ public abstract class CommandManager<T, S> {
         TabCompleter<S> existing = mapInner.get(commandSize);
 
         if (existing != null) {
-            combined = context -> {
-                List<String> completions = new ArrayList<>(existing.onCompletion(context));
-                completions.addAll(converter.onCompletion(context));
+            combined = (s,args) -> {
+                List<String> completions = new ArrayList<>(existing.onCompletion(s,args));
+                completions.addAll(converter.onCompletion(s,args));
                 return completions;
             };
         } else {
