@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
  * This class is the command manager.
  * It allows you to register commands and subcommands.
  * It also allows you to register argument converters and tab completer.
+ * @param <T> The type of the platform that will use this command manager.
+ * @param <S> The type of the sender that will use this command manager.
  */
 public abstract class CommandManager<T, S> {
 
@@ -203,6 +205,7 @@ public abstract class CommandManager<T, S> {
     /**
      * Register an argument converter in the command manager.
      * @param typeClass The class of the type.
+     * @param type The type of the argument.
      * @param converter The converter of the argument.
      * @param <C> The type of the argument.
      */

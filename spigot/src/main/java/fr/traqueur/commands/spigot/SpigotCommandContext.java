@@ -5,8 +5,6 @@ import fr.traqueur.commands.api.CommandContext;
 import org.bukkit.command.CommandSender;
 
 /**
- * {@inheritDoc}
- *
  * Represents the context of a command in a Spigot environment.
  * This class extends the CommandContext with CommandSender as the sender type.
  */

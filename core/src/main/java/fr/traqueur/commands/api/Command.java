@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
  * It contains all the necessary methods to create a command.
  * It is abstract and must be inherited to be used.
  * @param <T> The plugin that owns the command.
+ * @param <S> The type of the sender who use the command.
  */
 public abstract class Command<T, S> {
 
@@ -310,6 +311,10 @@ public abstract class Command<T, S> {
         }
     }
 
+    /**
+     * This method is called to add arguments to the command.
+     * @param arg The argument to add.
+     */
     public final void addArgs(String arg) {
         if(!arg.contains(CommandManager.TYPE_PARSER)) {
             this.addArgs(arg, String.class, null);
@@ -318,10 +323,20 @@ public abstract class Command<T, S> {
         }
     }
 
+    /**
+     * This method is called to add arguments to the command.
+     * @param arg The argument to add.
+     * @param type The type of the argument to add.
+     */
     public final void addArgs(String arg, Class<?> type) {
         this.addArgs(arg, type,null);
     }
 
+    /**
+     * This method is called to add arguments to the command.
+     * @param arg The argument to add.
+     * @param converter The converter of the argument.
+     */
     public final void addArgs(String arg, TabCompleter<S> converter) {
         if(!arg.contains(CommandManager.TYPE_PARSER)) {
             this.addArgs(arg, String.class, converter);
@@ -334,6 +349,7 @@ public abstract class Command<T, S> {
      * This method is called to add arguments to the command.
      * @param arg The argument to add.
      * @param converter The converter of the argument.
+     * @param type The type of the argument, can be null if the argument is a string.
      */
     public final void addArgs(String arg, Class<?> type, TabCompleter<S> converter) {
         if (arg.contains(CommandManager.TYPE_PARSER) && type != null) {
@@ -375,6 +391,10 @@ public abstract class Command<T, S> {
         }
     }
 
+    /**
+     * This method is called to add optional arguments to the command.
+     * @param arg The argument to add.
+     */
     public final void addOptionalArgs(String arg) {
         if (!arg.contains(CommandManager.TYPE_PARSER)) {
             this.addOptionalArgs(arg, String.class, null);
@@ -383,10 +403,20 @@ public abstract class Command<T, S> {
         this.addOptionalArgs(arg, null, null);
     }
 
+    /**
+     * This method is called to add optional arguments to the command.
+     * @param arg The argument to add.
+     * @param type The type of the argument to add.
+     */
     public final void addOptionalArgs(String arg, Class<?> type) {
         this.addOptionalArgs(arg, type,null);
     }
 
+    /**
+     * This method is called to add optional arguments to the command.
+     * @param arg The argument to add.
+     * @param converter The converter of the argument.
+     */
     public final void addOptionalArgs(String arg, TabCompleter<S> converter) {
         if (!arg.contains(CommandManager.TYPE_PARSER)) {
             this.addOptionalArgs(arg, String.class, converter);
@@ -398,6 +428,7 @@ public abstract class Command<T, S> {
     /**
      * This method is called to add arguments to the command.
      * @param arg The argument to add.
+     * @param type The type of the argument to add.
      * @param converter The converter of the argument.
      */
     public final void addOptionalArgs(String arg, Class<?> type, TabCompleter<S> converter) {
@@ -456,6 +487,9 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to generate a default usage for the command.
+     * @param platform The platform of the command.
+     * @param sender The sender of the command.
+     * @param label The label of the command.
      * @return The default usage of the command.
      */
     public String generateDefaultUsage(CommandPlatform<T,S> platform, S sender, String label) {

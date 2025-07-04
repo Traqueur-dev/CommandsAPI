@@ -10,8 +10,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 /**
- * {@inheritDoc}
- *
  * The Spigot implementation of the CommandPlatform interface.
  * This class handles the registration and management of commands in a Spigot environment.
  *

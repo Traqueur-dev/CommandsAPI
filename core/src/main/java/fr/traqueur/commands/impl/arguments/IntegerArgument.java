@@ -9,6 +9,11 @@ import fr.traqueur.commands.api.arguments.ArgumentConverter;
 public class IntegerArgument implements ArgumentConverter<Integer> {
 
     /**
+     * Default constructor.
+     */
+    public IntegerArgument() {}
+
+    /**
      * Converts a string to an integer.
      *
      * @param input the string to convert

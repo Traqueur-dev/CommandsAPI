@@ -3,6 +3,7 @@ package fr.traqueur.commands.api.arguments;
 /**
  * The class Argument.
  * <p> This class is used to represent an argument of a command. </p>
+ * @param <S> The type of the sender that will use this argument.
  */
 public class Argument<S> {
 
@@ -26,6 +27,7 @@ public class Argument<S> {
      * Constructor for Argument.
      *
      * @param arg The argument name.
+     * @param tabCompleter The tab completer for this argument.
      */
     public Argument(String arg, TabCompleter<S> tabCompleter) {
         this.arg = arg;
