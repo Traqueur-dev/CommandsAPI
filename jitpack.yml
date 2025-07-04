@@ -3,4 +3,4 @@ jdk:
 
 build:
   commands:
-    - ./gradlew core:publishToMavenLocal spigot:publishToMavenLocal
+    - ./gradlew core:publishToMavenLocal spigot:publishToMavenLocal velocity:publishToMavenLocal
