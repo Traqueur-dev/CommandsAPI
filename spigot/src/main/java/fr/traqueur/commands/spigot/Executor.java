@@ -11,7 +11,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -73,7 +72,7 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
      * @return If the command is executed.
      */
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull org.bukkit.command.Command command, @NotNull String label, @NotNull String[] args) {
+    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
         if (!this.plugin.isEnabled()) {
             return false;
         }
@@ -165,7 +164,7 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
      * @return The list of completions.
      */
     @Override
-    public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull org.bukkit.command.Command command, @NotNull String label, String[] args) {
+    public List<String> onTabComplete(CommandSender commandSender, org.bukkit.command.Command command, String label, String[] args) {
         String arg = args[args.length-1];
 
         String labelLower = this.parseLabel(label);
@@ -199,7 +198,7 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
         List<String> completer = converter.onCompletion(new SpigotTabContext(commandSender, Arrays.asList(argsBeforeString.split("\\."))))
                 .stream()
                 .filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg))
-                .toList();
+                .collect(Collectors.toList());
 
         String finalCmdLabel = cmdLabel;
         return completer.stream().filter(str -> {
