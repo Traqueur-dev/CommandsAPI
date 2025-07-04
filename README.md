@@ -1,40 +1,63 @@
 # CommandsAPI
 
-CommandsAPI is a powerful and flexible Java library for creating and managing commands in Bukkit/Spigot plugins. It provides a robust framework for handling command arguments, permissions, subcommands, and auto-completion, making it easier to build complex command structures in your Minecraft plugins.
+**CommandsAPI** is a modular, extensible Java library for building robust, typed command systems across multiple platforms such as **Spigot** and **Velocity**. 
+As of version `4.0.0`, all core logic has been extracted into a dedicated `core` module, enabling seamless multi-platform support.
 
-## Features
+---
 
-- **Customizable Commands:** Easily create commands with custom arguments, descriptions, usage, and permissions.
-- **Subcommands Support:** Organize your commands with subcommands and handle complex command structures effortlessly.
-- **Argument Handling:** Support for various argument types including custom types and auto-completion for a better user experience.
-- **Permissions and Aliases:** Define permissions and aliases for your commands to control access and provide alternative command names.
-- **In-Game/Console Command Support:** Specify whether a command can only be executed in-game or from the console.
-- **Commands Requirements:** Set requirements for commands to be executed, use specific conditions like in specific world.
+## ✨ Features
 
-## Getting Started
+* ✅ **Multi-Platform Support** (Spigot, Velocity, etc.)
+* ✅ **Typed Argument Parsing** with validation
+* ✅ **Custom Argument Converters**
+* ✅ **Subcommands & Hierarchical Command Trees**
+* ✅ **Tab Completion Support**
+* ✅ **Permission & Context Requirements**
+* ✅ **Optional and Infinite Arguments**
+* ✅ **Auto-Generated Usage Help**
+* ✅ **Lightweight, Fast, and Fully Extensible**
 
-### Prerequisites
+---
 
-- **Java 21** or higher
-- **Paper/Spigot API** - Compatible with various Minecraft server versions
-- **CommandsAPI Library** - Add it to your project dependencies
+## 🧱 Project Structure
 
-### Installation
+```
+traqueur-dev-commandsapi/
+├── core/                    # Platform-agnostic command logic
+├── spigot/                  # Spigot implementation
+├── <platform>-test-plugin/  # The test plugin for the specified platform
+└── velocity/                # Velocity implementation
+```
 
-To use CommandsAPI in your project, add the dependency to your build configuration. For Maven, include:
+---
 
-#### For Gradle include 
+## 🚀 Getting Started
+
+### ✅ Requirements
+
+* Java 21+
+* A supported Minecraft platform (e.g., Spigot or Velocity)
+* Build tool (Gradle/Maven) with JitPack
+
+---
+
+## 📦 Installation
+
+### Gradle
+
 ```groovy
 repositories {
     maven { url 'https://jitpack.io' }
 }
+
 dependencies {
-    implementation 'com.github.Traqueur-dev:CommandsAPI:VERSION'
+    implementation 'com.github.Traqueur-dev.CommandsAPI:platform-spigot:4.0.0' // or platform-velocity
 }
 ```
 
-#### For Maven include
-```xml 
+### Maven
+
+```xml
 <repositories>
     <repository>
         <id>jitpack.io</id>
@@ -44,22 +67,26 @@ dependencies {
 
 <dependencies>
     <dependency>
-        <groupId>com.github.Traqueur-dev</groupId>
-        <artifactId>CommandsAPI</artifactId>
-        <version>VERSION</version>
+        <groupId>com.github.Traqueur-dev.CommandsAPI</groupId>
+        <artifactId>platform-spigot</artifactId> <!-- or platform-velocity -->
+        <version>4.0.0</version>
     </dependency>
 </dependencies>
 ```
-Be sure to relocate commandsAPI in to prevent bugs with other plugins.
 
-### Basic Usage
+> ⚠️ **Relocate** the library when shading it into your plugin to avoid version conflicts with other plugins.
 
-To get started with CommandsAPI, create a new command by extending the `Command<T extends JavaPlugin>` class. Here’s a simple example:
+---
+
+## 💡 Example (Spigot)
+
+Be sure to extends all the classes from the platform you are using (Spigot, Velocity, etc.):
+`fr.traqueur.commandsapi.spigot.CommandManager` for Spigot, `fr.traqueur.commandsapi.velocity.CommandManager` for Velocity, etc.
 
 ```java
 public class HelloWorldCommand extends Command<MyPlugin> {
 
-    public HelloWorldCommand(JavaPlugin plugin) {
+    public HelloWorldCommand(MyPlugin plugin) {
         super(plugin, "helloworld");
         setDescription("A simple hello world command");
         setUsage("/helloworld");
@@ -72,41 +99,76 @@ public class HelloWorldCommand extends Command<MyPlugin> {
 }
 ```
 
-Register the command in your plugin's `onEnable` method:
+Register the command:
 
 ```java
-public class MyPlugin extends JavaPlugin {
-
-    @Override
-    public void onEnable() {
-        CommandManager<MyPlugin> commandManager = new CommandManager<>(this);
-        commandManager.registerCommands(new HelloWorldCommand(this));
-    }
+@Override
+public void onEnable() {
+    CommandManager<MyPlugin> manager = new CommandManager<>(/*args depending of the platform*/);
+    manager.registerCommand(new HelloWorldCommand(this));
 }
 ```
 
-### Documentation
+---
 
-For detailed documentation and usage examples, visit me [Wiki](https://github.com/Traqueur-dev/CommandsAPI/wiki).
+## 🧠 Add New Platform Support
 
-## Contributing
+You can create your own adapter by implementing:
 
-We welcome contributions to the CommandsAPI project! If you would like to contribute, please follow these steps:
+```java
+public interface CommandPlatform<T, S> {
+    T getPlugin();
+    void injectManager(CommandManager<T, S> manager);
+    Logger getLogger();
+    boolean hasPermission(S sender, String permission);
+    void addCommand(Command<T, S> command, String label);
+    void removeCommand(String label, boolean subcommand);
+}
+```
 
-1. Fork the repository.
-2. Create a new branch for your changes.
-3. Commit your changes with clear and concise commit messages.
-4. Push your changes to your fork.
-5. Create a pull request with a description of your changes.
-
-## License
-
-CommandsAPI is licensed under the [MIT License](LICENSE). See the LICENSE file for more details.
-
-## Contact
-
-For any questions or support, please open an issue on the [GitHub repository](https://github.com/Traqueur-dev/CommandsAPI/issues).
+This allows support for new platforms like Fabric, Minestom, or BungeeCord.
 
 ---
 
-Happy coding and enjoy building your Minecraft plugins with CommandsAPI!
+## 🛠️ Local Development
+
+To publish locally for development:
+
+```bash
+./gradlew core:publishToMavenLocal platform-spigot:publishToMavenLocal platform-velocity:publishToMavenLocal
+```
+
+---
+
+## 📚 Documentation
+
+Visit the [Wiki](https://github.com/Traqueur-dev/CommandsAPI/wiki) for:
+
+* Tutorials
+* Examples
+* API Reference
+* Extending with custom types and logic
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions!
+
+1. Fork this repository
+2. Create a new branch
+3. Implement your feature or fix
+4. Open a pull request with a clear description
+
+---
+
+## 📄 License
+
+CommandsAPI is licensed under the [MIT License](LICENSE).
+
+---
+
+## 💬 Support
+
+Need help or want to report a bug?
+Open an issue on [GitHub](https://github.com/Traqueur-dev/CommandsAPI/issues)
