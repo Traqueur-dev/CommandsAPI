@@ -14,6 +14,11 @@ import java.util.logging.Logger;
 public class Updater {
 
     /**
+     * Private constructor to prevent instantiation
+     */
+    private Updater() {}
+
+    /**
      * Check if the plugin is up to date and log a warning if it's not
      */
     public static void checkUpdates() {

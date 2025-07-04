@@ -9,6 +9,11 @@ import fr.traqueur.commands.api.logging.MessageHandler;
 public class InternalMessageHandler implements MessageHandler {
 
     /**
+     * Default constructor for the InternalMessageHandler.
+     */
+    public InternalMessageHandler() {}
+
+    /**
      * {@inheritDoc}
      */
     @Override

@@ -16,6 +16,11 @@ import java.util.stream.Collectors;
  */
 public class OfflinePlayerArgument implements ArgumentConverter<OfflinePlayer>, TabCompleter {
 
+    /**
+     * Creates a new OfflinePlayerArgument.
+     */
+    public OfflinePlayerArgument() {}
+
     @SuppressWarnings(value = "deprecation")
     /**
      * {@inheritDoc}

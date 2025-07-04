@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 /**
  * Represents the executor of the commands.
+ * @param <T> The type of the plugin that owns the executor.
  */
 public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.command.TabCompleter {
 

@@ -10,8 +10,16 @@ import java.util.List;
 /**
  * BooleanArgument is the argument that allow to get a boolean from a string.
  * It's used in the CommandManager to get a boolean from a string.
+ * @param <S> the type of the sender
  */
-public class BooleanArgument<T> implements ArgumentConverter<Boolean>, TabCompleter<T> {
+public class BooleanArgument<S> implements ArgumentConverter<Boolean>, TabCompleter<S> {
+
+    /**
+     * Creates a new BooleanArgument.
+     */
+    public BooleanArgument() {
+        // Default constructor
+    }
 
     @Override
     public Boolean apply(String s) {
@@ -22,7 +30,7 @@ public class BooleanArgument<T> implements ArgumentConverter<Boolean>, TabComple
     }
 
     @Override
-    public List<String> onCompletion(TabContext<T> context) {
+    public List<String> onCompletion(TabContext<S> context) {
         return Arrays.asList("true", "false");
     }
 }

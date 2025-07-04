@@ -16,6 +16,11 @@ import java.util.stream.Collectors;
 public class PlayerArgument implements ArgumentConverter<Player>, TabCompleter {
 
     /**
+     * Creates a new PlayerArgument.
+     */
+    public PlayerArgument() {}
+
+    /**
      * {@inheritDoc}
      * <p>
      * This implementation uses {@link Bukkit#getPlayer(String)} to convert the input to a player.

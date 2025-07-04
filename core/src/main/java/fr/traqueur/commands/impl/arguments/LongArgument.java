@@ -9,6 +9,11 @@ import fr.traqueur.commands.api.arguments.ArgumentConverter;
 public class LongArgument implements ArgumentConverter<Long> {
 
     /**
+     * Default constructor.
+     */
+    public LongArgument() {}
+
+    /**
      * Convert a string to a long.
      *
      * @param input the string to convert

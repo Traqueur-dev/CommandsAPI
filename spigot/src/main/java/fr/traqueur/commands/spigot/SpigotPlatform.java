@@ -19,8 +19,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * {@inheritDoc}
- *
  * The Spigot implementation of the CommandPlatform interface.
  * This class handles the registration and management of commands in a Spigot environment.
  *
@@ -28,6 +26,10 @@ import java.util.stream.Collectors;
  */
 public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, CommandSender> {
 
+    /**
+     * The plugin instance associated with this platform.
+     * This is used to access the plugin's methods and properties.
+     */
     private final T plugin;
 
     /**
