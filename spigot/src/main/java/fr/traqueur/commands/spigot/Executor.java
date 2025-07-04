@@ -41,6 +41,13 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
     }
 
 
+    /**
+     * Get the command label from the label and the arguments.
+     * @param label The label of the command.
+     * @param args The arguments of the command.
+     * @param commandLabelSize The size of the command label.
+     * @return The command label.
+     */
     private String getCommandLabel(String label, String[] args, int commandLabelSize) {
         StringBuilder buffer = new StringBuilder();
         String labelLower = label.toLowerCase();
@@ -51,6 +58,11 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
         return buffer.toString();
     }
 
+    /**
+     * Parse the label of the command.
+     * @param label The label of the command.
+     * @return The parsed label or null if the label is not valid.
+     */
     private String parseLabel(String label) {
         String labelLower = label.toLowerCase();
         if(labelLower.contains(":")) {
