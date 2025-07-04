@@ -1,7 +1,8 @@
-package fr.traqueur.commands.impl.arguments;
+package fr.traqueur.commands.spigot.arguments;
 
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
-import fr.traqueur.commands.api.arguments.TabCompleter;
+import fr.traqueur.commands.api.arguments.TabContext;
+import fr.traqueur.commands.spigot.arguments.completions.TabCompleter;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -31,7 +32,7 @@ public class OfflinePlayerArgument implements ArgumentConverter<OfflinePlayer>, 
      * This implementation returns a list of all player names.
      */
     @Override
-    public List<String> onCompletion(CommandSender sender, List<String> args) {
+    public List<String> onCompletion(TabContext<CommandSender> context) {
         return Arrays.stream(Bukkit.getServer().getOfflinePlayers()).map(OfflinePlayer::getName).collect(Collectors.toList());
     }
 }

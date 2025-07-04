@@ -1,4 +1,4 @@
-package fr.traqueur.commands.impl.requirements;
+package fr.traqueur.commands.spigot.requirements;
 
 import fr.traqueur.commands.api.requirements.Requirement;
 import org.bukkit.Location;
@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
  *     The zone is defined by two locations.
  * </p>
  */
-public class ZoneRequirement implements Requirement {
+public class ZoneRequirement implements Requirement<CommandSender> {
 
     /**
      * Create a new zone requirement.

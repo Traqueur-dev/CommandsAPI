@@ -2,7 +2,7 @@ package fr.traqueur.commands.impl.arguments;
 
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.TabCompleter;
-import org.bukkit.command.CommandSender;
+import fr.traqueur.commands.api.arguments.TabContext;
 
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
  * BooleanArgument is the argument that allow to get a boolean from a string.
  * It's used in the CommandManager to get a boolean from a string.
  */
-public class BooleanArgument implements ArgumentConverter<Boolean>, TabCompleter {
+public class BooleanArgument<T> implements ArgumentConverter<Boolean>, TabCompleter<T> {
 
     @Override
     public Boolean apply(String s) {
@@ -22,7 +22,7 @@ public class BooleanArgument implements ArgumentConverter<Boolean>, TabCompleter
     }
 
     @Override
-    public List<String> onCompletion(CommandSender sender, List<String> args) {
+    public List<String> onCompletion(TabContext<T> context) {
         return Arrays.asList("true", "false");
     }
 }

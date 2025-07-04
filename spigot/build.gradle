@@ -1,0 +1,12 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = "spigot"
+
+dependencies {
+    implementation(rootProject)
+    compileOnly "org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT"
+}
+

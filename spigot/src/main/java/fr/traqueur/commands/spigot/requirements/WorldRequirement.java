@@ -1,4 +1,4 @@
-package fr.traqueur.commands.impl.requirements;
+package fr.traqueur.commands.spigot.requirements;
 
 import fr.traqueur.commands.api.requirements.Requirement;
 import org.bukkit.Bukkit;
@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
  *     This class is used to represent a world requirement.
  * </p>
  */
-public class WorldRequirement implements Requirement {
+public class WorldRequirement implements Requirement<CommandSender> {
 
     /**
      * Create a new world requirement.

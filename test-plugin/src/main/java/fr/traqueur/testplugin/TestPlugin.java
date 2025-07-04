@@ -1,6 +1,6 @@
 package fr.traqueur.testplugin;
 
-import fr.traqueur.commands.api.CommandManager;
+import fr.traqueur.commands.spigot.CommandManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class TestPlugin extends JavaPlugin {

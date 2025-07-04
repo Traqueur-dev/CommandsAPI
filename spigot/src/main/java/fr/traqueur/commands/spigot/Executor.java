@@ -1,5 +1,8 @@
-package fr.traqueur.commands.api;
+package fr.traqueur.commands.spigot;
 
+import fr.traqueur.commands.api.Arguments;
+import fr.traqueur.commands.api.Command;
+import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
@@ -8,6 +11,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,14 +29,14 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
     /**
      * The command manager.
      */
-    private final CommandManager<T> commandManager;
+    private final CommandManager<T, CommandSender> commandManager;
 
     /**
      * The constructor of the executor.
      * @param plugin The plugin that owns the executor.
      * @param commandManager The command manager.
      */
-    public Executor(T plugin, CommandManager<T> commandManager) {
+    public Executor(T plugin, CommandManager<T, CommandSender> commandManager) {
         this.plugin = plugin;
         this.commandManager = commandManager;
     }
@@ -69,7 +73,7 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
      * @return If the command is executed.
      */
     @Override
-    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull org.bukkit.command.Command command, @NotNull String label, @NotNull String[] args) {
         if (!this.plugin.isEnabled()) {
             return false;
         }
@@ -80,10 +84,10 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
             return false;
         }
 
-        Map<String, Command<T>> commands = this.commandManager.getCommands();
+        Map<String, Command<T, CommandSender>> commands = this.commandManager.getCommands();
 
         String cmdLabel = "";
-        Command<T> commandFramework = null;
+        Command<T, CommandSender> commandFramework = null;
         for (int i = args.length; i >= 0; i--) {
             cmdLabel = getCommandLabel(labelLower, args, i);
             commandFramework = commands.getOrDefault(cmdLabel, null);
@@ -106,8 +110,8 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
             return true;
         }
 
-        List<Requirement> requirements = commandFramework.getRequirements();
-        for (Requirement requirement : requirements) {
+        List<Requirement<CommandSender>> requirements = commandFramework.getRequirements();
+        for (Requirement<CommandSender> requirement : requirements) {
             if (!requirement.check(sender)) {
                 String error = requirement.errorMessage().isEmpty()
                         ? this.commandManager.getMessageHandler().getRequirementMessage()
@@ -124,7 +128,7 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
 
         if (modArgs.length < commandFramework.getArgs().size()) {
             String usage = commandFramework.getUsage().equalsIgnoreCase("")
-                    ? commandFramework.generateDefaultUsage(sender, cmdLabel)
+                    ? commandFramework.generateDefaultUsage(this.commandManager.getPlatform(), sender, cmdLabel)
                     : commandFramework.getUsage();
             sender.sendMessage(ChatColor.translateAlternateColorCodes('&', usage));
             return true;
@@ -132,7 +136,7 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
 
         if (!commandFramework.isInfiniteArgs() && (modArgs.length > commandFramework.getArgs().size() + commandFramework.getOptinalArgs().size())) {
             String usage = commandFramework.getUsage().equalsIgnoreCase("")
-                    ? commandFramework.generateDefaultUsage(sender, cmdLabel)
+                    ? commandFramework.generateDefaultUsage(this.commandManager.getPlatform(),sender, cmdLabel)
                     : commandFramework.getUsage();
             sender.sendMessage(ChatColor.translateAlternateColorCodes('&', usage));
             return true;
@@ -140,7 +144,7 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
 
         try {
             Arguments arguments = this.commandManager.parse(commandFramework, modArgs);
-            commandFramework.execute(sender, arguments);
+            commandFramework.execute(new SpigotCommandContext(sender, arguments));
         } catch (TypeArgumentNotExistException e) {
             throw new RuntimeException(e);
         } catch (ArgumentIncorrectException e) {
@@ -161,7 +165,7 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
      * @return The list of completions.
      */
     @Override
-    public List<String> onTabComplete(CommandSender commandSender, org.bukkit.command.Command command, String label, String[] args) {
+    public List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull org.bukkit.command.Command command, @NotNull String label, String[] args) {
         String arg = args[args.length-1];
 
         String labelLower = this.parseLabel(label);
@@ -169,11 +173,11 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
             return Collections.emptyList();
         }
 
-        Map<String, Map<Integer, TabCompleter>> completers = this.commandManager.getCompleters();
-        Map<String, Command<T>> commands = this.commandManager.getCommands();
+        Map<String, Map<Integer, TabCompleter<CommandSender>>> completers = commandManager.getCompleters();
+        Map<String, Command<T, CommandSender>> commands = this.commandManager.getCommands();
 
         String cmdLabel = "";
-        Map<Integer, TabCompleter> map = null;
+        Map<Integer, TabCompleter<CommandSender>> map = null;
         for (int i = args.length; i >= 0; i--) {
             cmdLabel = getCommandLabel(labelLower, args, i);
             map = completers.getOrDefault(cmdLabel, null);
@@ -186,23 +190,24 @@ public class Executor<T extends Plugin> implements CommandExecutor, org.bukkit.c
             return Collections.emptyList();
         }
 
-        TabCompleter converter = map.get(args.length);
+        TabCompleter<CommandSender> converter = map.get(args.length);
         String argsBeforeString = (label +
                 "." +
                 String.join(".", Arrays.copyOf(args, args.length - 1)))
                 .replaceFirst("^" + cmdLabel + "\\.", "");
 
-        List<String> completer = converter.onCompletion(commandSender, Arrays.asList(argsBeforeString.split("\\."))).stream()
+        List<String> completer = converter.onCompletion(new SpigotTabContext(commandSender, Arrays.asList(argsBeforeString.split("\\."))))
+                .stream()
                 .filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg))
-                .collect(Collectors.toList());
+                .toList();
 
         String finalCmdLabel = cmdLabel;
         return completer.stream().filter(str -> {
             String cmdLabelInner = finalCmdLabel + "." + str.toLowerCase();
             if(commands.containsKey(cmdLabelInner)) {
-                Command<?> frameworkCommand = commands.get(cmdLabelInner);
-                List<Requirement> requirements = frameworkCommand.getRequirements();
-                for (Requirement requirement : requirements) {
+                Command<?, CommandSender> frameworkCommand = commands.get(cmdLabelInner);
+                List<Requirement<CommandSender>> requirements = frameworkCommand.getRequirements();
+                for (Requirement<CommandSender> requirement : requirements) {
                     if (!requirement.check(commandSender)) {
                         return false;
                     }

@@ -4,8 +4,6 @@ import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgsWithInfiniteArgumentException;
 import fr.traqueur.commands.api.requirements.Requirement;
-import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,9 +16,9 @@ import java.util.stream.Collectors;
  * It is abstract and must be inherited to be used.
  * @param <T> The plugin that owns the command.
  */
-public abstract class Command<T extends Plugin> {
+public abstract class Command<T, S> {
 
-    private CommandManager<T> manager;
+    private CommandManager<T, S> manager;
 
     /**
      * The plugin that owns the command.
@@ -40,7 +38,7 @@ public abstract class Command<T extends Plugin> {
     /**
      * The subcommands of the command.
      */
-    private final List<Command<T>> subcommands;
+    private final List<Command<T, S>> subcommands;
 
     /**
      * The arguments of the command.
@@ -55,7 +53,7 @@ public abstract class Command<T extends Plugin> {
     /**
      * The requirements of the command.
      */
-    private final List<Requirement> requirements;
+    private final List<Requirement<S>> requirements;
 
     /**
      * The description of the command.
@@ -111,16 +109,15 @@ public abstract class Command<T extends Plugin> {
      * This method is called to set the manager of the command.
      * @param manager The manager of the command.
      */
-    protected void setManager(CommandManager<T> manager) {
+    protected void setManager(CommandManager<T, S> manager) {
         this.manager = manager;
     }
 
     /**
      * This method is called when the command is executed.
-     * @param sender The sender of the command.
-     * @param args The arguments of the command.
+     * @param context The context of the command execution.
      */
-    public abstract void execute(CommandSender sender, Arguments args);
+    public abstract void execute(CommandContext<S> context);
 
     /**
      * This method is called to unregister the command.
@@ -185,7 +182,7 @@ public abstract class Command<T extends Plugin> {
      * This method is called to get the subcommands of the command.
      * @return The subcommands of the command.
      */
-    public final List<Command<T>> getSubcommands() {
+    public final List<Command<T, S>> getSubcommands() {
         return subcommands;
     }
 
@@ -217,7 +214,7 @@ public abstract class Command<T extends Plugin> {
      * This method is called to get the requirements of the command.
      * @return The requirements of the command.
      */
-    public final List<Requirement> getRequirements() {
+    public final List<Requirement<S>> getRequirements() {
         return requirements;
     }
 
@@ -282,8 +279,8 @@ public abstract class Command<T extends Plugin> {
      * @param commands The subcommands to add.
      */
     @SafeVarargs
-    public final void addSubCommand(Command<T>... commands) {
-        List<Command<T>> commandsList = Arrays.asList(commands);
+    public final void addSubCommand(Command<T, S>... commands) {
+        List<Command<T, S>> commandsList = Arrays.asList(commands);
         commandsList.forEach(Command::setSubcommand);
         this.subcommands.addAll(commandsList);
     }
@@ -325,7 +322,7 @@ public abstract class Command<T extends Plugin> {
         this.addArgs(arg, type,null);
     }
 
-    public final void addArgs(String arg, TabCompleter converter) {
+    public final void addArgs(String arg, TabCompleter<S> converter) {
         if(!arg.contains(CommandManager.TYPE_PARSER)) {
             this.addArgs(arg, String.class, converter);
         } else {
@@ -338,7 +335,7 @@ public abstract class Command<T extends Plugin> {
      * @param arg The argument to add.
      * @param converter The converter of the argument.
      */
-    public final void addArgs(String arg, Class<?> type, TabCompleter converter) {
+    public final void addArgs(String arg, Class<?> type, TabCompleter<S> converter) {
         if (arg.contains(CommandManager.TYPE_PARSER) && type != null) {
             throw new IllegalArgumentException("You can't use the type parser in the command arguments.");
         }
@@ -390,7 +387,7 @@ public abstract class Command<T extends Plugin> {
         this.addOptionalArgs(arg, type,null);
     }
 
-    public final void addOptionalArgs(String arg, TabCompleter converter) {
+    public final void addOptionalArgs(String arg, TabCompleter<S> converter) {
         if (!arg.contains(CommandManager.TYPE_PARSER)) {
             this.addOptionalArgs(arg, String.class, converter);
             return;
@@ -403,7 +400,7 @@ public abstract class Command<T extends Plugin> {
      * @param arg The argument to add.
      * @param converter The converter of the argument.
      */
-    public final void addOptionalArgs(String arg, Class<?> type, TabCompleter converter) {
+    public final void addOptionalArgs(String arg, Class<?> type, TabCompleter<S> converter) {
         if (arg.contains(CommandManager.TYPE_PARSER) && type != null) {
             throw new IllegalArgumentException("You can't use the type parser in the command arguments.");
         }
@@ -414,7 +411,7 @@ public abstract class Command<T extends Plugin> {
         this.add(arg, converter, true);
     }
 
-    private void add(String arg, TabCompleter converter, boolean opt) {
+    private void add(String arg, TabCompleter<S> converter, boolean opt) {
         try {
             if (this.infiniteArgs) {
                 throw new ArgsWithInfiniteArgumentException(false);
@@ -429,7 +426,7 @@ public abstract class Command<T extends Plugin> {
                 this.args.add(new Argument(arg, converter));
             }
         } catch (ArgsWithInfiniteArgumentException e) {
-            this.plugin.getLogger().severe(e.getMessage());
+            this.manager.getLogger().error(e.getMessage());
         }
     }
 
@@ -437,7 +434,7 @@ public abstract class Command<T extends Plugin> {
      * This method is called to add requirements to the command.
      * @param requirement The requirements to add.
      */
-    public final void addRequirements(Requirement... requirement) {
+    public final void addRequirements(Requirement<S>... requirement) {
         requirements.addAll(Arrays.asList(requirement));
     }
 
@@ -461,14 +458,14 @@ public abstract class Command<T extends Plugin> {
      * This method is called to generate a default usage for the command.
      * @return The default usage of the command.
      */
-    protected String generateDefaultUsage(CommandSender sender, String label) {
+    public String generateDefaultUsage(CommandPlatform<T> platform, S sender, String label) {
         StringBuilder usage = new StringBuilder();
         usage.append("/");
         Arrays.stream(label.split("\\.")).forEach(s -> usage.append(s).append(" "));
 
         StringBuilder firstArg = new StringBuilder();
         this.getSubcommands()
-                .stream().filter(subCommand -> subCommand.getPermission().isEmpty() || sender.hasPermission(subCommand.getPermission()))
+                .stream().filter(subCommand -> subCommand.getPermission().isEmpty() || platform.hasPermission(sender, subCommand.getPermission()))
                 .forEach(subCommand -> firstArg.append(subCommand.getName()).append("|"));
         if(firstArg.length() > 0) {
             firstArg.deleteCharAt(firstArg.length() - 1);

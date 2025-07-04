@@ -1,7 +1,5 @@
 package fr.traqueur.commands.api.arguments;
 
-import org.bukkit.command.CommandSender;
-
 import java.util.List;
 
 /**
@@ -11,14 +9,14 @@ import java.util.List;
  * </p>
  */
 @FunctionalInterface
-public interface TabCompleter {
+public interface TabCompleter<T> {
 
     /**
      * This method is called when the tabulation is used.
      * It is used to get the completion of the command.
-     * @param sender The sender of the command.
+     * @param context The context of the command.
      * @return The completion of the command.
      */
-    List<String> onCompletion(CommandSender sender, List<String> args);
+    List<String> onCompletion(TabContext<T> context);
 
 }
