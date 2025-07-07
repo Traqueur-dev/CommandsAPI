@@ -24,12 +24,19 @@ public class CommandInvoker<T, S> {
 
     private final CommandManager<T, S> manager;
 
+    /**
+     * Constructs a CommandInvoker with the given command manager.
+     * @param manager the command manager to use for command handling
+     */
     public CommandInvoker(CommandManager<T, S> manager) {
         this.manager = manager;
     }
 
     /**
      * Invokes a command based on the provided source, base label, and raw arguments.
+     * @param base the base command label (e.g. "hello")
+     * @param rawArgs the arguments of the command
+     * @param source the command sender (e.g. a player or console)
      * @return true if a command handler was executed or a message sent; false if command not found
      */
     public boolean invoke(S source, String base, String[] rawArgs) {
@@ -92,6 +99,11 @@ public class CommandInvoker<T, S> {
 
     /**
      * Suggests command completions based on the provided source, base label, and arguments.
+     * This method checks for available tab completers and filters suggestions based on the current input.
+     * @param source the command sender (e.g. a player or console)
+     * @param base the command label           (e.g. "hello")
+     * @param args the arguments provided to the command
+     * @return the list of suggestion
      */
     public List<String> suggest(S source, String base, String[] args) {
         for (int i = args.length; i >= 0; i--) {
