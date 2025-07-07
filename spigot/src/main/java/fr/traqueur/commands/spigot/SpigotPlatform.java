@@ -1,8 +1,8 @@
 package fr.traqueur.commands.spigot;
 
-import fr.traqueur.commands.api.Command;
+import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.CommandManager;
-import fr.traqueur.commands.api.CommandPlatform;
+import fr.traqueur.commands.api.models.CommandPlatform;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandMap;
@@ -129,44 +129,41 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
     public void addCommand(Command<T, CommandSender> command, String label) {
         String[] labelParts = label.split("\\.");
         String cmdLabel = labelParts[0].toLowerCase();
-        AtomicReference<String> originCmdLabelRef = new AtomicReference<>(cmdLabel);
-        int labelSize = labelParts.length;
 
-        if(labelSize > 1) {
-            this.commandManager.getCommands().values().stream()
-                    .filter(commandInner -> !commandInner.isSubCommand())
-                    .filter(commandInner -> commandInner.getAliases().contains(cmdLabel))
-                    .findAny()
-                    .ifPresent(commandInner -> originCmdLabelRef.set(commandInner.getName()));
-        } else {
-            originCmdLabelRef.set(label);
-        }
-        String originCmdLabel = originCmdLabelRef.get();
+        boolean alreadyInTree = commandManager.getCommands()
+                .getRoot()
+                .getChildren()
+                .containsKey(cmdLabel);
+        boolean alreadyInMap = commandMap.getCommand(cmdLabel) != null;
 
-        if (commandMap.getCommand(originCmdLabel) == null) {
-            PluginCommand cmd;
+        if (!alreadyInTree && !alreadyInMap) {
             try {
-                cmd = pluginConstructor.newInstance(originCmdLabel, this.plugin);
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                PluginCommand cmd = pluginConstructor.newInstance(cmdLabel, plugin);
+                cmd.setExecutor(spigotExecutor);
+                cmd.setTabCompleter(spigotExecutor);
+                cmd.setAliases(
+                        command.getAliases().stream()
+                                .map(a -> a.split("\\.")[0])
+                                .filter(a -> !a.equalsIgnoreCase(cmdLabel))
+                                .distinct()
+                                .collect(Collectors.toList())
+                );
+
+                if (!commandMap.register(cmdLabel, plugin.getName(), cmd)) {
+                    getLogger().severe("Unable to add command " + cmdLabel);
+                    return;
+                }
+            } catch (Exception e) {
                 throw new RuntimeException(e);
-            }
-
-            cmd.setExecutor(this.spigotExecutor);
-            cmd.setTabCompleter(this.spigotExecutor);
-            cmd.setAliases(command.getAliases().stream().map(s -> s.split("\\.")[0]).collect(Collectors.toList()));
-
-            if(!commandMap.register(originCmdLabel, this.plugin.getName(), cmd)) {
-                this.getLogger().severe("Unable to add the command " + originCmdLabel);
-                return;
             }
         }
 
         if (!command.getDescription().equalsIgnoreCase("") && labelParts.length == 1) {
-            Objects.requireNonNull(commandMap.getCommand(originCmdLabel)).setDescription(command.getDescription());
+            Objects.requireNonNull(commandMap.getCommand(cmdLabel)).setDescription(command.getDescription());
         }
 
         if (!command.getUsage().equalsIgnoreCase("") && labelParts.length == 1) {
-            Objects.requireNonNull(commandMap.getCommand(originCmdLabel)).setUsage(command.getUsage());
+            Objects.requireNonNull(commandMap.getCommand(cmdLabel)).setUsage(command.getUsage());
         }
     }
 

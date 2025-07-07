@@ -1,6 +1,6 @@
 package fr.traqueur.testplugin;
 
-import fr.traqueur.commands.api.Arguments;
+import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.spigot.Command;
 import org.bukkit.command.CommandSender;
 
