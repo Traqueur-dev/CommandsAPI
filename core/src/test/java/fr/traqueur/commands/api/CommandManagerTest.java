@@ -1,11 +1,15 @@
 package fr.traqueur.commands.api;
 
+import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
+import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.impl.logging.InternalLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -18,18 +22,27 @@ class CommandManagerTest {
 
     private InternalLogger logger;
     private CommandManager<Object, String> manager;
-    private static class FakePlatform implements CommandPlatform<Object, String> {
+    private FakePlatform platform;
+
+    static class DummyCommand extends Command<Object, String> {
+        DummyCommand() { super(null, "dummy"); }
+        DummyCommand(String name) { super(null, name); }
+        @Override public void execute(String sender, Arguments args) {}
+    }
+
+    static class FakePlatform implements CommandPlatform<Object, String> {
+        List<String> added = new ArrayList<>();
         @Override public Object getPlugin() { return null; }
-        @Override public void injectManager(CommandManager<Object, String> commandManager) {}
-        @Override public Logger getLogger() { return Logger.getAnonymousLogger(); }
+        @Override public void injectManager(CommandManager<Object, String> cm) {}
+        @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
         @Override public boolean hasPermission(String sender, String permission) { return true; }
-        @Override public void addCommand(Command<Object, String> command, String label) {}
-        @Override public void removeCommand(String label, boolean subcommand) {}
+        @Override public void addCommand(Command<Object, String> command, String label) { added.add(label); }
+        @Override public void removeCommand(String label, boolean sub) {}
     }
 
     @BeforeEach
     void setUp() {
-        FakePlatform platform = new FakePlatform();
+        platform = new FakePlatform();
         manager = new CommandManager<Object, String>(platform) {};
         platform.injectManager(manager);
         logger = Mockito.mock(InternalLogger.class);
@@ -55,9 +68,7 @@ class CommandManagerTest {
 
     @Test
     void testInfiniteArgsStopsFurtherParsing() throws Exception {
-        Command<Object, String> cmd = new Command<Object, String>(null, "cmd") {
-            @Override public void execute(String sender, Arguments arguments) {}
-        };
+        Command<Object, String> cmd = new DummyCommand();
         cmd.setManager(manager);
         cmd.addArgs("first", String.class);
         cmd.addArgs("rest:infinite");
@@ -72,9 +83,7 @@ class CommandManagerTest {
     @Test
     void testNoExtraAfterInfinite() throws Exception {
         // Vérifier que l'ajout d'un argument après un infini lève une exception gérée
-        Command<Object, String> cmd = new Command<Object, String>(null, "err") {
-            @Override public void execute(String sender, Arguments arguments) {}
-        };
+        Command<Object, String> cmd = new DummyCommand();
         cmd.setManager(manager);
         cmd.addArgs("x:infinite");
         cmd.addArgs("y", String.class);
@@ -89,9 +98,7 @@ class CommandManagerTest {
 
     @Test
     void testBasicArgParsing_correctTypes() throws Exception {
-        Command<Object, String> cmd = new Command<Object, String>(null, "basic") {
-            @Override public void execute(String sender, Arguments arguments) {}
-        };
+        Command<Object, String> cmd = new DummyCommand();
         cmd.addArgs("num", Integer.class);
         cmd.addOptionalArgs("opt", String.class);
 
@@ -107,9 +114,7 @@ class CommandManagerTest {
 
     @Test
     void testOptionalArgs_onlyDefault() throws Exception {
-        Command<Object, String> cmd = new Command<Object, String>(null, "opt") {
-            @Override public void execute(String sender, Arguments arguments) {}
-        };
+        Command<Object, String> cmd = new DummyCommand();
         cmd.addArgs("req", String.class);
         cmd.addOptionalArgs("opt1", Integer.class);
         cmd.addOptionalArgs("opt2", Double.class);
@@ -126,9 +131,7 @@ class CommandManagerTest {
 
     @Test
     void testArgumentIncorrectException_onBadType() {
-        Command<Object, String> cmd = new Command<Object, String>(null, "badtype") {
-            @Override public void execute(String sender, Arguments arguments) {}
-        };
+        Command<Object, String> cmd = new DummyCommand();
         cmd.addArgs("n", Integer.class);
         String[] input = {"notAnInt"};
         assertThrows(ArgumentIncorrectException.class, () -> manager.parse(cmd, input));
@@ -136,19 +139,54 @@ class CommandManagerTest {
 
     @Test
     void testCommandRegistration_entriesInManager() {
-        Command<Object, String> cmd = new Command<Object, String>(null, "main") {
-            @Override public void execute(String sender, Arguments arguments) {}
-        };
+        Command<Object, String> cmd = new DummyCommand("main");
         cmd.addAlias("m");
-        cmd.addSubCommand(new Command<Object, String>(null, "sub") {
-            @Override public void execute(String sender, Arguments arguments) {}
-        });
+        cmd.addSubCommand(new DummyCommand("sub"));
 
         manager.registerCommand(cmd);
         Map<String, Command<Object, String>> map = manager.getCommands();
         assertTrue(map.containsKey("main"));
         assertTrue(map.containsKey("m"));
         assertTrue(map.containsKey("main.sub"));
+    }
+
+    @Test
+    void registerCommand_shouldAddMainAndAliasAndSubcommands() {
+        // Create command with alias and subcommand
+        DummyCommand main = new DummyCommand();
+        main.addAlias("a1", "a2");
+        DummyCommand sub = new DummyCommand();
+        main.addSubCommand(sub);
+
+        manager.registerCommand(main);
+        // Check platform.addCommand called for all labels
+        List<String> added = platform.added;
+        assertTrue(added.contains("dummy"));
+        assertTrue(added.contains("a1"));
+        assertTrue(added.contains("a2"));
+        assertTrue(added.stream().anyMatch(label -> label.startsWith("dummy.")));
+    }
+
+    @Test
+    void addCommand_shouldRegisterCompletersForArgs() {
+        // Create a command requiring two args with converters
+        Command<Object, String> cmd = new DummyCommand();
+        cmd.addArgs("intArg", Integer.class);
+        cmd.addOptionalArgs("optArg", Double.class);
+        manager.registerCommand(cmd);
+
+        Map<String, Map<Integer, TabCompleter<String>>> comps = manager.getCompleters();
+        assertTrue(comps.containsKey("dummy"));
+        Map<Integer, TabCompleter<String>> map = comps.get("dummy");
+        assertTrue(map.containsKey(1));
+        assertTrue(map.containsKey(2));
+    }
+
+    @Test
+    void addCommand_withUnknownType_shouldThrow() {
+        Command<Object, String> cmd = new DummyCommand();
+        cmd.addArgs("bad:typeparser");
+        assertThrows(RuntimeException.class, () -> manager.registerCommand(cmd));
     }
 
 }

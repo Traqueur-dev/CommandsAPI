@@ -6,15 +6,18 @@ import fr.traqueur.commands.api.requirements.Requirement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class CommandTest {
 
     private static class DummyCommand extends Command<String, Object> {
+        DummyCommand(String name) {
+            super("plugin", name);
+        }
         DummyCommand() {
             super("plugin", "dummy");
         }
@@ -26,9 +29,18 @@ class CommandTest {
     }
 
     private DummyCommand cmd;
+    private CommandPlatform<String, Object> platform;
 
     @BeforeEach
     void setUp() {
+        platform = new CommandPlatform<String, Object>() {
+            @Override public String getPlugin() { return null; }
+            @Override public void injectManager(CommandManager<String, Object> commandManager) {}
+            @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
+            @Override public boolean hasPermission(Object sender, String permission) { return true; }
+            @Override public void addCommand(Command<String, Object> command, String label) {}
+            @Override public void removeCommand(String label, boolean subcommand) {}
+        };
         cmd = new DummyCommand();
     }
 
@@ -124,36 +136,53 @@ class CommandTest {
     }
 
     @Test
-    void testGenerateDefaultUsage_noSubs_noArgs() {
-        // when no subcommands or args, just /dummy
-        String usage = cmd.generateDefaultUsage(null, null, "dummy");
-        assertEquals("/dummy ", usage);
+    void usage_noSubs_noArgs() {
+        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        assertEquals("/dummy", usage);
     }
 
     @Test
-    void testGenerateDefaultUsage_withSubsAndArgs() {
-        // prepare subcommands
-        DummyCommand subA = new DummyCommand();
-        subA.setUsage("/dummy suba");
-        DummyCommand subB = new DummyCommand();
-        cmd.addSubCommand(subA, subB);
-        // prepare args
-        cmd.addArgs("x", Integer.class);
-        cmd.addOptionalArgs("y", String.class);
+    void usage_onlyRequiredArgs() {
+        cmd.addArgs("arg1", String.class);
+        cmd.addArgs("arg2", Integer.class);
+        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        assertTrue(usage.startsWith("/dummy <arg1:string> <arg2:integer>"));
+    }
 
-        // simulate platform and sender stub
-        CommandPlatform<String, Object> platform = new CommandPlatform<String, Object>() {
-            @Override public String getPlugin() { return null; }
-            @Override public void injectManager(CommandManager<String, Object> commandManager) {}
-            @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
-            @Override public boolean hasPermission(Object sender, String permission) { return true; }
-            @Override public void addCommand(Command<String, Object> command, String label) {}
-            @Override public void removeCommand(String label, boolean subcommand) {}
-        };
-        String gen = cmd.generateDefaultUsage(platform, null, "dummy");
-        // expected: /dummy <dummy|dummy> <x> [y]
-        assertTrue(gen.startsWith("/dummy <"));
-        assertTrue(gen.contains("<x:integer>"));
-        assertTrue(gen.contains("[y:string]"));
+    @Test
+    void usage_requiredAndOptionalArgs() {
+        cmd.addArgs("arg", String.class);
+        cmd.addOptionalArgs("opt", Double.class);
+        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        assertTrue(usage.contains("<arg:string>"));
+        assertTrue(usage.contains("[opt:double]"));
+    }
+
+    @Test
+    void usage_withSubcommands() {
+        DummyCommand subA = new DummyCommand("suba");
+        DummyCommand subB = new DummyCommand("subb");
+        cmd.addSubCommand(subA, subB);
+        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        // extract first angle bracket content
+        String inside = usage.substring(usage.indexOf('<')+1, usage.indexOf('>'));
+        List<String> parts = Arrays.asList(inside.split("\\|"));
+        assertTrue(parts.contains("suba"));
+        assertTrue(parts.contains("subb"));
+    }
+
+    @Test
+    void usage_subsAndArgsCombined() {
+        DummyCommand subX = new DummyCommand("x");
+        DummyCommand subY = new DummyCommand("y");
+        cmd.addSubCommand(subX, subY);
+        cmd.addArgs("req", String.class);
+        cmd.addOptionalArgs("opt", String.class);
+
+        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        // expect "/dummy <x|y> <req:string> [opt:string]"
+        assertTrue(usage.startsWith("/dummy <x|y>"));
+        assertTrue(usage.contains("<req:string>"));
+        assertTrue(usage.contains("[opt:string]"));
     }
 }

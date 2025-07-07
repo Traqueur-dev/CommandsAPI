@@ -7,7 +7,9 @@ import org.mockito.Mockito;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 class ArgumentsTest {
@@ -94,5 +96,24 @@ class ArgumentsTest {
         String allArgs = args.get("all");
         assertNotNull(allArgs);
         assertEquals("Infinite arguments test", allArgs);
+    }
+
+    @Test
+    void getAs_logsErrorWhenWrongType() {
+        InternalLogger mockLogger = Mockito.mock(InternalLogger.class);
+        Arguments args = new Arguments(mockLogger);
+        args.add("num", Integer.class, 123);
+        Optional<String> result = args.getAs("num", String.class);
+        assertFalse(result.isPresent());
+        verify(mockLogger).error(contains("The argument num is not the good type."));
+    }
+
+    @Test
+    void getOptional_onEmptyMapReturnsEmptyWithoutError() {
+        InternalLogger mockLogger = Mockito.mock(InternalLogger.class);
+        Arguments args = new Arguments(mockLogger);
+        Optional<?> opt = args.getOptional("anything");
+        assertFalse(opt.isPresent());
+        verify(mockLogger, never()).error(anyString());
     }
 }

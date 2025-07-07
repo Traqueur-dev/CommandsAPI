@@ -498,7 +498,7 @@ public abstract class Command<T, S> {
         usage.append("/");
         Arrays.stream(label.split("\\.")).forEach(s -> usage.append(s).append(" "));
         //remove the last space
-        if(this.args.isEmpty() || this.optionalArgs.isEmpty()) {
+        if(this.args.isEmpty() && this.optionalArgs.isEmpty()) {
             usage.deleteCharAt(usage.length() - 1);
         }
 
@@ -515,8 +515,11 @@ public abstract class Command<T, S> {
         }
 
         usage.append(this.getArgs().stream().map(argument -> "<" + argument.arg() + ">").collect(Collectors.joining(" ")));
-        usage.append(" ");
-        usage.append(this.getOptinalArgs().stream().map(argument -> "[" + argument.arg() + "]").collect(Collectors.joining(" ")));
+        if (!this.getOptinalArgs().isEmpty()) {
+            usage.append(" ");
+            usage.append(this.getOptinalArgs().stream().map(argument -> "[" + argument.arg() + "]").collect(Collectors.joining(" ")));
+        }
+
         return usage.toString();
     }
 
