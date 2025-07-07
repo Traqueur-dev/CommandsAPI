@@ -30,20 +30,14 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*','**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
 
-      - name: Build & test with Gradle
-        run: ./gradlew clean testAll --no-daemon
+      - name: Build & test
+        run: ./gradlew clean test testAll --no-daemon
 
       - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: |
             **/build/test-results/**/*.xml
             **/build/reports/tests/**
-
-      - name: Publish coverage to GitHub (optional)
-        if: success()
-        uses: codecov/codecov-action@v3
-        with:
-          files: build/reports/jacoco/test/jacocoTestReport.xml
