@@ -497,6 +497,10 @@ public abstract class Command<T, S> {
         StringBuilder usage = new StringBuilder();
         usage.append("/");
         Arrays.stream(label.split("\\.")).forEach(s -> usage.append(s).append(" "));
+        //remove the last space
+        if(this.args.isEmpty() || this.optionalArgs.isEmpty()) {
+            usage.deleteCharAt(usage.length() - 1);
+        }
 
         StringBuilder firstArg = new StringBuilder();
         this.getSubcommands()

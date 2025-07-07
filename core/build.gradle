@@ -11,7 +11,7 @@ java {
 
 def generatedResourcesDir = "$buildDir/generated-resources"
 
-task generateCommandsProperties {
+tasks.register('generateCommandsProperties') {
     doLast {
         def outputDir = file("$generatedResourcesDir")
         outputDir.mkdirs()
