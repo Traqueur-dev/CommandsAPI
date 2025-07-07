@@ -2,7 +2,6 @@ package fr.traqueur.commands.api;
 
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
-import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.impl.logging.InternalLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.contains;
@@ -36,6 +34,8 @@ class CommandManagerTest {
         @Override public void injectManager(CommandManager<Object, String> cm) {}
         @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
         @Override public boolean hasPermission(String sender, String permission) { return true; }
+        @Override public boolean isPlayer(String sender) {return false;}
+        @Override public void sendMessage(String sender, String message) {}
         @Override public void addCommand(Command<Object, String> command, String label) { added.add(label); }
         @Override public void removeCommand(String label, boolean sub) {}
     }

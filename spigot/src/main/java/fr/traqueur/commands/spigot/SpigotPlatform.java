@@ -4,6 +4,7 @@ import fr.traqueur.commands.api.Command;
 import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.CommandPlatform;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
@@ -46,7 +47,7 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
     /**
      * The executor of the command manager.
      */
-    private Executor<T> executor;
+    private SpigotExecutor<T> spigotExecutor;
 
     /**
      * The constructor of the plugin command.
@@ -89,7 +90,7 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
     public void injectManager(CommandManager<T, CommandSender> commandManager) {
         //noinspection unchecked
         this.commandManager = commandManager;
-        this.executor = new Executor<>(plugin, this.commandManager);
+        this.spigotExecutor = new SpigotExecutor<>(plugin, this.commandManager);
     }
 
     /**
@@ -109,6 +110,16 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
             return sender.hasPermission(permission);
         }
         return false;
+    }
+
+    @Override
+    public boolean isPlayer(CommandSender sender) {
+        return sender instanceof org.bukkit.entity.Player;
+    }
+
+    @Override
+    public void sendMessage(CommandSender sender, String message) {
+        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
     }
 
     /**
@@ -140,8 +151,8 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
                 throw new RuntimeException(e);
             }
 
-            cmd.setExecutor(this.executor);
-            cmd.setTabCompleter(this.executor);
+            cmd.setExecutor(this.spigotExecutor);
+            cmd.setTabCompleter(this.spigotExecutor);
             cmd.setAliases(command.getAliases().stream().map(s -> s.split("\\.")[0]).collect(Collectors.toList()));
 
             if(!commandMap.register(originCmdLabel, this.plugin.getName(), cmd)) {

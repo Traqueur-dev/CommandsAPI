@@ -41,6 +41,22 @@ public interface CommandPlatform<T, S> {
     boolean hasPermission(S sender, String permission);
 
     /**
+     * Checks if the sender is a player.
+     *
+     * @param sender The sender to check.
+     * @return true if the sender is a player, false otherwise.
+     */
+    boolean isPlayer(S sender);
+
+    /**
+     * Sends a message to the sender.
+     *
+     * @param sender The sender to send the message to.
+     * @param message The message to send.
+     */
+    void sendMessage(S sender, String message);
+
+    /**
      * Adds a command to the platform.
      *
      * @param command The command to add.
