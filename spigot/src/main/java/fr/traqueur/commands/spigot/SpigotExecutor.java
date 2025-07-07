@@ -40,15 +40,14 @@ public class SpigotExecutor<T extends Plugin> implements CommandExecutor, org.bu
      * @return The parsed label or null if the label is not valid.
      */
     private String parseLabel(String label) {
-        String labelLower = label.toLowerCase();
-        if(labelLower.contains(":")) {
-            String[] split = labelLower.split(":");
-            labelLower = split[1];
-            if(!split[0].equalsIgnoreCase(plugin.getName().toLowerCase())) {
+        if(label.contains(":")) {
+            String[] split = label.split(":");
+            label = split[1];
+            if(!split[0].equalsIgnoreCase(plugin.getName())) {
                 return null;
             }
         }
-        return labelLower;
+        return label.toLowerCase();
     }
 
     /**

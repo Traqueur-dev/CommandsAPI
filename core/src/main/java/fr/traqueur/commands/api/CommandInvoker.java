@@ -117,7 +117,8 @@ public class CommandInvoker<T, S> {
             Arguments arguments = this.commandManager.parse(commandFramework, modArgs);
             commandFramework.execute(source, arguments);
         } catch (TypeArgumentNotExistException e) {
-            throw new RuntimeException(e);
+            this.commandManager.getPlatform().sendMessage(source, "&cPlease contact the developer of the commands library, its should not happen.");
+            return false;
         } catch (ArgumentIncorrectException e) {
             String message = this.commandManager.getMessageHandler().getArgNotRecognized();
             message = message.replace("%arg%", e.getInput());
