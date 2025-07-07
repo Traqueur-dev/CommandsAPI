@@ -323,6 +323,7 @@ public class Arguments {
                 throw new NoGoodTypeArgumentException();
             }
         } catch (NoGoodTypeArgumentException e) {
+            logger.error("The argument " + argument + " is not the good type.");
             return Optional.empty();
         }
 

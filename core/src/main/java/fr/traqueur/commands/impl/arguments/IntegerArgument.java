@@ -21,6 +21,9 @@ public class IntegerArgument implements ArgumentConverter<Integer> {
      */
     @Override
     public Integer apply(String input) {
+        if (input == null || input.isEmpty()) {
+            return null;
+        }
         try {
             return Integer.valueOf(input);
         } catch (NumberFormatException e) {

@@ -21,6 +21,9 @@ public class EnumArgument<T extends Enum<T>, S> implements ArgumentConverter<Enu
 
     @Override
     public Enum<T> apply(String s) {
+        if (s == null || s.isEmpty()) {
+            return null;
+        }
         try {
             return Enum.valueOf(clazz, s);
         } catch (IllegalArgumentException e) {

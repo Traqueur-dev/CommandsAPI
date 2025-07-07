@@ -20,6 +20,9 @@ public class DoubleArgument implements ArgumentConverter<Double> {
      */
     @Override
     public Double apply(String input) {
+        if (input == null || input.isEmpty()) {
+            return null;
+        }
         try {
             return Double.valueOf(input);
         } catch (NumberFormatException e){

@@ -21,6 +21,9 @@ public class LongArgument implements ArgumentConverter<Long> {
      */
     @Override
     public Long apply(String input) {
+        if (input == null || input.isEmpty()) {
+            return null;
+        }
         try {
             return Long.valueOf(input);
         } catch (NumberFormatException e) {

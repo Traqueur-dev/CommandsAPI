@@ -22,6 +22,9 @@ public class BooleanArgument<S> implements ArgumentConverter<Boolean>, TabComple
 
     @Override
     public Boolean apply(String s) {
+        if(s == null || s.isEmpty()) {
+            return null;
+        }
         if(s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")) {
             return Boolean.parseBoolean(s);
         }
