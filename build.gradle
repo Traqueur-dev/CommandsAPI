@@ -34,16 +34,15 @@ subprojects {
         test {
             useJUnitPlatform()
             jvmArgs += ['-XX:+EnableDynamicAgentLoading']
-        }
+            reports {
+                html.required.set(true)
+                junitXml.required.set(true)
+            }
 
-        testlogger {
-            theme 'mocha-parallel'
-            logLevel 'quiet'
-            showPassed true
-            showSkipped true
-            showFailed true
-            showSummary true
-            showStandardStreams true
+            testLogging {
+                events("passed", "skipped", "failed")
+                exceptionFormat "full"
+            }
         }
     }
 }
