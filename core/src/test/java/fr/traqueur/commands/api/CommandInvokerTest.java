@@ -1,7 +1,6 @@
 package fr.traqueur.commands.api;
 
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
-import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.MessageHandler;
 import fr.traqueur.commands.api.requirements.Requirement;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings(value = "unchecked")
 class CommandInvokerTest {
 
     private CommandManager<String, String> manager;

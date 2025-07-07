@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings(value = {"deprecation", "ResultOfMethodCallIgnored"})
 class OfflinePlayerArgumentTest {
 
     @Test
