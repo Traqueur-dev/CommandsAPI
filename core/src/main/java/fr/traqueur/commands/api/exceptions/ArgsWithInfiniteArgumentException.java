@@ -10,6 +10,6 @@ public class ArgsWithInfiniteArgumentException extends Exception {
      * @param optional if the argument is optional
      */
     public ArgsWithInfiniteArgumentException(boolean optional) {
-        super((optional ? "Optional arguments" : "Arguments") + "cannot follow infinite arguments.");
+        super((optional ? "Optional arguments" : "Arguments") + " cannot follow infinite arguments.");
     }
 }

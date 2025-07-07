@@ -22,7 +22,7 @@ public class ZoneRequirement implements Requirement<CommandSender> {
      * @param locationDown The second location of the zone.
      * @return The zone requirement.
      */
-    public static Requirement of(Location locationUp, Location locationDown) {
+    public static Requirement<CommandSender> of(Location locationUp, Location locationDown) {
         return new ZoneRequirement(locationUp, locationDown);
     }
 
@@ -37,7 +37,7 @@ public class ZoneRequirement implements Requirement<CommandSender> {
      * @param z2 The second z coordinate of the zone.
      * @return The zone requirement.
      */
-    public static Requirement of(World world, int x1, int y1, int z1, int x2, int y2, int z2) {
+    public static Requirement<CommandSender> of(World world, int x1, int y1, int z1, int x2, int y2, int z2) {
         return new ZoneRequirement(new Location(world, x1, y1, z1), new Location(world, x2, y2, z2));
     }
 
@@ -51,7 +51,7 @@ public class ZoneRequirement implements Requirement<CommandSender> {
      * @param z2 The second z coordinate of the zone.
      * @return The zone requirement.
      */
-    public static Requirement of(World world, int x1, int z1, int x2, int z2) {
+    public static Requirement<CommandSender> of(World world, int x1, int z1, int x2, int z2) {
         return new ZoneRequirement(new Location(world, x1, world.getMaxHeight(), z1), new Location(world, x2, world.getMinHeight(), z2));
     }
 
@@ -67,7 +67,8 @@ public class ZoneRequirement implements Requirement<CommandSender> {
         if(locationUp.getWorld() == null || locationDown.getWorld() == null) {
             throw new IllegalArgumentException("The locations must not be null.");
         }
-        if(locationUp.getWorld().getName().equals(locationDown.getWorld().getName())) {
+
+        if(!locationUp.getWorld().getName().equals(locationDown.getWorld().getName())) {
             throw new IllegalArgumentException("The locations must be in the same world.");
         }
 

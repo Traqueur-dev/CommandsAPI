@@ -1,3 +1,7 @@
+plugins {
+    id 'com.adarshr.test-logger' version '4.0.0'
+}
+
 allprojects {
     group = 'fr.traqueur.commands'
     version = property('version')
@@ -6,10 +10,49 @@ allprojects {
         plugin 'java-library'
     }
 
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs += ['-nowarn']
+    }
+
     repositories {
         mavenCentral()
         maven {
             url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
         }
     }
+}
+
+subprojects {
+    if (!project.name.contains('test-plugin')) {
+
+        apply plugin: 'com.adarshr.test-logger'
+
+        dependencies {
+            testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+            testImplementation 'org.mockito:mockito-core:5.3.1'
+        }
+        test {
+            useJUnitPlatform()
+            jvmArgs += ['-XX:+EnableDynamicAgentLoading']
+            reports {
+                html.required.set(true)
+                junitXml.required.set(true)
+            }
+
+            testLogging {
+                events("passed", "skipped", "failed")
+                exceptionFormat "full"
+            }
+        }
+    }
+}
+
+tasks.register("testAll") {
+    group = "verification"
+    description = "Execute tous les tests des sous-projets qui ont une tâche 'test'"
+
+    // Déclare la dépendance vers chaque tâche 'test' de chaque sous-projet
+    dependsOn subprojects
+            .findAll { it.tasks.findByName('test') != null }
+            .collect { it.tasks.named('test') }
 }
