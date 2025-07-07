@@ -12,176 +12,177 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * CommandInvoker is responsible for invoking commands based on the provided label and arguments.
- * It checks permissions, requirements, and executes the command if all conditions are met.
+ * CommandInvoker is responsible for invoking and suggesting commands.
+ * It performs lookup, permission and requirement checks, usage display, parsing, and execution.
  *
- * @param <T> The type of the command sender (e.g., Player, Console).
- * @param <S> The type of the source (e.g., Player, CommandSender).
+ * @param <T> plugin type
+ * @param <S> sender type
  */
 public class CommandInvoker<T, S> {
 
-    /**
-     * The command manager that holds the commands and their configurations.
-     */
-    private final CommandManager<T, S> commandManager;
+    private static class CommandEntry {
+        String label;
+        String[] args;
 
-    /**
-     * Constructor for CommandInvoker.
-     * @param manager The command manager that holds the commands and their configurations.
-     */
-    public CommandInvoker(CommandManager<T,S> manager) {
-        this.commandManager = manager;
+        CommandEntry(String label, String[] args) {
+            this.label = label;
+            this.args = args;
+        }
     }
 
     /**
-     * Get the command label from the label and the arguments.
-     * @param label The label of the command.
-     * @param args The arguments of the command.
-     * @param commandLabelSize The size of the command label.
-     * @return The command label.
+     * The CommandManager instance that manages commands and their configurations.
      */
-    private String getCommandLabel(String label, String[] args, int commandLabelSize) {
-        StringBuilder buffer = new StringBuilder();
-        String labelLower = label.toLowerCase();
-        buffer.append(labelLower);
-        for (int x = 0; x <  commandLabelSize; x++) {
-            buffer.append(".").append(args[x].toLowerCase());
-        }
-        return buffer.toString();
+    private final CommandManager<T, S> manager;
+
+    /**
+     * Constructs a CommandInvoker with the specified CommandManager.
+     *
+     * @param manager the CommandManager instance to use
+     */
+    public CommandInvoker(CommandManager<T, S> manager) {
+        this.manager = manager;
     }
 
     /**
      * Invokes a command based on the provided source, base label, and raw arguments.
-     * It checks for command existence, permissions, requirements, and executes the command if valid.
+     * It checks for command existence, permissions, requirements, usage, and executes the command if valid.
      *
-     * @param source The source of the command (e.g., Player, Console).
-     * @param baseLabel The base label of the command.
-     * @param rawArgs The raw arguments passed to the command.
-     * @return true if the command was successfully invoked, false otherwise.
+     * @param source the sender of the command
+     * @param base the base label of the command
+     * @param rawArgs the raw arguments passed to the command
+     * @return true if the command was successfully invoked, false otherwise
      */
-    public boolean invoke(S source,
-                       String baseLabel,
-                       String[] rawArgs) {
+    public boolean invoke(S source, String base, String[] rawArgs) {
+        CommandEntry entry = findCommand(base, rawArgs);
+        if (entry == null) return false;
+        String label = entry.label;
+        Command<T, S> command = manager.getCommands().get(label);
+        String[] modArgs = entry.args;
 
-        Map<String, Command<T, S>> commands = this.commandManager.getCommands();
+        if (checkInGame(source, command) || checkPermission(source, command) || checkRequirements(source, command)) {
+            return true;
+        }
 
-        String cmdLabel = "";
-        Command<T, S> commandFramework = null;
-        for (int i = rawArgs.length; i >= 0; i--) {
-            cmdLabel = getCommandLabel(baseLabel, rawArgs, i);
-            commandFramework = commands.getOrDefault(cmdLabel, null);
-            if(commandFramework != null) {
-                break;
+        if (checkUsage(source, command, label, modArgs)) {
+            return true;
+        }
+
+        return parseAndExecute(source, command, modArgs);
+    }
+
+    /**
+     * Suggests command completions based on the provided source, base label, and arguments.
+     * It checks for matching commands and applies filters based on permissions and requirements.
+     *
+     * @param source the sender of the command
+     * @param base the base label of the command
+     * @param args the arguments passed to the command
+     * @return a list of suggested completions
+     */
+    public List<String> suggest(S source, String base, String[] args) {
+        for (int i = args.length; i >= 0; i--) {
+            String label = buildLabel(base, args, i);
+            Map<Integer, TabCompleter<S>> map = manager.getCompleters().get(label);
+            if (map != null && map.containsKey(args.length)) {
+                return map.get(args.length).onCompletion(source, Collections.singletonList(buildArgsBefore(base, args)))
+                        .stream()
+                        .filter(opt -> allowedSuggestion(source, label, opt))
+                        .filter(s -> matchesPrefix(s, args[args.length - 1]))
+                        .collect(Collectors.toList());
             }
         }
+        return Collections.emptyList();
+    }
 
-        if (commandFramework == null) {
-            return false;
+    private CommandEntry findCommand(String base, String[] args) {
+        for (int i = args.length; i >= 0; i--) {
+            String label = buildLabel(base, args, i);
+            if (manager.getCommands().containsKey(label)) {
+                String[] mod = Arrays.copyOfRange(args, i, args.length);
+                return new CommandEntry(label, mod);
+            }
         }
+        return null;
+    }
 
-        if(commandFramework.inGameOnly() && ! this.commandManager.getPlatform().isPlayer(source)) {
-            this.commandManager.getPlatform().sendMessage(source, this.commandManager.getMessageHandler().getOnlyInGameMessage());
+    private boolean checkInGame(S src, Command<T,S> cmd) {
+        if (cmd.inGameOnly() && !manager.getPlatform().isPlayer(src)) {
+            manager.getPlatform().sendMessage(src, manager.getMessageHandler().getOnlyInGameMessage());
             return true;
         }
+        return false;
+    }
 
-        if (!commandFramework.getPermission().isEmpty() && !this.commandManager.getPlatform().hasPermission(source, commandFramework.getPermission())) {
-            this.commandManager.getPlatform().sendMessage(source, this.commandManager.getMessageHandler().getNoPermissionMessage());
+    private boolean checkPermission(S src, Command<T,S> cmd) {
+        String perm = cmd.getPermission();
+        if (!perm.isEmpty() && !manager.getPlatform().hasPermission(src, perm)) {
+            manager.getPlatform().sendMessage(src, manager.getMessageHandler().getNoPermissionMessage());
             return true;
         }
+        return false;
+    }
 
-        List<Requirement<S>> requirements = commandFramework.getRequirements();
-        for (Requirement<S> requirement : requirements) {
-            if (!requirement.check(source)) {
-                String error = requirement.errorMessage().isEmpty()
-                        ? this.commandManager.getMessageHandler().getRequirementMessage()
-                        : requirement.errorMessage();
-                error = error.replace("%requirement%", requirement.getClass().getSimpleName());
-                this.commandManager.getPlatform().sendMessage(source, error);
+    private boolean checkRequirements(S src, Command<T,S> cmd) {
+        for (Requirement<S> r : cmd.getRequirements()) {
+            if (!r.check(src)) {
+                String msg = r.errorMessage().isEmpty()
+                        ? manager.getMessageHandler().getRequirementMessage().replace("%requirement%", r.getClass().getSimpleName())
+                        : r.errorMessage();
+                manager.getPlatform().sendMessage(src, msg);
                 return true;
             }
         }
+        return false;
+    }
 
-
-        int subCommand = cmdLabel.split("\\.").length - 1;
-        String[] modArgs = Arrays.copyOfRange(rawArgs, subCommand, rawArgs.length);
-
-        if ((modArgs.length < commandFramework.getArgs().size()) || (!commandFramework.isInfiniteArgs() && (modArgs.length > commandFramework.getArgs().size() + commandFramework.getOptinalArgs().size()))) {
-            String usage = commandFramework.getUsage().equalsIgnoreCase("")
-                    ? commandFramework.generateDefaultUsage(this.commandManager.getPlatform(), source, cmdLabel)
-                    : commandFramework.getUsage();
-            this.commandManager.getPlatform().sendMessage(source, usage);
+    private boolean checkUsage(S src, Command<T,S> cmd, String label, String[] modArgs) {
+        int min = cmd.getArgs().size();
+        int max = cmd.isInfiniteArgs() ? Integer.MAX_VALUE : min + cmd.getOptinalArgs().size();
+        if (modArgs.length < min || modArgs.length > max) {
+            String usage = cmd.getUsage().isEmpty()
+                    ? cmd.generateDefaultUsage(manager.getPlatform(), src, label)
+                    : cmd.getUsage();
+            manager.getPlatform().sendMessage(src, usage);
             return true;
         }
+        return false;
+    }
 
+    private boolean parseAndExecute(S src, Command<T,S> cmd, String[] modArgs) {
         try {
-            Arguments arguments = this.commandManager.parse(commandFramework, modArgs);
-            commandFramework.execute(source, arguments);
+            Arguments args = manager.parse(cmd, modArgs);
+            cmd.execute(src, args);
         } catch (TypeArgumentNotExistException e) {
-            this.commandManager.getPlatform().sendMessage(source, "&cPlease contact the developer of the commands library, its should not happen.");
+            manager.getPlatform().sendMessage(src, "&cInternal error: invalid argument type");
             return false;
         } catch (ArgumentIncorrectException e) {
-            String message = this.commandManager.getMessageHandler().getArgNotRecognized();
-            message = message.replace("%arg%", e.getInput());
-            this.commandManager.getPlatform().sendMessage(source, message);
+            String msg = manager.getMessageHandler().getArgNotRecognized().replace("%arg%", e.getInput());
+            manager.getPlatform().sendMessage(src, msg);
         }
         return true;
     }
 
-    /**
-     * Suggests completions for the command based on the provided source, label, and arguments.
-     * It filters the suggestions based on the current argument and checks permissions for each suggestion.
-     *
-     * @param source The source of the command (e.g., Player, Console).
-     * @param label The label of the command.
-     * @param args The arguments passed to the command.
-     * @return A list of suggested completions.
-     */
-    public List<String> suggest(S source, String label, String[] args) {
-        String arg = args[args.length-1];
+    private String buildLabel(String base, String[] args, int count) {
+        StringBuilder sb = new StringBuilder(base.toLowerCase());
+        for (int i = 0; i < count; i++) sb.append('.').append(args[i].toLowerCase());
+        return sb.toString();
+    }
 
+    private String buildArgsBefore(String base, String[] args) {
+        return base + "." + String.join(".", Arrays.copyOf(args, args.length - 1));
+    }
 
-        Map<String, Map<Integer, TabCompleter<S>>> completers = commandManager.getCompleters();
-        Map<String, Command<T, S>> commands = this.commandManager.getCommands();
+    private boolean matchesPrefix(String candidate, String current) {
+        String lower = current.toLowerCase();
+        return candidate.equalsIgnoreCase(current) || candidate.toLowerCase().startsWith(lower);
+    }
 
-        String cmdLabel = "";
-        Map<Integer, TabCompleter<S>> map = null;
-        for (int i = args.length; i >= 0; i--) {
-            cmdLabel = getCommandLabel(label, args, i);
-            map = completers.getOrDefault(cmdLabel, null);
-            if(map != null) {
-                break;
-            }
-        }
-
-        if (map == null || !map.containsKey(args.length)) {
-            return Collections.emptyList();
-        }
-
-        TabCompleter<S> converter = map.get(args.length);
-        String argsBeforeString = (label +
-                "." +
-                String.join(".", Arrays.copyOf(args, args.length - 1)))
-                .replaceFirst("^" + cmdLabel + "\\.", "");
-
-        List<String> completer = converter.onCompletion(source, Arrays.asList(argsBeforeString.split("\\.")))
-                .stream()
-                .filter(str -> str.toLowerCase().startsWith(arg.toLowerCase()) || str.equalsIgnoreCase(arg))
-                .collect(Collectors.toList());
-
-        String finalCmdLabel = cmdLabel;
-        return completer.stream().filter(str -> {
-            String cmdLabelInner = finalCmdLabel + "." + str.toLowerCase();
-            if(commands.containsKey(cmdLabelInner)) {
-                Command<T, S> frameworkCommand = commands.get(cmdLabelInner);
-                List<Requirement<S>> requirements = frameworkCommand.getRequirements();
-                for (Requirement<S> requirement : requirements) {
-                    if (!requirement.check(source)) {
-                        return false;
-                    }
-                }
-                return frameworkCommand.getPermission().isEmpty() || this.commandManager.getPlatform().hasPermission(source, frameworkCommand.getPermission());
-            }
-            return true;
-        }).collect(Collectors.toList());
+    private boolean allowedSuggestion(S src, String label, String opt) {
+        String full = label + "." + opt.toLowerCase();
+        Command<T,S> c = manager.getCommands().get(full);
+        if (c == null) return true;
+        return c.getRequirements().stream().allMatch(r -> r.check(src))
+                && (c.getPermission().isEmpty() || manager.getPlatform().hasPermission(src, c.getPermission()));
     }
 }
