@@ -3,7 +3,8 @@ package fr.traqueur.commands.api.logging;
 
 import fr.traqueur.commands.impl.logging.InternalMessageHandler;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InternalMessageHandlerTest {
 

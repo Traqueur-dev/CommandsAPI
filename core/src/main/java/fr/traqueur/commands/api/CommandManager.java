@@ -57,6 +57,8 @@ public abstract class CommandManager<T, S> {
     private final Map<String, Map<Integer, TabCompleter<S>>> completers;
 
 
+    private final CommandInvoker<T,S> invoker;
+
     /**
      * The message handler of the command manager.
      */
@@ -87,6 +89,7 @@ public abstract class CommandManager<T, S> {
         this.commands = new HashMap<>();
         this.typeConverters = new HashMap<>();
         this.completers = new HashMap<>();
+        this.invoker = new CommandInvoker<>(this);
         this.registerInternalConverters();
     }
 
@@ -498,6 +501,14 @@ public abstract class CommandManager<T, S> {
             arguments.add(key, typeClass, obj);
         }
         return false;
+    }
+
+    /**
+     * Get the command invoker of the command manager.
+     * @return The command invoker of the command manager.
+     */
+    public CommandInvoker<T, S> getInvoker() {
+        return invoker;
     }
 
     /**

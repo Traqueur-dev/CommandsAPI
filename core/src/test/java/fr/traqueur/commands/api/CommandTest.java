@@ -2,7 +2,6 @@
 
 package fr.traqueur.commands.api;
 
-import fr.traqueur.commands.api.requirements.Requirement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,6 +37,8 @@ class CommandTest {
             @Override public void injectManager(CommandManager<String, Object> commandManager) {}
             @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
             @Override public boolean hasPermission(Object sender, String permission) { return true; }
+            @Override public boolean isPlayer(Object sender) {return false;}
+            @Override public void sendMessage(Object sender, String message) {}
             @Override public void addCommand(Command<String, Object> command, String label) {}
             @Override public void removeCommand(String label, boolean subcommand) {}
         };
@@ -94,6 +95,8 @@ class CommandTest {
             @Override public void injectManager(CommandManager<String, Object> commandManager) {}
             @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
             @Override public boolean hasPermission(Object sender, String permission) { return true; }
+            @Override public boolean isPlayer(Object sender) {return false;}
+            @Override public void sendMessage(Object sender, String message) {}
             @Override public void addCommand(Command<String, Object> command, String label) {called.set(true);}
             @Override public void removeCommand(String label, boolean subcommand) {  }
         }) {};
@@ -110,6 +113,8 @@ class CommandTest {
             @Override public void injectManager(CommandManager<String, Object> commandManager) {}
             @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
             @Override public boolean hasPermission(Object sender, String permission) { return true; }
+            @Override public boolean isPlayer(Object sender) {return false;}
+            @Override public void sendMessage(Object sender, String message) {}
             @Override public void addCommand(Command<String, Object> command, String label) {}
             @Override public void removeCommand(String label, boolean subcommand) { called.set(true); }
         }) {};
