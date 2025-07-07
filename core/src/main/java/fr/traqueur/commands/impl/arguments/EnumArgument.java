@@ -7,18 +7,45 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * An argument converter for enum types, allowing conversion from string to enum and providing tab completion.
+ *
+ * @param <T> The type of the enum.
+ * @param <S> The type of the sender (e.g., player, console).
+ */
 public class EnumArgument<T extends Enum<T>, S> implements ArgumentConverter<Enum<T>>, TabCompleter<S> {
 
+    /**
+     * Creates a new EnumArgument instance for the specified enum class.
+     *
+     * @param enumClass The class of the enum
+     * @param <E> The type of the enum
+     * @param <S> The type of the sender (e.g., player, console)
+     * @return A new instance of EnumArgument
+     */
     public static <E extends Enum<E>, S> EnumArgument<E, S> of(Class<E> enumClass) {
         return new EnumArgument<>(enumClass);
     }
 
+    /**
+     * The class of the enum type this argument converter handles.
+     */
     private final Class<T> clazz;
 
+    /**
+     * Constructs a new EnumArgument for the specified enum class.
+     *
+     * @param clazz The class of the enum type
+     */
     public EnumArgument(Class<T> clazz) {
         this.clazz = clazz;
     }
 
+    /**
+     * Gets the class of the enum type this argument converter handles.
+     *
+     * @return The enum class
+     */
     @Override
     public Enum<T> apply(String s) {
         if (s == null || s.isEmpty()) {
@@ -31,6 +58,11 @@ public class EnumArgument<T extends Enum<T>, S> implements ArgumentConverter<Enu
         }
     }
 
+    /**
+     * Gets the class of the enum type this argument converter handles.
+     *
+     * @return The enum class
+     */
     @Override
     public List<String> onCompletion(S sender, List<String> args) {
         return Arrays.stream(clazz.getEnumConstants())

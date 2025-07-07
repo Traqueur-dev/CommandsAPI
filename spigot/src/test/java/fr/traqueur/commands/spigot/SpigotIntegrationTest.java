@@ -27,6 +27,8 @@ class SpigotIntegrationTest {
             @Override public void injectManager(fr.traqueur.commands.api.CommandManager<Object, CommandSender> cm) {}
             @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
             @Override public boolean hasPermission(CommandSender sender, String permission) { return true; }
+            @Override public boolean isPlayer(CommandSender sender) {return sender instanceof Player;}
+            @Override public void sendMessage(CommandSender sender, String message) {}
             @Override public void addCommand(fr.traqueur.commands.api.Command<Object, CommandSender> command, String label) {}
             @Override public void removeCommand(String label, boolean subcommand) {}
         }) {};

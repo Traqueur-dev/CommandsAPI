@@ -5,6 +5,9 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import fr.traqueur.commands.api.Command;
 import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.CommandPlatform;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -16,6 +19,17 @@ import java.util.logging.Logger;
  * @param <T> The type of the JavaPlugin that this platform is associated with.
  */
 public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
+
+
+    /**
+     * The serializer used to convert legacy components to Adventure components.
+     */
+    private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
+
+    /**
+     * The MiniMessage instance used for parsing messages.
+     */
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
     /**
      * The plugin instance associated with this platform.
@@ -86,6 +100,16 @@ public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
         return sender.hasPermission(permission);
     }
 
+    @Override
+    public boolean isPlayer(CommandSource sender) {
+        return sender instanceof com.velocitypowered.api.proxy.Player;
+    }
+
+    @Override
+    public void sendMessage(CommandSource sender, String message) {
+        sender.sendMessage(this.parse(message));
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -120,7 +144,7 @@ public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
                             .aliases(aliases)
                             .plugin(plugin)
                             .build(),
-                    new Executor<>(commandManager)
+                    new VelocityExecutor<>(commandManager)
             );
         }
     }
@@ -135,5 +159,17 @@ public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
         } else {
             this.server.getCommandManager().unregister(label);
         }
+    }
+
+    /**
+     * Parses a message from legacy format to Adventure format.
+     *
+     * @param message The message in legacy format.
+     * @return The parsed message in Adventure format.
+     */
+    private Component parse(String message) {
+        Component legacy = SERIALIZER.deserialize(message);
+        String asMini = MINI_MESSAGE.serialize(legacy);
+        return MINI_MESSAGE.deserialize(asMini);
     }
 }

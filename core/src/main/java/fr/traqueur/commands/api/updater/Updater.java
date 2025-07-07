@@ -26,10 +26,18 @@ public class Updater {
         }
     }
 
+    /**
+     * Set the URL to use to check for the latest release
+     * @param URL_LATEST_RELEASE The URL to use
+     */
     public static void setUrlLatestRelease(URL URL_LATEST_RELEASE) {
         Updater.URL_LATEST_RELEASE = URL_LATEST_RELEASE;
     }
 
+    /**
+     * Set the logger to use for logging messages
+     * @param LOGGER The logger to use
+     */
     public static void setLogger(Logger LOGGER) {
         Updater.LOGGER = LOGGER;
     }
