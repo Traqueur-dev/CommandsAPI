@@ -139,7 +139,7 @@ public class CommandTree<T, S> {
             if (child != null) {
                 node = child;
                 i++;
-            } else if (node.hadChildren) {
+            } else if (node.hadChildren && node.command == null) {
                 return Optional.empty();
             } else if (node.command != null) {
                 break;
