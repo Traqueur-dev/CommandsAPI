@@ -1,7 +1,11 @@
 package fr.traqueur.commands.api;
 
+import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
+import fr.traqueur.commands.api.models.Command;
+import fr.traqueur.commands.api.models.CommandPlatform;
+import fr.traqueur.commands.api.models.collections.CommandTree;
 import fr.traqueur.commands.impl.logging.InternalLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,7 +86,6 @@ class CommandManagerTest {
 
     @Test
     void testNoExtraAfterInfinite() throws Exception {
-        // Vérifier que l'ajout d'un argument après un infini lève une exception gérée
         Command<Object, String> cmd = new DummyCommand();
         cmd.setManager(manager);
         cmd.addArgs("x:infinite");
@@ -138,28 +141,26 @@ class CommandManagerTest {
     }
 
     @Test
-    void testCommandRegistration_entriesInManager() {
+    void testCommandRegistration_entriesInTree() {
         Command<Object, String> cmd = new DummyCommand("main");
         cmd.addAlias("m");
         cmd.addSubCommand(new DummyCommand("sub"));
 
         manager.registerCommand(cmd);
-        Map<String, Command<Object, String>> map = manager.getCommands();
-        assertTrue(map.containsKey("main"));
-        assertTrue(map.containsKey("m"));
-        assertTrue(map.containsKey("main.sub"));
+        CommandTree<Object, String> tree = manager.getCommands();
+        assertTrue(tree.getRoot().getChildren().containsKey("main"));
+        assertTrue(tree.getRoot().getChildren().containsKey("m"));
+        assertTrue(tree.findNode("main", new String[]{"sub"}).isPresent());
     }
 
     @Test
     void registerCommand_shouldAddMainAndAliasAndSubcommands() {
-        // Create command with alias and subcommand
         DummyCommand main = new DummyCommand();
         main.addAlias("a1", "a2");
         DummyCommand sub = new DummyCommand();
         main.addSubCommand(sub);
 
         manager.registerCommand(main);
-        // Check platform.addCommand called for all labels
         List<String> added = platform.added;
         assertTrue(added.contains("dummy"));
         assertTrue(added.contains("a1"));
@@ -169,7 +170,6 @@ class CommandManagerTest {
 
     @Test
     void addCommand_shouldRegisterCompletersForArgs() {
-        // Create a command requiring two args with converters
         Command<Object, String> cmd = new DummyCommand();
         cmd.addArgs("intArg", Integer.class);
         cmd.addOptionalArgs("optArg", Double.class);

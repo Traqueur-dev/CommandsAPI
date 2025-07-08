@@ -1,8 +1,8 @@
 package fr.traqueur.commands.spigot;
 
-import fr.traqueur.commands.api.Arguments;
-import fr.traqueur.commands.api.Command;
-import fr.traqueur.commands.api.CommandPlatform;
+import fr.traqueur.commands.api.arguments.Arguments;
+import fr.traqueur.commands.api.models.Command;
+import fr.traqueur.commands.api.models.CommandPlatform;
 import fr.traqueur.commands.spigot.arguments.PlayerArgument;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -29,7 +29,7 @@ class SpigotIntegrationTest {
             @Override public boolean hasPermission(CommandSender sender, String permission) { return true; }
             @Override public boolean isPlayer(CommandSender sender) {return sender instanceof Player;}
             @Override public void sendMessage(CommandSender sender, String message) {}
-            @Override public void addCommand(fr.traqueur.commands.api.Command<Object, CommandSender> command, String label) {}
+            @Override public void addCommand(Command<Object, CommandSender> command, String label) {}
             @Override public void removeCommand(String label, boolean subcommand) {}
         }) {};
         manager.registerConverter(Player.class, new PlayerArgument());

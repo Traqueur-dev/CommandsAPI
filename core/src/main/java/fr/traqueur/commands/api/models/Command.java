@@ -1,5 +1,7 @@
-package fr.traqueur.commands.api;
+package fr.traqueur.commands.api.models;
 
+import fr.traqueur.commands.api.arguments.Arguments;
+import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgsWithInfiniteArgumentException;
@@ -110,7 +112,7 @@ public abstract class Command<T, S> {
      * This method is called to set the manager of the command.
      * @param manager The manager of the command.
      */
-    protected void setManager(CommandManager<T, S> manager) {
+    public void setManager(CommandManager<T, S> manager) {
         this.manager = manager;
     }
 
@@ -176,6 +178,11 @@ public abstract class Command<T, S> {
      * @return The aliases of the command.
      */
     public final List<String> getAliases() {
+        List<String> aliases = new ArrayList<>();
+        aliases.add(name);
+        if (!this.aliases.isEmpty()) {
+            aliases.addAll(this.aliases);
+        }
         return aliases;
     }
 

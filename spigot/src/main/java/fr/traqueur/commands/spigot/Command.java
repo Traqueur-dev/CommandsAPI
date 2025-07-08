@@ -4,10 +4,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * This implementation of {@link fr.traqueur.commands.api.Command} is used to provide a command in Spigot.
+ * This implementation of {@link fr.traqueur.commands.api.models.Command} is used to provide a command in Spigot.
  * @param <T> is the type of the plugin, which must extend the main plugin class.
  */
-public abstract class Command<T extends JavaPlugin> extends fr.traqueur.commands.api.Command<T, CommandSender> {
+public abstract class Command<T extends JavaPlugin> extends fr.traqueur.commands.api.models.Command<T, CommandSender> {
 
     /**
      * The constructor of the command.

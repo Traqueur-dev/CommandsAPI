@@ -2,9 +2,9 @@ package fr.traqueur.commands.velocity;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
-import fr.traqueur.commands.api.Command;
+import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.CommandManager;
-import fr.traqueur.commands.api.CommandPlatform;
+import fr.traqueur.commands.api.models.CommandPlatform;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -117,30 +117,24 @@ public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
     public void addCommand(Command<T, CommandSource> command, String label) {
         String[] labelParts = label.split("\\.");
         String cmdLabel = labelParts[0].toLowerCase();
-        AtomicReference<String> originCmdLabelRef = new AtomicReference<>(cmdLabel);
 
-        if (labelParts.length > 1) {
-            this.commandManager.getCommands().values().stream()
-                    .filter(commandInner -> !commandInner.isSubCommand())
-                    .filter(commandInner -> commandInner.getAliases().contains(cmdLabel))
-                    .findAny()
-                    .ifPresent(commandInner -> originCmdLabelRef.set(commandInner.getName()));
-        } else {
-            originCmdLabelRef.set(label);
-        }
-
-        String originCmdLabel = originCmdLabelRef.get().toLowerCase();
         com.velocitypowered.api.command.CommandManager velocityCmdManager = server.getCommandManager();
 
-        if (velocityCmdManager.getCommandMeta(originCmdLabel) == null) {
+        boolean alreadyInTree = commandManager.getCommands()
+                .getRoot()
+                .getChildren()
+                .containsKey(cmdLabel);
+        boolean alreadyInMap = velocityCmdManager.getCommandMeta(cmdLabel) != null;
+
+        if (!alreadyInTree && !alreadyInMap) {
             String[] aliases = command.getAliases().stream()
                     .map(a -> a.split("\\.")[0].toLowerCase())
+                    .filter(a -> !a.equalsIgnoreCase(cmdLabel))
                     .distinct()
-                    .filter(a -> !a.equalsIgnoreCase(originCmdLabel))
                     .toArray(String[]::new);
 
             velocityCmdManager.register(
-                    velocityCmdManager.metaBuilder(originCmdLabel)
+                    velocityCmdManager.metaBuilder(cmdLabel)
                             .aliases(aliases)
                             .plugin(plugin)
                             .build(),

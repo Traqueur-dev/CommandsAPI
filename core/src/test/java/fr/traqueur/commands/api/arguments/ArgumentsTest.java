@@ -1,4 +1,4 @@
-package fr.traqueur.commands.api;
+package fr.traqueur.commands.api.arguments;
 import fr.traqueur.commands.impl.logging.InternalLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
