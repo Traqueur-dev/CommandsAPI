@@ -1,4 +1,6 @@
-package fr.traqueur.commands.api;
+package fr.traqueur.commands.api.models;
+
+import fr.traqueur.commands.api.CommandManager;
 
 import java.util.logging.Logger;
 

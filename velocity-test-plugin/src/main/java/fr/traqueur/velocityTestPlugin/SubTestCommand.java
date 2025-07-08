@@ -1,7 +1,7 @@
 package fr.traqueur.velocityTestPlugin;
 
 import com.velocitypowered.api.command.CommandSource;
-import fr.traqueur.commands.api.Arguments;
+import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.velocity.Command;
 import net.kyori.adventure.text.Component;
 

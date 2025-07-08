@@ -1,23 +1,24 @@
-package fr.traqueur.commands.api;
+package fr.traqueur.commands.api.models;
 
+import fr.traqueur.commands.api.CommandManager;
+import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.logging.MessageHandler;
+import fr.traqueur.commands.api.models.collections.CommandTree;
 import fr.traqueur.commands.api.requirements.Requirement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@SuppressWarnings(value = "unchecked")
+@SuppressWarnings("unchecked")
 class CommandInvokerTest {
 
     private CommandManager<String, String> manager;
+    private CommandTree<String, String> tree;
     private CommandPlatform<String, String> platform;
     private MessageHandler messageHandler;
     private CommandInvoker<String, String> invoker;
@@ -25,21 +26,19 @@ class CommandInvokerTest {
 
     @BeforeEach
     void setup() {
-        // Mock platform and manager
         platform = mock(CommandPlatform.class);
         messageHandler = mock(MessageHandler.class);
         manager = mock(CommandManager.class);
         when(manager.getPlatform()).thenReturn(platform);
         when(manager.getMessageHandler()).thenReturn(messageHandler);
-        // Default platform behaviors
         when(platform.isPlayer(anyString())).thenReturn(true);
         when(platform.hasPermission(anyString(), anyString())).thenReturn(true);
-        // Register single command under key "base"
+
         cmd = new DummyCommand();
-        Map<String, Command<String, String>> map = new HashMap<>();
-        map.put("base", cmd);
-        when(manager.getCommands()).thenReturn(map);
-        // Create invoker
+        tree = new CommandTree<>();
+        tree.addCommand("base",cmd);
+        when(manager.getCommands()).thenReturn(tree);
+
         invoker = new CommandInvoker<>(manager);
     }
 
@@ -57,7 +56,6 @@ class CommandInvokerTest {
         when(messageHandler.getOnlyInGameMessage()).thenReturn("ONLY_IN_GAME");
 
         invoker.invoke("user", "base", new String[]{});
-
         verify(platform).sendMessage("user", "ONLY_IN_GAME");
     }
 
@@ -68,7 +66,6 @@ class CommandInvokerTest {
         when(messageHandler.getNoPermissionMessage()).thenReturn("NO_PERMISSION");
 
         invoker.invoke("user", "base", new String[]{});
-
         verify(platform).sendMessage("user", "NO_PERMISSION");
     }
 
@@ -80,7 +77,6 @@ class CommandInvokerTest {
         cmd.addRequirements(req);
 
         invoker.invoke("user", "base", new String[]{});
-
         verify(platform).sendMessage("user", "REQ_ERR");
     }
 
@@ -90,18 +86,17 @@ class CommandInvokerTest {
         cmd.setUsage("/base <a>");
 
         invoker.invoke("user", "base", new String[]{});
-
         verify(platform).sendMessage("user", "/base <a>");
     }
 
     @Test
     void invoke_parseThrowsArgumentIncorrect_sendsArgNotRecognized() throws Exception {
         cmd.addArgs("a", String.class);
-        when(manager.parse(eq(cmd), any(String[].class))).thenThrow(new ArgumentIncorrectException("bad"));
+        when(manager.parse(eq(cmd), any(String[].class)))
+                .thenThrow(new ArgumentIncorrectException("bad"));
         when(messageHandler.getArgNotRecognized()).thenReturn("ARG_ERR %arg%");
 
         invoker.invoke("user", "base", new String[]{"bad"});
-
         verify(platform).sendMessage("user", "ARG_ERR bad");
     }
 
@@ -115,10 +110,13 @@ class CommandInvokerTest {
             }
         };
         custom.addArgs("x", String.class);
-        when(manager.getCommands()).thenReturn(Collections.singletonMap("base", custom));
+
+        tree = new CommandTree<>();
+        tree.addCommand("base",custom);
+        when(manager.getCommands()).thenReturn(tree);
+        invoker = new CommandInvoker<>(manager);
 
         boolean result = invoker.invoke("user", "base", new String[]{"hello"});
-
         assertTrue(result);
         assertTrue(executed.get());
     }

@@ -1,7 +1,9 @@
 // Placez ce fichier sous core/src/test/java/fr/traqueur/commands/api/
 
-package fr.traqueur.commands.api;
+package fr.traqueur.commands.api.models;
 
+import fr.traqueur.commands.api.CommandManager;
+import fr.traqueur.commands.api.arguments.Arguments;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,10 +50,10 @@ class CommandTest {
     @Test
     void testAliasesAndName() {
         assertEquals("dummy", cmd.getName());
-        assertTrue(cmd.getAliases().isEmpty());
+        assertEquals(1, cmd.getAliases().size());
         cmd.addAlias("d1", "d2");
         List<String> aliases = cmd.getAliases();
-        assertEquals(2, aliases.size());
+        assertEquals(3, cmd.getAliases().size());
         assertTrue(aliases.contains("d1"));
         assertTrue(aliases.contains("d2"));
     }

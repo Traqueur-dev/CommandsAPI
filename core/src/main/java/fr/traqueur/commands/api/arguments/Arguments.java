@@ -1,6 +1,5 @@
-package fr.traqueur.commands.api;
+package fr.traqueur.commands.api.arguments;
 
-import fr.traqueur.commands.api.arguments.ArgumentValue;
 import fr.traqueur.commands.api.exceptions.ArgumentNotExistException;
 import fr.traqueur.commands.api.exceptions.NoGoodTypeArgumentException;
 import fr.traqueur.commands.api.logging.Logger;
@@ -371,7 +370,7 @@ public class Arguments {
      * @param type The type of the argument.
      * @param object The object of the argument.
      */
-    protected void add(String key, Class<?> type, Object object) {
+    public void add(String key, Class<?> type, Object object) {
         ArgumentValue argumentValue = new ArgumentValue(type, object);
         this.arguments.put(key, argumentValue);
     }

@@ -2,11 +2,16 @@ package fr.traqueur.commands.api;
 
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
+import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
 import fr.traqueur.commands.api.logging.MessageHandler;
+import fr.traqueur.commands.api.models.Command;
+import fr.traqueur.commands.api.models.CommandInvoker;
+import fr.traqueur.commands.api.models.CommandPlatform;
+import fr.traqueur.commands.api.models.collections.CommandTree;
 import fr.traqueur.commands.api.updater.Updater;
 import fr.traqueur.commands.impl.arguments.BooleanArgument;
 import fr.traqueur.commands.impl.arguments.DoubleArgument;
@@ -44,7 +49,7 @@ public abstract class CommandManager<T, S> {
     /**
      * The commands registered in the command manager.
      */
-    private final Map<String, Command<T,S>> commands;
+    private final CommandTree<T,S> commands;
 
     /**
      * The argument converters registered in the command manager.
@@ -86,7 +91,7 @@ public abstract class CommandManager<T, S> {
         this.messageHandler = new InternalMessageHandler();
         this.logger = new InternalLogger(platform.getLogger());
         this.debug = false;
-        this.commands = new HashMap<>();
+        this.commands = new CommandTree<>();
         this.typeConverters = new HashMap<>();
         this.completers = new HashMap<>();
         this.invoker = new CommandInvoker<>(this);
@@ -165,10 +170,14 @@ public abstract class CommandManager<T, S> {
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregisterCommand(String label, boolean subcommands) {
-        if(this.commands.get(label) == null) {
-            throw new IllegalArgumentException("The command " + label + " does not exist.");
+        String[] rawArgs = label.split("\\.");
+        Optional<Command<T,S>> commandOptional = this.commands.findNode(rawArgs)
+                .flatMap(result -> result.node.getCommand());
+
+        if (!commandOptional.isPresent()) {
+            throw new IllegalArgumentException("Command with label '" + label + "' does not exist.");
         }
-        this.unregisterCommand(this.commands.get(label), subcommands);
+        this.unregisterCommand(commandOptional.get(), subcommands);
     }
 
     /**
@@ -252,7 +261,7 @@ public abstract class CommandManager<T, S> {
      * Get the commands of the command manager.
      * @return The commands of the command manager.
      */
-    public Map<String, Command<T,S>> getCommands() {
+    public CommandTree<T, S> getCommands() {
         return commands;
     }
 
@@ -327,7 +336,7 @@ public abstract class CommandManager<T, S> {
      */
     private void removeCommand(String label, boolean subcommand) {
         this.platform.removeCommand(label, subcommand);
-        this.commands.remove(label);
+        this.commands.removeCommand(label, subcommand);
         this.completers.remove(label);
     }
 
@@ -351,10 +360,8 @@ public abstract class CommandManager<T, S> {
         }
 
         command.setManager(this);
-
-        commands.put(label.toLowerCase(), command);
-
         this.platform.addCommand(command, label);
+        commands.addCommand(label, command);
 
         this.addCompletionsForLabel(labelParts);
         this.addCompletionForArgs(label, labelSize, args);
