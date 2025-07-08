@@ -106,30 +106,22 @@ public class CommandInvoker<T, S> {
      * @return the list of suggestion
      */
     public List<String> suggest(S source, String base, String[] args) {
-        for (int i = args.length; i >= 0; i--) {
-            String label = buildLabel(base, args, i);
-            Map<Integer, TabCompleter<S>> map = manager.getCompleters().get(label);
-            if (map != null && map.containsKey(args.length)) {
-                return map.get(args.length)
-                        .onCompletion(source, Collections.singletonList(buildArgsBefore(base, args)))
-                        .stream()
-                        .filter(opt -> allowedSuggestion(source, label, opt))
-                        .filter(opt -> matchesPrefix(opt, args[args.length - 1]))
-                        .collect(Collectors.toList());
-            }
+        Optional<MatchResult<T, S>> found = manager.getCommands().findNode(base, args);
+        if (!found.isPresent()) return Collections.emptyList();
+        MatchResult<T, S> result = found.get();
+        CommandTree.CommandNode<T, S> node = result.node;
+        String[] rawArgs = result.args;
+        String label = node.getFullLabel() != null ? node.getFullLabel() : base;
+        Map<Integer, TabCompleter<S>> map = manager.getCompleters().get(label);
+        if (map != null && map.containsKey(args.length)) {
+            return map.get(args.length)
+                    .onCompletion(source, Arrays.asList(rawArgs))
+                    .stream()
+                    .filter(opt -> allowedSuggestion(source, label, opt))
+                    .filter(opt -> matchesPrefix(opt, args[args.length - 1]))
+                    .collect(Collectors.toList());
         }
         return Collections.emptyList();
-    }
-
-    private String buildLabel(String base, String[] args, int count) {
-        StringBuilder sb = new StringBuilder(base.toLowerCase());
-        for (int i = 0; i < count; i++) sb.append('.').append(args[i].toLowerCase());
-        return sb.toString();
-    }
-
-    private String buildArgsBefore(String base, String[] args) {
-        if (args.length <= 1) return base;
-        return base + "." + String.join(".", Arrays.copyOf(args, args.length - 1));
     }
 
     private boolean matchesPrefix(String candidate, String current) {

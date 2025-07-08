@@ -360,8 +360,8 @@ public abstract class CommandManager<T, S> {
         }
 
         command.setManager(this);
-        commands.addCommand(label, command);
         this.platform.addCommand(command, label);
+        commands.addCommand(label, command);
 
         this.addCompletionsForLabel(labelParts);
         this.addCompletionForArgs(label, labelSize, args);

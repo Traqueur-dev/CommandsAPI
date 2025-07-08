@@ -136,16 +136,17 @@ public class CommandTree<T, S> {
         while (i < rawArgs.length) {
             String seg = rawArgs[i].toLowerCase();
             CommandNode<T, S> child = node.children.get(seg);
+
             if (child != null) {
                 node = child;
                 i++;
-            } else if (node.hadChildren) {
-                // expected a subcommand but not found
-                return Optional.empty();
-            } else {
+            } else if (node.getCommand().isPresent()) {
                 break;
+            } else {
+                return Optional.empty();
             }
         }
+
         String[] left = Arrays.copyOfRange(rawArgs, i, rawArgs.length);
         return Optional.of(new MatchResult<>(node, left));
     }
