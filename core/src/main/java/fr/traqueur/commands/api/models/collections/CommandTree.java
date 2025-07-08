@@ -136,17 +136,17 @@ public class CommandTree<T, S> {
         while (i < rawArgs.length) {
             String seg = rawArgs[i].toLowerCase();
             CommandNode<T, S> child = node.children.get(seg);
-
             if (child != null) {
                 node = child;
                 i++;
-            } else if (node.getCommand().isPresent()) {
+            } else if (node.hadChildren) {
+                return Optional.empty();
+            } else if (node.command != null) {
                 break;
             } else {
                 return Optional.empty();
             }
         }
-
         String[] left = Arrays.copyOfRange(rawArgs, i, rawArgs.length);
         return Optional.of(new MatchResult<>(node, left));
     }
@@ -173,22 +173,36 @@ public class CommandTree<T, S> {
      * @param prune if true, remove entire subtree; otherwise just clear the command at that node
      */
     public void removeCommand(String label, boolean prune) {
-        String[] parts = label.split("\\.");
-        CommandNode<T, S> node = root;
-        for (String seg : parts) {
-            node = node.children.get(seg.toLowerCase());
-            if (node == null) return;
-        }
-        CommandNode<T, S> parent = node.parent;
-        if (parent == null) return; // cannot remove root
+        CommandNode<T, S> target = this.findNode(label.split("\\.")).map(result -> result.node).orElse(null);
+        if (target == null) return;
 
-        boolean hasChildren = !node.children.isEmpty();
-        if (prune || !hasChildren) {
-            // remove this node and entire subtree
-            parent.children.remove(node.label);
+        if (prune) {
+            pruneSubtree(target);
         } else {
-            // clear only the command, keep subtree intact
-            node.command = null;
+            clearOrPruneEmpty(target);
+        }
+    }
+
+    private void pruneSubtree(CommandNode<T, S> node) {
+        CommandNode<T, S> parent = node.parent;
+        if (parent != null) {
+            parent.children.remove(node.label);
+            if(parent.children.isEmpty()){
+                parent.hadChildren = false;
+            }
+        }
+    }
+
+    private void clearOrPruneEmpty(CommandNode<T, S> node) {
+        node.command = null;
+        if (node.children.isEmpty()) {
+            CommandNode<T, S> parent = node.parent;
+            if (parent != null) {
+                parent.children.remove(node.label);
+                if(parent.children.isEmpty()){
+                    parent.hadChildren = false;
+                }
+            }
         }
     }
 

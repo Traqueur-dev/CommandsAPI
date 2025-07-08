@@ -76,7 +76,6 @@ class CommandTreeTest {
     @Test
     void testRemoveCommandClearOnly() {
         tree.addCommand("root",rootCmd);
-        // remove without subcommands flag false, but no children => pruned
         tree.removeCommand("root", false);
         Optional<CommandTree.MatchResult<String,String>> m = tree.findNode("root", new String[]{});
         assertFalse(m.isPresent());
@@ -112,11 +111,29 @@ class CommandTreeTest {
 
         // remove entire branch
         tree.removeCommand("root.sub", true);
-        // sub and subsub removed
-        assertFalse(tree.findNode("root", new String[]{"sub"}).isPresent());
-        assertFalse(tree.findNode("root", new String[]{"sub","subsub"}).isPresent());
-        // root remains
+        Optional<CommandTree.MatchResult<String,String>> rootopt = tree.findNode("root", new String[]{"sub"});
+        assertTrue(rootopt.isPresent());
+        assertEquals(rootCmd, rootopt.get().node.getCommand().orElse(null));
+        rootopt = tree.findNode("root", new String[]{"sub", "subsub"});
+        assertTrue(rootopt.isPresent());
+        assertEquals(rootCmd, rootopt.get().node.getCommand().orElse(null));
         assertTrue(tree.findNode("root", new String[]{}).isPresent());
+    }
+
+    @Test
+    void testRemoveCommandPruneBranchWithoutRoot() {
+        rootCmd.addSubCommand(subCmd);
+        subCmd.addSubCommand(subSubCmd);
+        tree.addCommand("root.sub",subCmd);
+        tree.addCommand("root.sub.subsub",subSubCmd);
+
+        // remove entire branch
+        tree.removeCommand("root.sub", true);
+
+        Optional<CommandTree.MatchResult<String,String>> opt = tree.findNode("root", new String[]{"sub"});
+        assertFalse(opt.isPresent(), "Expected no command at 'root.sub' after pruning");
+        opt = tree.findNode("root", new String[]{"sub", "subsub"});
+        assertFalse(opt.isPresent(), "Expected no command at 'root.sub.subsub' after pruning");
     }
 
     // stub Command to use in tests
