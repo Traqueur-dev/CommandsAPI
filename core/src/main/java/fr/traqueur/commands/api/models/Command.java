@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class is the base class for all commands.
@@ -501,30 +502,46 @@ public abstract class Command<T, S> {
      * @return The default usage of the command.
      */
     public String generateDefaultUsage(CommandPlatform<T,S> platform, S sender, String label) {
-        StringBuilder usage = new StringBuilder();
-        usage.append("/");
-        Arrays.stream(label.split("\\.")).forEach(s -> usage.append(s).append(" "));
-        //remove the last space
-        if(this.args.isEmpty() && this.optionalArgs.isEmpty()) {
-            usage.deleteCharAt(usage.length() - 1);
+        StringBuilder usage = new StringBuilder("/");
+
+        String[] parts = label.split("\\.");
+        usage.append(String.join(" ", parts));
+
+        List<Command<T, S>> directSubs = this.getSubcommands().stream()
+                .filter(sub -> {
+                    String perm = sub.getPermission();
+                    return perm.isEmpty() || platform.hasPermission(sender, perm);
+                })
+                .collect(Collectors.toList());
+
+        if (!directSubs.isEmpty()) {
+            usage.append(" <");
+            String subs = directSubs.stream()
+                    .map(Command::getName)
+                    .map(str -> str.split("\\.")[0])
+                    .collect(Collectors.joining("|"));
+            usage.append(subs).append(">");
         }
 
-        StringBuilder firstArg = new StringBuilder();
-        this.getSubcommands()
-                .stream().filter(subCommand -> subCommand.getPermission().isEmpty() || platform.hasPermission(sender, subCommand.getPermission()))
-                .forEach(subCommand -> firstArg.append(subCommand.getName()).append("|"));
-        if(firstArg.length() > 0) {
-            firstArg.deleteCharAt(firstArg.length() - 1);
-            usage.append("<").append(firstArg).append(">");
-        }
-        if((!this.getArgs().isEmpty() || !this.getOptinalArgs().isEmpty()) && firstArg.length() > 0) {
-            usage.append("|");
-        }
+        if (!this.getArgs().isEmpty() || !this.getOptinalArgs().isEmpty()) {
+            usage.append(!directSubs.isEmpty() ? "|" : " ");
 
-        usage.append(this.getArgs().stream().map(argument -> "<" + argument.arg() + ">").collect(Collectors.joining(" ")));
-        if (!this.getOptinalArgs().isEmpty()) {
-            usage.append(" ");
-            usage.append(this.getOptinalArgs().stream().map(argument -> "[" + argument.arg() + "]").collect(Collectors.joining(" ")));
+            // arguments obligatoires : <name:type>
+            String req = this.getArgs().stream()
+                    .map(arg -> "<" + arg.arg() + ">")
+                    .collect(Collectors.joining(" "));
+            usage.append(req);
+
+            // arguments optionnels : [name:type]
+            if (!this.getOptinalArgs().isEmpty()) {
+                if (!req.isEmpty()) {
+                    usage.append(" ");
+                }
+                String opt = this.getOptinalArgs().stream()
+                        .map(arg -> "[" + arg.arg() + "]")
+                        .collect(Collectors.joining(" "));
+                usage.append(opt);
+            }
         }
 
         return usage.toString();
