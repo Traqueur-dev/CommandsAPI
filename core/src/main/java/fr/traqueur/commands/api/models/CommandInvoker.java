@@ -12,6 +12,7 @@ import fr.traqueur.commands.api.requirements.Requirement;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * CommandInvoker is responsible for invoking and suggesting commands.
@@ -107,21 +108,53 @@ public class CommandInvoker<T, S> {
      */
     public List<String> suggest(S source, String base, String[] args) {
         Optional<MatchResult<T, S>> found = manager.getCommands().findNode(base, args);
-        if (!found.isPresent()) return Collections.emptyList();
-        MatchResult<T, S> result = found.get();
-        CommandTree.CommandNode<T, S> node = result.node;
-        String[] rawArgs = result.args;
-        String label = node.getFullLabel() != null ? node.getFullLabel() : base;
-        Map<Integer, TabCompleter<S>> map = manager.getCompleters().get(label);
-        if (map != null && map.containsKey(args.length)) {
-            return map.get(args.length)
-                    .onCompletion(source, Arrays.asList(rawArgs))
-                    .stream()
-                    .filter(opt -> allowedSuggestion(source, label, opt))
-                    .filter(opt -> matchesPrefix(opt, args[args.length - 1]))
-                    .collect(Collectors.toList());
+        String lastArg = args.length > 0 ? args[args.length - 1] : "";
+        if (found.isPresent()) {
+            MatchResult<T, S> result = found.get();
+            CommandTree.CommandNode<T, S> node = result.node;
+            String[] rawArgs = result.args;
+            String label = Optional.ofNullable(node.getFullLabel()).orElse(base);
+            Map<Integer, TabCompleter<S>> map = manager.getCompleters().get(label);
+            if (map != null) {
+                TabCompleter<S> completer = map.get(args.length);
+                if (completer != null) {
+                    return completer.onCompletion(source, Arrays.asList(rawArgs)).stream()
+                            .filter(opt -> allowedSuggestion(source, label, opt))
+                            .filter(opt -> matchesPrefix(opt, lastArg))
+                            .collect(Collectors.toList());
+                }
+            }
         }
-        return Collections.emptyList();
+
+        CommandTree.CommandNode<T, S> current = manager.getCommands().getRoot().getChildren().get(base.toLowerCase());
+        if (current == null) return Collections.emptyList();
+
+        current = traverseNode(current, args);
+        String parentLabel = current.getFullLabel();
+
+        Stream<String> children = current.getChildren().keySet().stream();
+        if (args.length > 0 && current.getChildren().containsKey(lastArg.toLowerCase())) {
+            children = children.filter(opt -> matchesPrefix(opt, lastArg));
+        }
+
+        return children
+                .filter(opt -> allowedSuggestion(source, parentLabel, opt))
+                .collect(Collectors.toList());
+    }
+
+    private CommandTree.CommandNode<T, S> traverseNode(CommandTree.CommandNode<T, S> node, String[] args) {
+        int index = 0;
+        while (index < args.length - 1) {
+            String arg = args[index].toLowerCase();
+            CommandTree.CommandNode<T, S> child = node.getChildren().get(arg);
+            if (child != null) {
+                node = child;
+                index++;
+            } else {
+                break;
+            }
+        }
+        return node;
     }
 
     private boolean matchesPrefix(String candidate, String current) {

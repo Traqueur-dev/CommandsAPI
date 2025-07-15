@@ -145,9 +145,7 @@ public abstract class CommandManager<T, S> {
      */
     public void registerCommand(Command<T,S> command) {
         try {
-            List<String> aliases = new ArrayList<>(command.getAliases());
-            aliases.add(command.getName());
-            for (String alias : aliases) {
+            for (String alias : command.getAliases()) {
                 this.addCommand(command, alias);
                 this.registerSubCommands(alias, command.getSubcommands());
             }
