@@ -9,6 +9,7 @@ import fr.traqueur.commands.api.requirements.Requirement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -119,6 +120,28 @@ class CommandInvokerTest {
         boolean result = invoker.invoke("user", "base", new String[]{"hello"});
         assertTrue(result);
         assertTrue(executed.get());
+    }
+
+    @Test
+    void valid_AliasWithSubCommand_executesSubCommand() {
+        cmd.addAlias("base.sub");
+
+        DummyCommand sub = new DummyCommand();
+        cmd.addSubCommand(sub);
+
+        tree.addCommand("base.sub", cmd);
+        tree.addCommand("base.sub.base", sub);
+        tree.addCommand("base.base", sub);
+
+        List<String> suggests = invoker.suggest("user", "base", new String[]{""});
+        assertTrue(suggests.contains("sub"));
+        assertTrue(suggests.contains("base"));
+
+        List<String> suggests3 = invoker.suggest("user", "base", new String[]{"sub"});
+        assertTrue(suggests3.contains("sub"));
+
+        List<String> suggests4 = invoker.suggest("user", "base", new String[]{"sub", ""});
+        assertTrue(suggests4.contains("base"));
     }
 
     static class DummyCommand extends Command<String, String> {
