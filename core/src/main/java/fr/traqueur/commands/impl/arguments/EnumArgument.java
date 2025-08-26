@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  * @param <T> The type of the enum.
  * @param <S> The type of the sender (e.g., player, console).
  */
-public class EnumArgument<T extends Enum<T>, S> implements ArgumentConverter<Enum<T>>, TabCompleter<S> {
+public class EnumArgument<T extends Enum<T>, S> implements ArgumentConverter<T>, TabCompleter<S> {
 
     /**
      * Creates a new EnumArgument instance for the specified enum class.
@@ -47,7 +47,7 @@ public class EnumArgument<T extends Enum<T>, S> implements ArgumentConverter<Enu
      * @return The enum class
      */
     @Override
-    public Enum<T> apply(String s) {
+    public T apply(String s) {
         if (s == null || s.isEmpty()) {
             return null;
         }
