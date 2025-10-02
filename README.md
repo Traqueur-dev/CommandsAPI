@@ -51,7 +51,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.Traqueur-dev.CommandsAPI:platform-spigot:4.0.0' // or platform-velocity
+    implementation 'com.github.Traqueur-dev.CommandsAPI:platform-spigot:[version]' // or platform-velocity
 }
 ```
 
@@ -69,7 +69,7 @@ dependencies {
     <dependency>
         <groupId>com.github.Traqueur-dev.CommandsAPI</groupId>
         <artifactId>platform-spigot</artifactId> <!-- or platform-velocity -->
-        <version>4.0.0</version>
+        <version>[version]</version>
     </dependency>
 </dependencies>
 ```
@@ -135,7 +135,7 @@ This allows support for new platforms like Fabric, Minestom, or BungeeCord.
 To publish locally for development:
 
 ```bash
-./gradlew core:publishToMavenLocal platform-spigot:publishToMavenLocal platform-velocity:publishToMavenLocal
+./gradlew core:publishToMavenLocal spigot:publishToMavenLocal velocity:publishToMavenLocal
 ```
 
 ---
