@@ -25,6 +25,13 @@ public abstract class Command<T> extends fr.traqueur.commands.api.models.Command
         super(bot, name);
     }
 
+    /**
+     * Abstract method to execute the command.
+     * Must be implemented by subclasses to define command behavior.
+     *
+     * @param event     The slash command interaction event.
+     * @param arguments The JDA-specific arguments for the command.
+     */
     public abstract void execute(SlashCommandInteractionEvent event, JDAArguments arguments);
 
     public void execute(SlashCommandInteractionEvent event, Arguments arguments) {
