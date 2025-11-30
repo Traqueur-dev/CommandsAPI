@@ -1,0 +1,30 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(":jda")
+    implementation("net.dv8tion:JDA:5.2.1") {
+        exclude module: 'opus-java'
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+application {
+    mainClass = 'fr.traqueur.commands.test.TestBot'
+}
+
+tasks.register('runBot', JavaExec) {
+    group = 'application'
+    description = 'Run the test Discord bot'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fr.traqueur.commands.test.TestBot'
+}

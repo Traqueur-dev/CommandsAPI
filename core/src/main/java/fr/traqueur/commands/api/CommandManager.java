@@ -299,8 +299,8 @@ public abstract class CommandManager<T, S> {
             return;
         }
         for (Command<T,S> subcommand : subcommands) {
+            // getAliases() already returns [name, ...aliases], so no need to add the name again
             List<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
-            aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
                 this.addCommand(subcommand, parentLabel + "." + aliasSub);
                 this.registerSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());
@@ -318,8 +318,8 @@ public abstract class CommandManager<T, S> {
             return;
         }
         for (Command<T,S> subcommand : subcommandsList) {
+            // getAliases() already returns [name, ...aliases], so no need to add the name again
             List<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
-            aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
                 this.removeCommand(parentLabel + "." + aliasSub, true);
                 this.unregisterSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());

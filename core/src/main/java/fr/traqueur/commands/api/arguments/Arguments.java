@@ -16,12 +16,12 @@ public class Arguments {
     /**
      * The map of the arguments.
      */
-    private final Map<String, ArgumentValue> arguments;
+    protected final Map<String, ArgumentValue> arguments;
 
     /**
      * The logger of the class.
      */
-    private final Logger logger;
+    protected final Logger logger;
 
     /**
      * Constructor of the class.
@@ -373,5 +373,24 @@ public class Arguments {
     public void add(String key, Class<?> type, Object object) {
         ArgumentValue argumentValue = new ArgumentValue(type, object);
         this.arguments.put(key, argumentValue);
+    }
+
+    /**
+     * Check if an argument exists in the map.
+     *
+     * @param key The key of the argument.
+     * @return true if the argument exists, false otherwise.
+     */
+    public boolean has(String key) {
+        return this.arguments.containsKey(key);
+    }
+
+    /**
+     * Get the logger of the class.
+     *
+     * @return The logger of the class.
+     */
+    protected Logger getLogger() {
+        return this.logger;
     }
 }
