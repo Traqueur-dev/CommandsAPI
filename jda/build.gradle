@@ -8,10 +8,10 @@ repositories {
 
 dependencies {
     api project(":core")
-    compileOnly("net.dv8tion:JDA:5.2.1") {
+    compileOnly("net.dv8tion:JDA:6.1.2") {
         exclude module: 'opus-java'
     }
-    testImplementation("net.dv8tion:JDA:5.2.1") {
+    testImplementation("net.dv8tion:JDA:6.1.2") {
         exclude module: 'opus-java'
     }
 }
