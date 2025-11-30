@@ -5,6 +5,7 @@ import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
+import fr.traqueur.commands.api.exceptions.CommandRegistrationException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
 import fr.traqueur.commands.api.logging.MessageHandler;
@@ -150,7 +151,7 @@ public abstract class CommandManager<T, S> {
                 this.registerSubCommands(alias, command.getSubcommands());
             }
         } catch(TypeArgumentNotExistException e) {
-            throw new RuntimeException(e);
+            throw new CommandRegistrationException("Failed to register command: " + command.getClass().getSimpleName(), e);
         }
     }
 
@@ -299,8 +300,8 @@ public abstract class CommandManager<T, S> {
             return;
         }
         for (Command<T,S> subcommand : subcommands) {
+            // getAliases() already returns [name, ...aliases], so no need to add the name again
             List<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
-            aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
                 this.addCommand(subcommand, parentLabel + "." + aliasSub);
                 this.registerSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());
@@ -318,8 +319,8 @@ public abstract class CommandManager<T, S> {
             return;
         }
         for (Command<T,S> subcommand : subcommandsList) {
+            // getAliases() already returns [name, ...aliases], so no need to add the name again
             List<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
-            aliasesSub.add(subcommand.getName());
             for (String aliasSub : aliasesSub) {
                 this.removeCommand(parentLabel + "." + aliasSub, true);
                 this.unregisterSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());

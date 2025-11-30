@@ -1,5 +1,7 @@
 package fr.traqueur.commands.api.updater;
 
+import fr.traqueur.commands.api.exceptions.UpdaterInitializationException;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -22,7 +24,7 @@ public class Updater {
         try {
             URL_LATEST_RELEASE = URI.create("https://api.github.com/repos/Traqueur-dev/CommandsAPI/releases/latest").toURL();
         } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
+            throw new UpdaterInitializationException("Failed to initialize updater URL", e);
         }
     }
 

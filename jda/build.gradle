@@ -1,0 +1,35 @@
+plugins {
+    id 'maven-publish'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api project(":core")
+    compileOnly("net.dv8tion:JDA:5.2.1") {
+        exclude module: 'opus-java'
+    }
+    testImplementation("net.dv8tion:JDA:5.2.1") {
+        exclude module: 'opus-java'
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
+    withJavadocJar()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            groupId = project.group
+            artifactId = 'platform-jda'
+            version = project.version
+        }
+    }
+}

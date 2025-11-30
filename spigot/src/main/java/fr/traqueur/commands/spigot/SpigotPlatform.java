@@ -1,7 +1,8 @@
 package fr.traqueur.commands.spigot;
 
-import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.CommandManager;
+import fr.traqueur.commands.api.exceptions.CommandRegistrationException;
+import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandPlatform;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -154,7 +155,7 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
                     return;
                 }
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new CommandRegistrationException("Failed to register command '" + cmdLabel + "' in Spigot", e);
             }
         }
 
