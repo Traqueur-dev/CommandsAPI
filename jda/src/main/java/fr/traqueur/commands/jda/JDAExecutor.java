@@ -23,11 +23,6 @@ import java.util.Optional;
 public class JDAExecutor<T> extends ListenerAdapter {
 
     /**
-     * The bot instance.
-     */
-    private final T bot;
-
-    /**
      * The command manager.
      */
     private final CommandManager<T, SlashCommandInteractionEvent> commandManager;
@@ -35,11 +30,9 @@ public class JDAExecutor<T> extends ListenerAdapter {
     /**
      * Constructor for JDAExecutor.
      *
-     * @param bot            The bot instance.
      * @param commandManager The command manager.
      */
-    public JDAExecutor(T bot, CommandManager<T, SlashCommandInteractionEvent> commandManager) {
-        this.bot = bot;
+    public JDAExecutor(CommandManager<T, SlashCommandInteractionEvent> commandManager) {
         this.commandManager = commandManager;
     }
 

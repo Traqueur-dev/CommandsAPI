@@ -48,11 +48,6 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
     private CommandManager<T, SlashCommandInteractionEvent> commandManager;
 
     /**
-     * The executor that handles slash command events.
-     */
-    private JDAExecutor<T> executor;
-
-    /**
      * Map of root command names to their SlashCommandData.
      */
     private final Map<String, SlashCommandData> slashCommands;
@@ -79,8 +74,7 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
     @Override
     public void injectManager(CommandManager<T, SlashCommandInteractionEvent> commandManager) {
         this.commandManager = commandManager;
-        this.executor = new JDAExecutor<>(bot, commandManager);
-        this.jda.addEventListener(executor);
+        this.jda.addEventListener(new JDAExecutor<>(commandManager));
     }
 
     @Override
@@ -255,9 +249,8 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
         String type = parts.length > 1 ? parts[1].trim() : "string";
 
         OptionType optionType = mapToOptionType(type);
-        OptionData option = new OptionData(optionType, name, "Argument: " + name, required);
 
-        return option;
+        return new OptionData(optionType, name, "Argument: " + name, required);
     }
 
     /**
@@ -267,31 +260,17 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
      * @return The corresponding OptionType.
      */
     private OptionType mapToOptionType(String type) {
-        switch (type.toLowerCase()) {
-            case "integer":
-            case "int":
-            case "long":
-                return OptionType.INTEGER;
-            case "boolean":
-                return OptionType.BOOLEAN;
-            case "user":
-            case "member":
-                return OptionType.USER;
-            case "role":
-                return OptionType.ROLE;
-            case "channel":
-            case "guildchannelunion":
-                return OptionType.CHANNEL;
-            case "double":
-            case "float":
-                return OptionType.NUMBER;
-            case "attachment":
-                return OptionType.ATTACHMENT;
-            case "mentionable":
-                return OptionType.MENTIONABLE;
-            default:
-                return OptionType.STRING;
-        }
+        return switch (type.toLowerCase()) {
+            case "integer", "int", "long" -> OptionType.INTEGER;
+            case "boolean" -> OptionType.BOOLEAN;
+            case "user", "member" -> OptionType.USER;
+            case "role" -> OptionType.ROLE;
+            case "channel", "guildchannelunion" -> OptionType.CHANNEL;
+            case "double", "float" -> OptionType.NUMBER;
+            case "attachment" -> OptionType.ATTACHMENT;
+            case "mentionable" -> OptionType.MENTIONABLE;
+            default -> OptionType.STRING;
+        };
     }
 
     /**
