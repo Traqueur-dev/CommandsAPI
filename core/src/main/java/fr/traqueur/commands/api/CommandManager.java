@@ -5,6 +5,7 @@ import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
+import fr.traqueur.commands.api.exceptions.CommandRegistrationException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
 import fr.traqueur.commands.api.logging.MessageHandler;
@@ -150,7 +151,7 @@ public abstract class CommandManager<T, S> {
                 this.registerSubCommands(alias, command.getSubcommands());
             }
         } catch(TypeArgumentNotExistException e) {
-            throw new RuntimeException(e);
+            throw new CommandRegistrationException("Failed to register command: " + command.getClass().getSimpleName(), e);
         }
     }
 
