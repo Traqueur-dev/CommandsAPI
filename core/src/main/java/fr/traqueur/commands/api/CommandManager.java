@@ -22,6 +22,7 @@ import fr.traqueur.commands.impl.arguments.IntegerArgument;
 import fr.traqueur.commands.impl.arguments.LongArgument;
 import fr.traqueur.commands.impl.logging.InternalLogger;
 import fr.traqueur.commands.impl.logging.InternalMessageHandler;
+import fr.traqueur.commands.impl.parsing.DefaultArgumentParser;
 
 import java.util.*;
 
@@ -35,7 +36,7 @@ import java.util.*;
 public abstract class CommandManager<T, S> {
 
 
-    private final ArgumentParser<T, S> parser;
+    private final ArgumentParser<T, S, String[]> parser;
     private final CommandPlatform<T,S> platform;
 
     /**
@@ -87,7 +88,7 @@ public abstract class CommandManager<T, S> {
         this.typeConverters = new HashMap<>();
         this.completers = new HashMap<>();
         this.invoker = new CommandInvoker<>(this);
-        this.parser = new ArgumentParser<>(this.typeConverters);
+        this.parser = new DefaultArgumentParser<>(this.typeConverters, this.logger);
         this.registerInternalConverters();
     }
 
@@ -210,7 +211,7 @@ public abstract class CommandManager<T, S> {
      * @throws ArgumentIncorrectException If the argument is incorrect.
      */
     public Arguments parse(Command<T,S> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
-        ParseResult result = parser.parse(command, args, this.logger);
+        ParseResult result = parser.parse(command, args);
         if (!result.isSuccess()) {
             ParseError error = result.error();
             switch (error.type()) {
