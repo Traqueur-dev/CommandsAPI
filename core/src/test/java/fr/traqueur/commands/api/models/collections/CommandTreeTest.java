@@ -4,7 +4,6 @@ import fr.traqueur.commands.api.models.Command;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,9 +28,9 @@ class CommandTreeTest {
         // find base with no args
         Optional<CommandTree.MatchResult<String,String>> match = tree.findNode("root", new String[]{});
         assertTrue(match.isPresent());
-        assertEquals(rootCmd, match.get().node.getCommand().orElse(null));
+        assertEquals(rootCmd, match.get().node().getCommand().orElse(null));
         // full label
-        assertEquals("root", match.get().node.getFullLabel());
+        assertEquals("root", match.get().node().getFullLabel());
     }
 
     @Test
@@ -46,14 +45,14 @@ class CommandTreeTest {
         // find sub
         Optional<CommandTree.MatchResult<String,String>> m1 = tree.findNode("root", new String[]{"sub"});
         assertTrue(m1.isPresent());
-        assertEquals(subCmd, m1.get().node.getCommand().orElse(null));
-        assertArrayEquals(new String[]{}, m1.get().args);
+        assertEquals(subCmd, m1.get().node().getCommand().orElse(null));
+        assertArrayEquals(new String[]{}, m1.get().args());
 
         // find sub.subsub
         Optional<CommandTree.MatchResult<String,String>> m2 = tree.findNode("root", new String[]{"sub", "subsub"});
         assertTrue(m2.isPresent());
-        assertEquals(subSubCmd, m2.get().node.getCommand().orElse(null));
-        assertArrayEquals(new String[]{}, m2.get().args);
+        assertEquals(subSubCmd, m2.get().node().getCommand().orElse(null));
+        assertArrayEquals(new String[]{}, m2.get().args());
     }
 
     @Test
@@ -62,8 +61,8 @@ class CommandTreeTest {
         // root takes no args, so extra args are leftover
         Optional<CommandTree.MatchResult<String,String>> m = tree.findNode("root", new String[]{"a","b","c"});
         assertTrue(m.isPresent());
-        assertEquals(rootCmd, m.get().node.getCommand().orElse(null));
-        assertArrayEquals(new String[]{"a","b","c"}, m.get().args);
+        assertEquals(rootCmd, m.get().node().getCommand().orElse(null));
+        assertArrayEquals(new String[]{"a", "b", "c"}, m.get().args());
     }
 
     @Test
@@ -93,11 +92,11 @@ class CommandTreeTest {
         // root command cleared but sub-tree remains
         Optional<CommandTree.MatchResult<String,String>> mSub = tree.findNode("root", new String[]{"sub"});
         assertTrue(mSub.isPresent());
-        assertEquals(subCmd, mSub.get().node.getCommand().orElse(null));
+        assertEquals(subCmd, mSub.get().node().getCommand().orElse(null));
 
         // find root itself => cleared, so no command at root
         Optional<CommandTree.MatchResult<String,String>> mRoot = tree.findNode("root", new String[]{});
-        assertFalse(mRoot.get().node.getCommand().isPresent());
+        assertFalse(mRoot.get().node().getCommand().isPresent());
     }
 
     @Test
@@ -113,10 +112,10 @@ class CommandTreeTest {
         tree.removeCommand("root.sub", true);
         Optional<CommandTree.MatchResult<String,String>> rootopt = tree.findNode("root", new String[]{"sub"});
         assertTrue(rootopt.isPresent());
-        assertEquals(rootCmd, rootopt.get().node.getCommand().orElse(null));
+        assertEquals(rootCmd, rootopt.get().node().getCommand().orElse(null));
         rootopt = tree.findNode("root", new String[]{"sub", "subsub"});
         assertTrue(rootopt.isPresent());
-        assertEquals(rootCmd, rootopt.get().node.getCommand().orElse(null));
+        assertEquals(rootCmd, rootopt.get().node().getCommand().orElse(null));
         assertTrue(tree.findNode("root", new String[]{}).isPresent());
     }
 

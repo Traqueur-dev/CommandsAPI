@@ -1,10 +1,8 @@
 package fr.traqueur.commands.test.commands;
 
-import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.jda.Command;
 import fr.traqueur.commands.jda.JDAArguments;
 import fr.traqueur.commands.test.TestBot;
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 /**
@@ -45,8 +43,8 @@ public class MathCommand extends Command<TestBot> {
 
         @Override
         public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
-            double a = arguments.getAsDouble("a").orElse(0.0);
-            double b = arguments.getAsDouble("b").orElse(0.0);
+            double a = arguments.get("a");
+            double b = arguments.get("b");
             double result = a + b;
 
             jda(arguments).reply(String.format("%.2f + %.2f = %.2f", a, b, result));
@@ -65,8 +63,8 @@ public class MathCommand extends Command<TestBot> {
 
         @Override
         public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
-            double a = arguments.getAsDouble("a").orElse(0.0);
-            double b = arguments.getAsDouble("b").orElse(0.0);
+            double a = arguments.get("a");
+            double b = arguments.get("b");
             double result = a - b;
 
             jda(arguments).reply(String.format("%.2f - %.2f = %.2f", a, b, result));
@@ -85,8 +83,8 @@ public class MathCommand extends Command<TestBot> {
 
         @Override
         public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
-            double a = arguments.getAsDouble("a").orElse(0.0);
-            double b = arguments.getAsDouble("b").orElse(0.0);
+            double a = arguments.get("a");
+            double b = arguments.get("b");
             double result = a * b;
 
             jda(arguments).reply(String.format("%.2f × %.2f = %.2f", a, b, result));
@@ -105,8 +103,8 @@ public class MathCommand extends Command<TestBot> {
 
         @Override
         public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
-            double a = arguments.getAsDouble("a").orElse(0.0);
-            double b = arguments.getAsDouble("b").orElse(0.0);
+            double a = arguments.get("a");
+            double b = arguments.get("b");
 
             if (b == 0) {
                 jda(arguments).replyEphemeral("Cannot divide by zero!");

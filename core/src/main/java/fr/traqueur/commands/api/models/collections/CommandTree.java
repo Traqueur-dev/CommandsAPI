@@ -10,33 +10,8 @@ import java.util.*;
  * @param <S> type of the command sender
  */
 public class CommandTree<T, S> {
-    /**
-     * Result of a lookup: the deepest matching node and leftover args.
-     * This is used to find commands based on a base label and raw arguments.
-     * @param <T> type of the command context
-     * @param <S> type of the command sender
-     */
-    public static class MatchResult<T, S> {
 
-        /** The node that matched the base label and any subcommands.
-         * The args are the remaining segments after the match.
-         */
-        public final CommandNode<T, S> node;
-
-        /** Remaining arguments after the matched node.
-         * This can be empty if the match was exact.
-         */
-        public final String[] args;
-
-        /** Create a match result with the node and leftover args.
-         * @param node the matched command node
-         * @param args remaining arguments after the match
-         */
-        public MatchResult(CommandNode<T, S> node, String[] args) {
-            this.node = node;
-            this.args = args;
-        }
-    }
+    private CommandNode<T, S> root;
 
     /**
      * A node representing one segment in the command path.
@@ -92,7 +67,9 @@ public class CommandTree<T, S> {
         }
     }
 
-    private final CommandNode<T, S> root;
+    public void clear() {
+        this.root = new CommandNode<>(null, null);
+    }
 
 
     /**
@@ -101,6 +78,20 @@ public class CommandTree<T, S> {
      */
     public CommandTree() {
         this.root = new CommandNode<>(null, null);
+    }
+
+    /**
+     * Result of a lookup: the deepest matching node and leftover args.
+     * This is used to find commands based on a base label and raw arguments.
+     *
+     * @param <T>  type of the command context
+     * @param <S>  type of the command sender
+     * @param node The node that matched the base label and any subcommands.
+     *             The args are the remaining segments after the match.
+     * @param args Remaining arguments after the matched node.
+     *             This can be empty if the match was exact.
+     */
+    public record MatchResult<T, S>(CommandNode<T, S> node, String[] args) {
     }
 
     /**

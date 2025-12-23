@@ -8,11 +8,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
+import net.dv8tion.jda.api.interactions.commands.build.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -244,11 +240,9 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
      * @return The OptionData.
      */
     private OptionData createOptionData(Argument<SlashCommandInteractionEvent> arg, boolean required) {
-        String[] parts = arg.arg().split(CommandManager.TYPE_PARSER);
-        String name = parts[0].trim().toLowerCase();
-        String type = parts.length > 1 ? parts[1].trim() : "string";
+        String name = arg.name();
 
-        OptionType optionType = mapToOptionType(type);
+        OptionType optionType = mapToOptionType(arg.type().key());
 
         return new OptionData(optionType, name, "Argument: " + name, required);
     }

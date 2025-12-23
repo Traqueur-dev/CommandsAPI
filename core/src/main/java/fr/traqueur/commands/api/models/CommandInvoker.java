@@ -5,7 +5,6 @@ import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
-import fr.traqueur.commands.api.logging.MessageHandler;
 import fr.traqueur.commands.api.models.collections.CommandTree;
 import fr.traqueur.commands.api.models.collections.CommandTree.MatchResult;
 import fr.traqueur.commands.api.requirements.Requirement;
@@ -42,7 +41,7 @@ public class CommandInvoker<T, S> {
      */
     public boolean invoke(S source, String base, String[] rawArgs) {
         Optional<CommandContext<T, S>> contextOpt = findCommandContext(base, rawArgs);
-        if (!contextOpt.isPresent()) {
+        if (contextOpt.isEmpty()) {
             return false;
         }
 
@@ -63,21 +62,21 @@ public class CommandInvoker<T, S> {
      */
     private Optional<CommandContext<T, S>> findCommandContext(String base, String[] rawArgs) {
         Optional<MatchResult<T, S>> found = manager.getCommands().findNode(base, rawArgs);
-        if (!found.isPresent()) {
+        if (found.isEmpty()) {
             return Optional.empty();
         }
 
         MatchResult<T, S> result = found.get();
-        CommandTree.CommandNode<T, S> node = result.node;
+        CommandTree.CommandNode<T, S> node = result.node();
         Optional<Command<T, S>> cmdOpt = node.getCommand();
 
-        if (!cmdOpt.isPresent()) {
+        if (cmdOpt.isEmpty()) {
             return Optional.empty();
         }
 
         Command<T, S> command = cmdOpt.get();
         String label = node.getFullLabel() != null ? node.getFullLabel() : base;
-        String[] args = result.args;
+        String[] args = result.args();
 
         return Optional.of(new CommandContext<>(command, label, args));
     }
@@ -185,7 +184,7 @@ public class CommandInvoker<T, S> {
         String label = context.label;
 
         return command.getUsage().isEmpty()
-                ? command.generateDefaultUsage(manager.getPlatform(), source, label)
+                ? command.generateDefaultUsage(source, label)
                 : command.getUsage();
     }
 
@@ -230,21 +229,6 @@ public class CommandInvoker<T, S> {
     }
 
     /**
-     * Internal context class to hold command execution data.
-     */
-    private static class CommandContext<T, S> {
-        final Command<T, S> command;
-        final String label;
-        final String[] args;
-
-        CommandContext(Command<T, S> command, String label, String[] args) {
-            this.command = command;
-            this.label = label;
-            this.args = args;
-        }
-    }
-
-    /**
      * Suggests command completions based on the provided source, base label, and arguments.
      * This method checks for available tab completers and filters suggestions based on the current input.
      * @param source the command sender (e.g. a player or console)
@@ -257,8 +241,8 @@ public class CommandInvoker<T, S> {
         String lastArg = args.length > 0 ? args[args.length - 1] : "";
         if (found.isPresent()) {
             MatchResult<T, S> result = found.get();
-            CommandTree.CommandNode<T, S> node = result.node;
-            String[] rawArgs = result.args;
+            CommandTree.CommandNode<T, S> node = result.node();
+            String[] rawArgs = result.args();
             String label = Optional.ofNullable(node.getFullLabel()).orElse(base);
             Map<Integer, TabCompleter<S>> map = manager.getCompleters().get(label);
             if (map != null) {
@@ -288,6 +272,15 @@ public class CommandInvoker<T, S> {
                 .collect(Collectors.toList());
     }
 
+    private boolean allowedSuggestion(S src, String label, String opt) {
+        String full = label + "." + opt.toLowerCase();
+        Optional<Command<T, S>> copt = manager.getCommands().findNode(full.split("\\.")).flatMap(r -> r.node().getCommand());
+        if (!copt.isPresent()) return true;
+        Command<T,S> c = copt.get();
+        return c.getRequirements().stream().allMatch(r -> r.check(src))
+                && (c.getPermission().isEmpty() || manager.getPlatform().hasPermission(src, c.getPermission()));
+    }
+
     private CommandTree.CommandNode<T, S> traverseNode(CommandTree.CommandNode<T, S> node, String[] args) {
         int index = 0;
         while (index < args.length - 1) {
@@ -308,12 +301,9 @@ public class CommandInvoker<T, S> {
         return candidate.equalsIgnoreCase(current) || candidate.toLowerCase().startsWith(lower);
     }
 
-    private boolean allowedSuggestion(S src, String label, String opt) {
-        String full = label + "." + opt.toLowerCase();
-        Optional<Command<T,S>> copt = manager.getCommands().findNode(full.split("\\.")).flatMap(r -> r.node.getCommand());
-        if (!copt.isPresent()) return true;
-        Command<T,S> c = copt.get();
-        return c.getRequirements().stream().allMatch(r -> r.check(src))
-                && (c.getPermission().isEmpty() || manager.getPlatform().hasPermission(src, c.getPermission()));
+    /**
+     * Internal context class to hold command execution data.
+     */
+    private record CommandContext<T, S>(Command<T, S> command, String label, String[] args) {
     }
 }

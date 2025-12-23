@@ -1,17 +1,16 @@
 package fr.traqueur.commands.api.models;
 
-import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.arguments.Argument;
+import fr.traqueur.commands.api.arguments.ArgumentType;
+import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabCompleter;
-import fr.traqueur.commands.api.exceptions.ArgsWithInfiniteArgumentException;
 import fr.traqueur.commands.api.requirements.Requirement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This class is the base class for all commands.
@@ -300,35 +299,16 @@ public abstract class Command<T, S> {
      * @param args The arguments to add.
      */
     public final void addArgs(Object... args) {
-        if (Arrays.stream(args).allMatch(arg -> arg instanceof String)) {
-            for (Object arg : args) {
-                String argStr = (String) arg;
-                this.addArgs(argStr);
-            }
-            return;
-        }
 
-        if (args.length % 2 != 0 && !(args[1] instanceof String)) {
-            throw new IllegalArgumentException("You must provide a type for the argument.");
+        if (args.length % 2 != 0) {
+            throw new IllegalArgumentException("You must use the method like succession of String,Class<?>");
         }
 
         for (int i = 0; i < args.length; i += 2) {
-            if(!(args[i] instanceof String && args[i + 1] instanceof Class<?>)) {
+            if (!(args[i] instanceof String argName && args[i + 1] instanceof Class<?> type)) {
                 throw new IllegalArgumentException("You must provide a type for the argument.");
             }
-            this.addArgs((String) args[i], (Class<?>) args[i + 1]);
-        }
-    }
-
-    /**
-     * This method is called to add arguments to the command.
-     * @param arg The argument to add.
-     */
-    public final void addArgs(String arg) {
-        if(!arg.contains(CommandManager.TYPE_PARSER)) {
-            this.addArgs(arg, String.class, null);
-        } else {
-            this.addArgs(arg, null, null);
+            this.addArg(argName, type);
         }
     }
 
@@ -337,21 +317,8 @@ public abstract class Command<T, S> {
      * @param arg The argument to add.
      * @param type The type of the argument to add.
      */
-    public final void addArgs(String arg, Class<?> type) {
-        this.addArgs(arg, type,null);
-    }
-
-    /**
-     * This method is called to add arguments to the command.
-     * @param arg The argument to add.
-     * @param converter The converter of the argument.
-     */
-    public final void addArgs(String arg, TabCompleter<S> converter) {
-        if(!arg.contains(CommandManager.TYPE_PARSER)) {
-            this.addArgs(arg, String.class, converter);
-        } else {
-            this.addArgs(arg, null, converter);
-        }
+    public final void addArg(String arg, Class<?> type) {
+        this.addArg(arg, type, null);
     }
 
     /**
@@ -360,19 +327,8 @@ public abstract class Command<T, S> {
      * @param converter The converter of the argument.
      * @param type The type of the argument, can be null if the argument is a string.
      */
-    public final void addArgs(String arg, Class<?> type, TabCompleter<S> converter) {
-        if (arg.contains(CommandManager.TYPE_PARSER) && type != null) {
-            throw new IllegalArgumentException("You can't use the type parser in the command arguments.");
-        }
-        if(type == null && !arg.contains(CommandManager.TYPE_PARSER)) {
-            throw new IllegalArgumentException("You must provide a type for the argument.");
-        }
-
-        if(type != null) {
-            arg = arg + CommandManager.TYPE_PARSER + type.getSimpleName().toLowerCase();
-        }
-
-        this.add(arg, converter, false);
+    public final void addArg(String arg, Class<?> type, TabCompleter<S> converter) {
+        this.add(arg, ArgumentType.of(type), converter, false);
     }
 
     /**
@@ -380,36 +336,16 @@ public abstract class Command<T, S> {
      * @param args The arguments to add.
      */
     public final void addOptionalArgs(Object... args) {
-        if (Arrays.stream(args).allMatch(arg -> arg instanceof String)) {
-            for (Object arg : args) {
-                String argStr = (String) arg;
-                this.addOptionalArgs(argStr);
-            }
-            return;
-        }
-
-        if (args.length % 2 != 0 && !(args[1] instanceof String)) {
+        if (args.length % 2 != 0) {
             throw new IllegalArgumentException("You must provide a type for the argument.");
         }
 
         for (int i = 0; i < args.length; i += 2) {
-            if(!(args[i] instanceof String && args[i + 1] instanceof Class<?>)) {
+            if (!(args[i] instanceof String argName && args[i + 1] instanceof Class<?> clazz)) {
                 throw new IllegalArgumentException("You must provide a type for the argument.");
             }
-            this.addOptionalArgs((String) args[i], (Class<?>) args[i + 1]);
+            this.addOptionalArg(argName, clazz);
         }
-    }
-
-    /**
-     * This method is called to add optional arguments to the command.
-     * @param arg The argument to add.
-     */
-    public final void addOptionalArgs(String arg) {
-        if (!arg.contains(CommandManager.TYPE_PARSER)) {
-            this.addOptionalArgs(arg, String.class, null);
-            return;
-        }
-        this.addOptionalArgs(arg, null, null);
     }
 
     /**
@@ -417,8 +353,8 @@ public abstract class Command<T, S> {
      * @param arg The argument to add.
      * @param type The type of the argument to add.
      */
-    public final void addOptionalArgs(String arg, Class<?> type) {
-        this.addOptionalArgs(arg, type,null);
+    public final void addOptionalArg(String arg, Class<?> type) {
+        this.addOptionalArg(arg, type, null);
     }
 
     /**
@@ -426,47 +362,29 @@ public abstract class Command<T, S> {
      * @param arg The argument to add.
      * @param converter The converter of the argument.
      */
-    public final void addOptionalArgs(String arg, TabCompleter<S> converter) {
-        if (!arg.contains(CommandManager.TYPE_PARSER)) {
-            this.addOptionalArgs(arg, String.class, converter);
-            return;
-        }
-        this.addOptionalArgs(arg, null, converter);
+    public final void addOptionalArg(String arg, Class<?> type, TabCompleter<S> converter) {
+        this.add(arg, ArgumentType.of(type), converter, true);
     }
 
-    /**
-     * This method is called to add arguments to the command.
-     * @param arg The argument to add.
-     * @param type The type of the argument to add.
-     * @param converter The converter of the argument.
-     */
-    public final void addOptionalArgs(String arg, Class<?> type, TabCompleter<S> converter) {
-        if (arg.contains(CommandManager.TYPE_PARSER) && type != null) {
-            throw new IllegalArgumentException("You can't use the type parser in the command arguments.");
-        }
-        if(type != null) {
-            arg = arg + CommandManager.TYPE_PARSER + type.getSimpleName().toLowerCase();
+    private void add(String name, ArgumentType type, TabCompleter<S> completer, boolean optional) {
+        if (this.infiniteArgs) {
+            if (this.manager != null) {
+                String msg = (optional ? "Optional arguments" : "Arguments") +
+                        " cannot follow infinite arguments.";
+                this.manager.getLogger().error(msg);
+            }
         }
 
-        this.add(arg, converter, true);
-    }
+        if (type.isInfinite()) {
+            this.infiniteArgs = true;
+        }
 
-    private void add(String arg, TabCompleter<S> converter, boolean opt) {
-        try {
-            if (this.infiniteArgs) {
-                throw new ArgsWithInfiniteArgumentException(false);
-            }
+        Argument<S> arg = new Argument<>(name, type, completer);
 
-            if (arg.contains(":infinite")) {
-                this.infiniteArgs = true;
-            }
-            if(opt) {
-                this.optionalArgs.add(new Argument<>(arg, converter));
-            } else {
-                this.args.add(new Argument<>(arg, converter));
-            }
-        } catch (ArgsWithInfiniteArgumentException e) {
-            this.manager.getLogger().error(e.getMessage());
+        if (optional) {
+            this.optionalArgs.add(arg);
+        } else {
+            this.args.add(arg);
         }
     }
 
@@ -474,6 +392,7 @@ public abstract class Command<T, S> {
      * This method is called to add requirements to the command.
      * @param requirement The requirements to add.
      */
+    @SafeVarargs
     public final void addRequirements(Requirement<S>... requirement) {
         requirements.addAll(Arrays.asList(requirement));
     }
@@ -496,12 +415,11 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to generate a default usage for the command.
-     * @param platform The platform of the command.
      * @param sender The sender of the command.
      * @param label The label of the command.
      * @return The default usage of the command.
      */
-    public String generateDefaultUsage(CommandPlatform<T,S> platform, S sender, String label) {
+    public String generateDefaultUsage(S sender, String label) {
         StringBuilder usage = new StringBuilder("/");
 
         String[] parts = label.split("\\.");
@@ -510,9 +428,9 @@ public abstract class Command<T, S> {
         List<Command<T, S>> directSubs = this.getSubcommands().stream()
                 .filter(sub -> {
                     String perm = sub.getPermission();
-                    return perm.isEmpty() || platform.hasPermission(sender, perm);
+                    return perm.isEmpty() || this.manager.getPlatform().hasPermission(sender, perm);
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         if (!directSubs.isEmpty()) {
             usage.append(" <");
@@ -528,7 +446,7 @@ public abstract class Command<T, S> {
 
             // arguments obligatoires : <name:type>
             String req = this.getArgs().stream()
-                    .map(arg -> "<" + arg.arg() + ">")
+                    .map(arg -> "<" + arg.canonicalName() + ">")
                     .collect(Collectors.joining(" "));
             usage.append(req);
 
@@ -538,7 +456,7 @@ public abstract class Command<T, S> {
                     usage.append(" ");
                 }
                 String opt = this.getOptinalArgs().stream()
-                        .map(arg -> "[" + arg.arg() + "]")
+                        .map(arg -> "[" + arg.canonicalName() + "]")
                         .collect(Collectors.joining(" "));
                 usage.append(opt);
             }

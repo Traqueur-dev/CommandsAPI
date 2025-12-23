@@ -1,5 +1,3 @@
-// Placez ce fichier sous core/src/test/java/fr/traqueur/commands/api/
-
 package fr.traqueur.commands.api.models;
 
 import fr.traqueur.commands.api.CommandManager;
@@ -30,21 +28,50 @@ class CommandTest {
     }
 
     private DummyCommand cmd;
-    private CommandPlatform<String, Object> platform;
 
     @BeforeEach
     void setUp() {
-        platform = new CommandPlatform<String, Object>() {
-            @Override public String getPlugin() { return null; }
-            @Override public void injectManager(CommandManager<String, Object> commandManager) {}
-            @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
-            @Override public boolean hasPermission(Object sender, String permission) { return true; }
-            @Override public boolean isPlayer(Object sender) {return false;}
-            @Override public void sendMessage(Object sender, String message) {}
-            @Override public void addCommand(Command<String, Object> command, String label) {}
-            @Override public void removeCommand(String label, boolean subcommand) {}
+        CommandPlatform<String, Object> platform = new CommandPlatform<>() {
+            @Override
+            public String getPlugin() {
+                return null;
+            }
+
+            @Override
+            public void injectManager(CommandManager<String, Object> commandManager) {
+            }
+
+            @Override
+            public java.util.logging.Logger getLogger() {
+                return java.util.logging.Logger.getAnonymousLogger();
+            }
+
+            @Override
+            public boolean hasPermission(Object sender, String permission) {
+                return true;
+            }
+
+            @Override
+            public boolean isPlayer(Object sender) {
+                return false;
+            }
+
+            @Override
+            public void sendMessage(Object sender, String message) {
+            }
+
+            @Override
+            public void addCommand(Command<String, Object> command, String label) {
+            }
+
+            @Override
+            public void removeCommand(String label, boolean subcommand) {
+            }
+        };
+        CommandManager<String, Object> manager = new CommandManager<>(platform) {
         };
         cmd = new DummyCommand();
+        cmd.setManager(manager);
     }
 
     @Test
@@ -92,16 +119,45 @@ class CommandTest {
     @Test
     void testRegisterDelegatesToManager() {
         AtomicBoolean called = new AtomicBoolean(false);
-        CommandManager<String, Object> fakeManager = new CommandManager<String, Object>(new CommandPlatform<String, Object>() {
-            @Override public String getPlugin() { return null; }
-            @Override public void injectManager(CommandManager<String, Object> commandManager) {}
-            @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
-            @Override public boolean hasPermission(Object sender, String permission) { return true; }
-            @Override public boolean isPlayer(Object sender) {return false;}
-            @Override public void sendMessage(Object sender, String message) {}
-            @Override public void addCommand(Command<String, Object> command, String label) {called.set(true);}
-            @Override public void removeCommand(String label, boolean subcommand) {  }
-        }) {};
+        CommandManager<String, Object> fakeManager = new CommandManager<>(new CommandPlatform<String, Object>() {
+            @Override
+            public String getPlugin() {
+                return null;
+            }
+
+            @Override
+            public void injectManager(CommandManager<String, Object> commandManager) {
+            }
+
+            @Override
+            public java.util.logging.Logger getLogger() {
+                return java.util.logging.Logger.getAnonymousLogger();
+            }
+
+            @Override
+            public boolean hasPermission(Object sender, String permission) {
+                return true;
+            }
+
+            @Override
+            public boolean isPlayer(Object sender) {
+                return false;
+            }
+
+            @Override
+            public void sendMessage(Object sender, String message) {
+            }
+
+            @Override
+            public void addCommand(Command<String, Object> command, String label) {
+                called.set(true);
+            }
+
+            @Override
+            public void removeCommand(String label, boolean subcommand) {
+            }
+        }) {
+        };
         cmd.setManager(fakeManager);
         fakeManager.registerCommand(cmd);
         assertTrue(called.get());
@@ -126,25 +182,8 @@ class CommandTest {
     }
 
     @Test
-    void testAddArgsAndOptionalArgs() {
-        // add required args
-        cmd.addArgs("arg1", String.class);
-        cmd.addArgs("arg2"); // string type
-        assertEquals(2, cmd.getArgs().size());
-        assertEquals("arg1:string", cmd.getArgs().get(0).arg().toLowerCase());
-        assertEquals("arg2:string", cmd.getArgs().get(1).arg().toLowerCase());
-        
-        // add optional args
-        cmd.addOptionalArgs("opt1", Integer.class);
-        cmd.addOptionalArgs("opt2");
-        assertEquals(2, cmd.getOptinalArgs().size());
-        assertEquals("opt1:integer", cmd.getOptinalArgs().get(0).arg().toLowerCase());
-        assertEquals("opt2:string", cmd.getOptinalArgs().get(1).arg().toLowerCase());
-    }
-
-    @Test
     void usage_noSubs_noArgs() {
-        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        String usage = cmd.generateDefaultUsage(null, "dummy");
         assertEquals("/dummy", usage);
     }
 
@@ -152,7 +191,7 @@ class CommandTest {
     void usage_onlyRequiredArgs() {
         cmd.addArgs("arg1", String.class);
         cmd.addArgs("arg2", Integer.class);
-        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        String usage = cmd.generateDefaultUsage(null, "dummy");
         assertTrue(usage.startsWith("/dummy <arg1:string> <arg2:integer>"));
     }
 
@@ -160,7 +199,8 @@ class CommandTest {
     void usage_requiredAndOptionalArgs() {
         cmd.addArgs("arg", String.class);
         cmd.addOptionalArgs("opt", Double.class);
-        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        String usage = cmd.generateDefaultUsage(null, "dummy");
+        System.out.println(usage);
         assertTrue(usage.contains("<arg:string>"));
         assertTrue(usage.contains("[opt:double]"));
     }
@@ -170,7 +210,7 @@ class CommandTest {
         DummyCommand subA = new DummyCommand("suba");
         DummyCommand subB = new DummyCommand("subb");
         cmd.addSubCommand(subA, subB);
-        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        String usage = cmd.generateDefaultUsage(null, "dummy");
         // extract first angle bracket content
         String inside = usage.substring(usage.indexOf('<')+1, usage.indexOf('>'));
         List<String> parts = Arrays.asList(inside.split("\\|"));
@@ -186,7 +226,7 @@ class CommandTest {
         cmd.addArgs("req", String.class);
         cmd.addOptionalArgs("opt", String.class);
 
-        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        String usage = cmd.generateDefaultUsage(null, "dummy");
         // expect "/dummy <x|y> <req:string> [opt:string]"
         assertTrue(usage.startsWith("/dummy <x|y>"));
         assertTrue(usage.contains("<req:string>"));

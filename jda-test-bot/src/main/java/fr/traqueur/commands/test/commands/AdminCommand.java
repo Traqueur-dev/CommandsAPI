@@ -1,6 +1,5 @@
 package fr.traqueur.commands.test.commands;
 
-import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.jda.Command;
 import fr.traqueur.commands.jda.JDAArguments;
 import fr.traqueur.commands.test.TestBot;
@@ -70,13 +69,8 @@ public class AdminCommand extends Command<TestBot> {
         @Override
         public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
             JDAArguments jdaArgs = jda(arguments);
-            User user = jdaArgs.getUser("user").orElse(null);
-            String reason = jdaArgs.getAsString("reason").orElse("No reason provided");
-
-            if (user == null) {
-                jdaArgs.replyEphemeral("User not found!");
-                return;
-            }
+            User user = jdaArgs.get("user");
+            String reason = jdaArgs.<String>getOptional("reason").orElse("No reason provided");
 
             jdaArgs.reply(String.format("Would kick user %s for reason: %s",
                 user.getAsMention(), reason));
@@ -96,13 +90,8 @@ public class AdminCommand extends Command<TestBot> {
 
         @Override
         public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
-            User user = arguments.getUser("user").orElse(null);
-            String reason = arguments.getAsString("reason").orElse("No reason provided");
-
-            if (user == null) {
-                arguments.replyEphemeral("User not found!");
-                return;
-            }
+            User user = arguments.get("user");
+            String reason = arguments.<String>getOptional("reason").orElse("No reason provided");
 
             arguments.reply(String.format("Would ban user %s for reason: %s",
                 user.getAsMention(), reason));
@@ -172,8 +161,8 @@ public class AdminCommand extends Command<TestBot> {
         @Override
         public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
             JDAArguments jdaArgs = jda(arguments);
-            String option = jdaArgs.getAsString("option").orElse("unknown");
-            String value = jdaArgs.getAsString("value").orElse("unknown");
+            String option = jdaArgs.get("option");
+            String value = jdaArgs.get("value");
 
             jdaArgs.reply(String.format("Would set setting '%s' to '%s'", option, value));
         }

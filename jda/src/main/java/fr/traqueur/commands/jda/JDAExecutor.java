@@ -1,6 +1,9 @@
 package fr.traqueur.commands.jda;
 
 import fr.traqueur.commands.api.CommandManager;
+import fr.traqueur.commands.api.arguments.Argument;
+import fr.traqueur.commands.api.arguments.ArgumentType;
+import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.collections.CommandTree;
 import fr.traqueur.commands.api.requirements.Requirement;
@@ -11,6 +14,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,7 +56,7 @@ public class JDAExecutor<T> extends ListenerAdapter {
             return;
         }
 
-        JDAArguments jdaArguments = createArguments(event);
+        JDAArguments jdaArguments = createArguments(event, command);
         executeCommand(event, command, jdaArguments, label);
     }
 
@@ -86,7 +90,7 @@ public class JDAExecutor<T> extends ListenerAdapter {
         }
 
         CommandTree.MatchResult<T, SlashCommandInteractionEvent> result = found.get();
-        CommandTree.CommandNode<T, SlashCommandInteractionEvent> node = result.node;
+        CommandTree.CommandNode<T, SlashCommandInteractionEvent> node = result.node();
         Optional<Command<T, SlashCommandInteractionEvent>> cmdOpt = node.getCommand();
 
         if (cmdOpt.isEmpty()) {
@@ -180,12 +184,26 @@ public class JDAExecutor<T> extends ListenerAdapter {
      * @param event The slash command event.
      * @return The populated JDAArguments.
      */
-    private JDAArguments createArguments(SlashCommandInteractionEvent event) {
+    private JDAArguments createArguments(SlashCommandInteractionEvent event, Command<T, SlashCommandInteractionEvent> command) {
         JDAArguments jdaArguments = new JDAArguments(commandManager.getLogger(), event);
         List<OptionMapping> options = event.getOptions();
 
-        for (OptionMapping option : options) {
-            populateArgument(jdaArguments, option);
+        List<Argument<SlashCommandInteractionEvent>> args = new ArrayList<>();
+        args.addAll(command.getArgs());
+        args.addAll(command.getOptinalArgs());
+
+        if (options.size() < command.getArgs().size()) {
+            throw new IllegalArgumentException("No enough arguments");
+        }
+        int sizeWithoutRequired = options.size() - command.getArgs().size();
+        if (sizeWithoutRequired > command.getOptinalArgs().size()) {
+            throw new IllegalArgumentException("More options than expected");
+        }
+
+        for (int i = 0; i < options.size(); i++) {
+            OptionMapping optionMapping = options.get(i);
+            Argument<SlashCommandInteractionEvent> arg = args.get(i);
+            populateArgument(jdaArguments, optionMapping, arg);
         }
 
         return jdaArguments;
@@ -197,26 +215,57 @@ public class JDAExecutor<T> extends ListenerAdapter {
      * @param arguments The arguments container.
      * @param option    The option to populate from.
      */
-    private void populateArgument(JDAArguments arguments, OptionMapping option) {
+    private void populateArgument(JDAArguments arguments, OptionMapping option, Argument<SlashCommandInteractionEvent> arg) {
         String name = option.getName();
-
         switch (option.getType()) {
             case STRING:
                 arguments.add(name, String.class, option.getAsString());
                 break;
             case INTEGER:
-                arguments.add(name, Long.class, option.getAsLong());
+                if (!(arg.type() instanceof ArgumentType.Simple(Class<?> clazz))) {
+                    throw new ArgumentIncorrectException(option.getName());
+                }
+                if (clazz == Integer.class) {
+                    arguments.add(name, Integer.class, option.getAsInt());
+                } else if (clazz == int.class) {
+                    arguments.add(name, int.class, option.getAsInt());
+                } else if (clazz == Long.class) {
+                    arguments.add(name, Long.class, option.getAsLong());
+                } else if (clazz == long.class) {
+                    arguments.add(name, long.class, option.getAsLong());
+                } else {
+                    throw new ArgumentIncorrectException(option.getName());
+                }
                 break;
             case NUMBER:
-                arguments.add(name, Double.class, option.getAsDouble());
+                if (!(arg.type() instanceof ArgumentType.Simple(Class<?> clazz))) {
+                    throw new ArgumentIncorrectException(option.getName());
+                }
+                if (clazz == Double.class) {
+                    arguments.add(name, Double.class, option.getAsDouble());
+                } else if (clazz == double.class) {
+                    arguments.add(name, double.class, option.getAsDouble());
+                } else if (clazz == Float.class) {
+                    arguments.add(name, Float.class, (float) option.getAsDouble());
+                } else if (clazz == float.class) {
+                    arguments.add(name, float.class, (float) option.getAsDouble());
+                } else {
+                    throw new ArgumentIncorrectException(option.getName());
+                }
                 break;
             case BOOLEAN:
                 arguments.add(name, Boolean.class, option.getAsBoolean());
                 break;
             case USER:
-                arguments.add(name, User.class, option.getAsUser());
-                if (option.getAsMember() != null) {
+                if (!(arg.type() instanceof ArgumentType.Simple(Class<?> clazz))) {
+                    throw new ArgumentIncorrectException(option.getName());
+                }
+                if (clazz == Member.class) {
                     arguments.add(name, Member.class, option.getAsMember());
+                } else if (clazz == User.class) {
+                    arguments.add(name, User.class, option.getAsUser());
+                } else {
+                    throw new ArgumentIncorrectException(option.getName());
                 }
                 break;
             case ROLE:

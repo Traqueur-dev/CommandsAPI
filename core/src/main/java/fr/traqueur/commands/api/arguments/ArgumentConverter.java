@@ -17,4 +17,18 @@ public interface ArgumentConverter<T> extends Function<String, T> {
      */
     @Override
     T apply(String s);
+
+    record Wrapper<T>(Class<T> clazz, ArgumentConverter<T> converter) {
+
+        public boolean convertAndApply(String input, String name, Arguments arguments) {
+            T result = converter.apply(input);
+            if (result == null) {
+                return false;
+            }
+            arguments.add(name, clazz, result);
+            return true;
+        }
+
+    }
+
 }

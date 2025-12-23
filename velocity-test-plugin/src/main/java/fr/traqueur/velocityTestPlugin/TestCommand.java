@@ -10,13 +10,13 @@ public class TestCommand extends Command<VelocityTestPlugin> {
     public TestCommand(VelocityTestPlugin plugin) {
         super(plugin, "test");
         this.addSubCommand(new SubTestCommand(plugin), new Sub2TestCommand(plugin));
-        this.addArgs("test");
+        this.addArgs("test", Integer.class);
         this.addAlias("inner.in");
     }
 
     @Override
     public void execute(CommandSource sender, Arguments args) {
-        int test = args.getAsInt("test", -1);
+        int test = args.get("test");
         sender.sendMessage(Component.text("Test command executed! " + test));
         sender.sendMessage(Component.text(this.getUsage()));
     }

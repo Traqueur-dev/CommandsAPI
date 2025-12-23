@@ -1,6 +1,6 @@
 package fr.traqueur.commands.test.commands;
 
-import fr.traqueur.commands.api.arguments.Arguments;
+import fr.traqueur.commands.api.arguments.Infinite;
 import fr.traqueur.commands.jda.Command;
 import fr.traqueur.commands.jda.JDAArguments;
 import fr.traqueur.commands.test.TestBot;
@@ -17,18 +17,14 @@ public class GreetCommand extends Command<TestBot> {
         super(bot, "greet");
         this.setDescription("Greet a user with a custom message");
         this.addArgs("user", User.class);
-        this.addOptionalArgs("message:infinite");
+        this.addOptionalArgs("message", Infinite.class);
     }
 
     @Override
     public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
-        User target = arguments.getUser("user").orElse(null);
-        if (target == null) {
-            arguments.replyEphemeral("User not found!");
-            return;
-        }
+        User target = arguments.get("user");
 
-        String customMessage = arguments.getAsString("message", "Hello there!");
+        String customMessage = arguments.<String>getOptional("message").orElse("Hello there!");
 
         String greeting = String.format("%s says to %s: %s",
                 event.getUser().getAsMention(),

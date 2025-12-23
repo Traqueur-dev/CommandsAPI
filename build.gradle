@@ -6,10 +6,6 @@ allprojects {
         plugin 'java-library'
     }
 
-    tasks.withType(JavaCompile).configureEach {
-        options.compilerArgs += ['-nowarn']
-    }
-
     repositories {
         mavenCentral()
         maven {

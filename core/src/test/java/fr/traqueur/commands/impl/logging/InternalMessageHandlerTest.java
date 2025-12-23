@@ -1,7 +1,6 @@
-// src/test/java/fr/traqueur/commands/api/logging/InternalMessageHandlerTest.java
-package fr.traqueur.commands.api.logging;
+package fr.traqueur.commands.impl.logging;
 
-import fr.traqueur.commands.impl.logging.InternalMessageHandler;
+import fr.traqueur.commands.api.logging.MessageHandler;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

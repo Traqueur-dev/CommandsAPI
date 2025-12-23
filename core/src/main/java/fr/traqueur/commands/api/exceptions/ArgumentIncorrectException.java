@@ -3,7 +3,7 @@ package fr.traqueur.commands.api.exceptions;
 /**
  * Exception thrown when an argument is incorrect.
  */
-public class ArgumentIncorrectException extends Exception {
+public class ArgumentIncorrectException extends RuntimeException {
 
     /**
      * The input that caused the exception.

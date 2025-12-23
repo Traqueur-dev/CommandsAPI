@@ -15,7 +15,7 @@ public class Sub2TestCommand extends Command<TestPlugin> {
 
     @Override
     public void execute(CommandSender sender, Arguments args) {
-       args.getAsInt("test").ifPresent(test -> sender.sendMessage("Test: " + test));
+        args.<Integer>getOptional("test").ifPresent(test -> sender.sendMessage("Test: " + test));
        sender.sendMessage(this.getUsage());
     }
 }
