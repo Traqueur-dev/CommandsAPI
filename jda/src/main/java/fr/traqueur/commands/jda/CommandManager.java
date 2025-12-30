@@ -27,7 +27,7 @@ public class CommandManager<T> extends fr.traqueur.commands.api.CommandManager<T
      */
     public CommandManager(T bot, JDA jda, Logger logger) {
         super(new JDAPlatform<>(bot, jda, logger));
-        this.jdaPlatform = (JDAPlatform<T>) getPlatform();
+        this.jdaPlatform = (JDAPlatform<T>) super.getPlatform();
     }
 
     /**

@@ -1,9 +1,21 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
 allprojects {
     group = 'fr.traqueur.commands'
     version = property('version')
 
     apply {
         plugin 'java-library'
+    }
+
+    ext.classifier = System.getProperty('archive.classifier')
+    ext.sha = System.getProperty('github.sha')
+
+    if (rootProject.ext.has('sha') && rootProject.ext.sha) {
+        version = rootProject.ext.sha
     }
 
     repositories {
@@ -15,35 +27,138 @@ allprojects {
 }
 
 subprojects {
-    if (!project.name.contains('test-plugin')) {
+    if (project.name.contains('test-')) {
+        return;
+    }
 
-        dependencies {
-            testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
-            testImplementation 'org.mockito:mockito-core:5.3.1'
+    apply plugin: 'maven-publish'
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+        withSourcesJar()
+        withJavadocJar()
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs.addAll([
+                '-Xlint:all',
+                '-Xlint:-processing',
+                '-Xlint:-serial'
+        ])
+    }
+
+    tasks.withType(Javadoc).configureEach {
+        options.encoding = 'UTF-8'
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+
+    dependencies {
+        testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+        testImplementation 'org.mockito:mockito-core:5.3.1'
+    }
+    test {
+        useJUnitPlatform()
+        jvmArgs += ['-XX:+EnableDynamicAgentLoading']
+        reports {
+            html.required.set(true)
+            junitXml.required.set(true)
         }
-        test {
-            useJUnitPlatform()
-            jvmArgs += ['-XX:+EnableDynamicAgentLoading']
-            reports {
-                html.required.set(true)
-                junitXml.required.set(true)
-            }
 
-            testLogging {
-                showStandardStreams = true
-                events("passed", "skipped", "failed", "standardOut", "standardError")
-                exceptionFormat "full"
+        testLogging {
+            showStandardStreams = true
+            events("passed", "skipped", "failed", "standardOut", "standardError")
+            exceptionFormat "full"
+        }
+    }
+
+    publishing {
+        repositories {
+            maven {
+                def repository = System.getProperty('repository.name', 'snapshots')
+                def repoType = repository.toLowerCase()
+
+                name = "groupez${repository.capitalize()}"
+                url = uri("https://repo.groupez.dev/${repoType}")
+
+                credentials {
+                    username = findProperty("${name}Username") ?: System.getenv('MAVEN_USERNAME')
+                    password = findProperty("${name}Password") ?: System.getenv('MAVEN_PASSWORD')
+                }
+
+                authentication {
+                    create("basic", BasicAuthentication)
+                }
             }
+        }
+
+        publications {
+            create('maven', MavenPublication) {
+                from components.java
+
+                groupId = rootProject.group.toString()
+
+                if (project.name == 'core') {
+                    artifactId = 'core'
+                } else {
+                    def platform = project.name.replaceFirst(/^platform-/, '')
+                    artifactId = "platform-${platform}"
+                }
+
+                version = rootProject.version.toString()
+
+                pom {
+                    name = artifactId
+                    description = 'CommandsAPI - A flexible command framework for Java applications'
+                    url = 'https://github.com/Traqueur-dev/CommandsAPI'
+
+                    licenses {
+                        license {
+                            name = 'MIT License'
+                            url = 'https://opensource.org/licenses/MIT'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id = 'traqueur'
+                            name = 'Traqueur'
+                        }
+                    }
+
+                    scm {
+                        connection = 'scm:git:git://github.com/Traqueur-dev/CommandsAPI.git'
+                        developerConnection = 'scm:git:ssh://github.com/Traqueur-dev/CommandsAPI.git'
+                        url = 'https://github.com/Traqueur-dev/CommandsAPI'
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+tasks.register('publishAll') {
+    description = 'Publishes all subprojects to Maven repository'
+    group = 'publishing'
+
+    subprojects.each { sub ->
+        sub.plugins.withId('maven-publish') {
+            dependsOn sub.tasks.named('publish')
         }
     }
 }
 
-tasks.register("testAll") {
-    group = "verification"
-    description = "Execute tous les tests des sous-projets qui ont une tâche 'test'"
 
-    // Déclare la dépendance vers chaque tâche 'test' de chaque sous-projet
-    dependsOn subprojects
-            .findAll { it.tasks.findByName('test') != null }
-            .collect { it.tasks.named('test') }
+tasks.register('testAll') {
+    description = 'Runs all tests across all subprojects'
+    group = 'verification'
+
+    subprojects.each { sub ->
+        sub.plugins.withId('java') {
+            dependsOn sub.tasks.named('test')
+        }
+    }
 }
+

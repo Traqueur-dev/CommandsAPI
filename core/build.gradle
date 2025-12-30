@@ -1,13 +1,5 @@
 plugins {
-    id 'maven-publish'
     id("me.champeau.jmh") version "0.7.3"
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-    withSourcesJar()
-    withJavadocJar()
 }
 
 dependencies {
@@ -33,17 +25,6 @@ sourceSets {
     main {
         resources {
             srcDir generatedResourcesDir
-        }
-    }
-}
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from components.java
-            groupId = project.group
-            artifactId = 'core'
-            version = project.version
         }
     }
 }

@@ -73,6 +73,7 @@ public class Arguments {
      * @param <T>      The type of the argument.
      * @return The argument.
      */
+     @SuppressWarnings("unchecked")
     public <T> Optional<T> getOptional(String argument) {
         if (this.isEmpty()) {
             return Optional.empty();

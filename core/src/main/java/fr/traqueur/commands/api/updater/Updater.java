@@ -2,14 +2,19 @@ package fr.traqueur.commands.api.updater;
 
 import fr.traqueur.commands.api.exceptions.UpdaterInitializationException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Properties;
-import java.util.Scanner;
 import java.util.logging.Logger;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
 /**
  * This class is used to check if the plugin is up to date
@@ -17,114 +22,92 @@ import java.util.logging.Logger;
 public class Updater {
 
     private static final String VERSION_PROPERTY_FILE = "commands.properties";
-    private static URL URL_LATEST_RELEASE;
+    private static final URL URL_LATEST_RELEASE;
     private static Logger LOGGER = Logger.getLogger("CommandsAPI");
 
     static {
         try {
-            URL_LATEST_RELEASE = URI.create("https://api.github.com/repos/Traqueur-dev/CommandsAPI/releases/latest").toURL();
+            URL_LATEST_RELEASE = URI.create(
+                    "https://repo.groupez.dev/releases/fr/traqueur/commands/core/maven-metadata.xml"
+            ).toURL();
         } catch (MalformedURLException e) {
             throw new UpdaterInitializationException("Failed to initialize updater URL", e);
         }
     }
 
-    /**
-     * Private constructor to prevent instantiation
-     */
-    private Updater() {
+    private Updater() {}
+
+    public static void setLogger(Logger logger) {
+        Updater.LOGGER = logger;
     }
 
-    /**
-     * Set the URL to use to check for the latest release
-     *
-     * @param URL_LATEST_RELEASE The URL to use
-     */
-    public static void setUrlLatestRelease(URL URL_LATEST_RELEASE) {
-        Updater.URL_LATEST_RELEASE = URL_LATEST_RELEASE;
-    }
-
-    /**
-     * Set the logger to use for logging messages
-     *
-     * @param LOGGER The logger to use
-     */
-    public static void setLogger(Logger LOGGER) {
-        Updater.LOGGER = LOGGER;
-    }
-
-    /**
-     * Check if the plugin is up to date and log a warning if it's not
-     */
     public static void checkUpdates() {
-        if (!Updater.isUpToDate()) {
-            LOGGER.warning("The framework is not up to date, the latest version is " + Updater.fetchLatestVersion());
+        try {
+            String latest = fetchLatestVersion();
+            String current = getVersion();
+
+            if (latest != null && !latest.equals(current)) {
+                LOGGER.warning("⚠ CommandsAPI is not up to date!");
+                LOGGER.warning("Current: " + current + " | Latest: " + latest);
+            }
+        } catch (Exception ignored) {
         }
     }
 
-    /**
-     * Get the version of the plugin
-     *
-     * @return The version of the plugin
-     */
     public static String getVersion() {
         Properties prop = new Properties();
-        try {
-            prop.load(Updater.class.getClassLoader().getResourceAsStream(VERSION_PROPERTY_FILE));
+        try (InputStream is = Updater.class
+                .getClassLoader()
+                .getResourceAsStream(VERSION_PROPERTY_FILE)) {
+
+            if (is == null) {
+                throw new RuntimeException("commands.properties not found");
+            }
+
+            prop.load(is);
             return prop.getProperty("version");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    /**
-     * Check if the plugin is up to date
-     *
-     * @return True if the plugin is up to date, false otherwise
-     */
     public static boolean isUpToDate() {
-        try {
-            String latestVersion = fetchLatestVersion();
-            return getVersion().equals(latestVersion);
-        } catch (Exception e) {
-            return false;
-        }
+        String latest = fetchLatestVersion();
+        return latest != null && getVersion().equals(latest);
     }
 
     /**
-     * Get the latest version of the plugin
-     *
-     * @return The latest version of the plugin
+     * Fetch latest version from Reposilite maven-metadata.xml
      */
     public static String fetchLatestVersion() {
         try {
-            String responseString = getString();
-            int tagNameIndex = responseString.indexOf("\"tag_name\"");
-            int start = responseString.indexOf('\"', tagNameIndex + 10) + 1;
-            int end = responseString.indexOf('\"', start);
-            return responseString.substring(start, end);
-        } catch (Exception e) {
-            return null;
-        }
-    }
+            HttpURLConnection connection =
+                    (HttpURLConnection) URL_LATEST_RELEASE.openConnection();
 
-    /**
-     * Get the latest version of the plugin
-     *
-     * @return The latest version of the plugin
-     */
-    private static String getString() throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) Updater.URL_LATEST_RELEASE.openConnection();
-        connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+            connection.setRequestMethod("GET");
 
-        StringBuilder response = new StringBuilder();
-        try (Scanner scanner = new Scanner(connection.getInputStream())) {
-            while (scanner.hasNext()) {
-                response.append(scanner.nextLine());
+            try (InputStream is = connection.getInputStream()) {
+                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder builder = factory.newDocumentBuilder();
+                Document document = builder.parse(is);
+
+                // Priorité à <release>, fallback <latest>
+                NodeList release = document.getElementsByTagName("release");
+                if (release.getLength() > 0) {
+                    return release.item(0).getTextContent();
+                }
+
+                NodeList latest = document.getElementsByTagName("latest");
+                if (latest.getLength() > 0) {
+                    return latest.item(0).getTextContent();
+                }
             }
-        } finally {
-            connection.disconnect();
+        } catch (Exception e) {
+            LOGGER.warning("Failed to fetch latest version: " + e.getMessage());
         }
 
-        return response.toString();
+        return null;
     }
 }

@@ -381,6 +381,7 @@ public abstract class CommandManager<T, S> {
      * @param commandSize The size of the command.
      * @param args        The arguments to register.
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void addCompletionForArgs(String label, int commandSize, List<Argument<S>> args) {
         for (int i = 0; i < args.size(); i++) {
             Argument<S> arg = args.get(i);
