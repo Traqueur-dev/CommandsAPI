@@ -31,4 +31,10 @@ public interface MessageHandler {
      * @return The requirement message.
      */
     String getRequirementMessage();
+
+    /**
+     * This method is used to get the command disabled message.
+     * @return The command disabled message.
+     */
+    String getCommandDisabledMessage();
 }

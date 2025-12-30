@@ -138,9 +138,9 @@ public abstract class CommandManager<T, S> {
      * @param command The command to register.
      */
     public void registerCommand(Command<T,S> command) {
-        for (String alias : command.getAliases()) {
-            this.addCommand(command, alias);
-            this.registerSubCommands(alias, command.getSubcommands());
+        for (String label : command.getAllLabels()) {
+            this.addCommand(command, label);
+            this.registerSubCommands(label, command.getSubcommands());
         }
     }
 
@@ -182,12 +182,11 @@ public abstract class CommandManager<T, S> {
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregisterCommand(Command<T,S> command, boolean subcommands) {
-        List<String> aliases = new ArrayList<>(command.getAliases());
-        aliases.add(command.getName());
-        for (String alias : aliases) {
-            this.removeCommand(alias, subcommands);
+        List<String> labels = new ArrayList<>(command.getAllLabels());
+        for (String label : labels) {
+            this.removeCommand(label, subcommands);
             if(subcommands) {
-                this.unregisterSubCommands(alias, command.getSubcommands());
+                this.unregisterSubCommands(label, command.getSubcommands());
             }
         }
     }
@@ -266,8 +265,7 @@ public abstract class CommandManager<T, S> {
             return;
         }
         for (Command<T,S> subcommand : subcommands) {
-            // getAliases() already returns [name, ...aliases], so no need to add the name again
-            List<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
+            List<String> aliasesSub = new ArrayList<>(subcommand.getAllLabels());
             for (String aliasSub : aliasesSub) {
                 this.addCommand(subcommand, parentLabel + "." + aliasSub);
                 this.registerSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());
@@ -285,11 +283,10 @@ public abstract class CommandManager<T, S> {
             return;
         }
         for (Command<T,S> subcommand : subcommandsList) {
-            // getAliases() already returns [name, ...aliases], so no need to add the name again
-            List<String> aliasesSub = new ArrayList<>(subcommand.getAliases());
-            for (String aliasSub : aliasesSub) {
-                this.removeCommand(parentLabel + "." + aliasSub, true);
-                this.unregisterSubCommands(parentLabel + "." + aliasSub, subcommand.getSubcommands());
+            List<String> labelsSub = subcommand.getAllLabels();
+            for (String labelSub : labelsSub) {
+                this.removeCommand(parentLabel + "." + labelSub, true);
+                this.unregisterSubCommands(parentLabel + "." + labelSub, subcommand.getSubcommands());
             }
         }
     }
@@ -315,7 +312,7 @@ public abstract class CommandManager<T, S> {
             this.logger.info("Register command " + label);
         }
         List<Argument<S>> args = command.getArgs();
-        List<Argument<S>> optArgs = command.getOptinalArgs();
+        List<Argument<S>> optArgs = command.getOptionalArgs();
         String[] labelParts = label.split("\\.");
         int labelSize = labelParts.length;
 

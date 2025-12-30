@@ -77,10 +77,10 @@ class CommandTest {
     @Test
     void testAliasesAndName() {
         assertEquals("dummy", cmd.getName());
-        assertEquals(1, cmd.getAliases().size());
+        assertEquals(0, cmd.getAliases().size());
         cmd.addAlias("d1", "d2");
         List<String> aliases = cmd.getAliases();
-        assertEquals(3, cmd.getAliases().size());
+        assertEquals(2, cmd.getAliases().size());
         assertTrue(aliases.contains("d1"));
         assertTrue(aliases.contains("d2"));
     }

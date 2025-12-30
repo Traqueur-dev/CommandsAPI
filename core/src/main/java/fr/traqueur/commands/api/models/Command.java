@@ -9,6 +9,7 @@ import fr.traqueur.commands.api.requirements.Requirement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -83,6 +84,8 @@ public abstract class Command<T, S> {
      */
     private boolean infiniteArgs;
 
+    private boolean enable;
+
     /**
      * If the command is subcommand
      */
@@ -106,6 +109,7 @@ public abstract class Command<T, S> {
         this.optionalArgs = new ArrayList<>();
         this.requirements = new ArrayList<>();
         this.subcommand = false;
+        this.enable = true;
     }
 
     /**
@@ -178,12 +182,16 @@ public abstract class Command<T, S> {
      * @return The aliases of the command.
      */
     public final List<String> getAliases() {
-        List<String> aliases = new ArrayList<>();
-        aliases.add(name);
+        return Collections.unmodifiableList(aliases);
+    }
+
+    public final List<String> getAllLabels() {
+        List<String> labels = new ArrayList<>();
+        labels.add(name);
         if (!this.aliases.isEmpty()) {
-            aliases.addAll(this.aliases);
+            labels.addAll(this.aliases);
         }
-        return aliases;
+        return labels;
     }
 
 
@@ -207,7 +215,7 @@ public abstract class Command<T, S> {
      * This method is called to get the optional arguments of the command.
      * @return The optional arguments of the command.
      */
-    public final List<Argument<S>> getOptinalArgs() {
+    public final List<Argument<S>> getOptionalArgs() {
         return optionalArgs;
     }
 
@@ -441,7 +449,7 @@ public abstract class Command<T, S> {
             usage.append(subs).append(">");
         }
 
-        if (!this.getArgs().isEmpty() || !this.getOptinalArgs().isEmpty()) {
+        if (!this.getArgs().isEmpty() || !this.getOptionalArgs().isEmpty()) {
             usage.append(!directSubs.isEmpty() ? "|" : " ");
 
             // arguments obligatoires : <name:type>
@@ -451,11 +459,11 @@ public abstract class Command<T, S> {
             usage.append(req);
 
             // arguments optionnels : [name:type]
-            if (!this.getOptinalArgs().isEmpty()) {
+            if (!this.getOptionalArgs().isEmpty()) {
                 if (!req.isEmpty()) {
                     usage.append(" ");
                 }
-                String opt = this.getOptinalArgs().stream()
+                String opt = this.getOptionalArgs().stream()
                         .map(arg -> "[" + arg.canonicalName() + "]")
                         .collect(Collectors.joining(" "));
                 usage.append(opt);
@@ -463,6 +471,22 @@ public abstract class Command<T, S> {
         }
 
         return usage.toString();
+    }
+
+    /**
+     * Change the state of the command
+     * @param state the new state for the command
+     */
+    public void setEnabled(boolean state) {
+        this.enable = state;
+    }
+
+    /**
+     * Check if the command is enabled
+     * @return if the command is enabled
+     */
+    public boolean isEnabled() {
+        return enable;
     }
 
     /**

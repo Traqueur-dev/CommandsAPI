@@ -150,7 +150,7 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
             addArgumentsToSubcommand(subcommand, command);
             slashCommand.addSubcommands(subcommand);
 
-        } else if (parts.length >= 3) {
+        } else {
             // Subcommand group: /command group subcommand
             String groupName = parts[1].toLowerCase();
             String subName = parts[2].toLowerCase();
@@ -198,7 +198,7 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
      */
     private void addArgumentsToCommand(SlashCommandData slashCommand, Command<T, SlashCommandInteractionEvent> command) {
         List<Argument<SlashCommandInteractionEvent>> args = command.getArgs();
-        List<Argument<SlashCommandInteractionEvent>> optionalArgs = command.getOptinalArgs();
+        List<Argument<SlashCommandInteractionEvent>> optionalArgs = command.getOptionalArgs();
 
         for (Argument<SlashCommandInteractionEvent> arg : args) {
             OptionData option = createOptionData(arg, true);
@@ -219,7 +219,7 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
      */
     private void addArgumentsToSubcommand(SubcommandData subcommand, Command<T, SlashCommandInteractionEvent> command) {
         List<Argument<SlashCommandInteractionEvent>> args = command.getArgs();
-        List<Argument<SlashCommandInteractionEvent>> optionalArgs = command.getOptinalArgs();
+        List<Argument<SlashCommandInteractionEvent>> optionalArgs = command.getOptionalArgs();
 
         for (Argument<SlashCommandInteractionEvent> arg : args) {
             OptionData option = createOptionData(arg, true);

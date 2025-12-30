@@ -45,4 +45,12 @@ public class InternalMessageHandler implements MessageHandler {
         return "The requirement %requirement% was not met";
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getCommandDisabledMessage() {
+        return "&cThis command is currently disabled.";
+    }
+
 }

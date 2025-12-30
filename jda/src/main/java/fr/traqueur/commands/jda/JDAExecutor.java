@@ -75,6 +75,13 @@ public class JDAExecutor<T> extends ListenerAdapter {
 
     private boolean validateCommand(SlashCommandInteractionEvent event,
                                     Command<T, SlashCommandInteractionEvent> command) {
+        // Enabled check
+        if (!command.isEnabled()) {
+            event.reply(commandManager.getMessageHandler().getCommandDisabledMessage())
+                    .setEphemeral(true).queue();
+            return false;
+        }
+
         // Game-only check
         if (command.inGameOnly() && !event.isFromGuild()) {
             event.reply(commandManager.getMessageHandler().getOnlyInGameMessage())

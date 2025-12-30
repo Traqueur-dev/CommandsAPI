@@ -31,7 +31,7 @@ public class DefaultArgumentParser<T, S> implements ArgumentParser<T, S, String[
         Arguments arguments = new Arguments(logger);
         
         List<Argument<S>> required = command.getArgs();
-        List<Argument<S>> optional = command.getOptinalArgs();
+        List<Argument<S>> optional = command.getOptionalArgs();
         
         int argIndex = 0;
         

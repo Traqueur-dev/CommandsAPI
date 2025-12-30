@@ -20,71 +20,65 @@ import java.util.List;
  * JDA-specific argument parser that uses Discord's OptionMapping.
  * Discord handles type resolution natively, so no string conversion needed.
  */
-public class JDAArgumentParser<T> implements ArgumentParser<T, SlashCommandInteractionEvent, SlashCommandInteractionEvent> {
-    
-    private final Logger logger;
-    
-    public JDAArgumentParser(Logger logger) {
-        this.logger = logger;
-    }
-    
+public record JDAArgumentParser<T>(Logger logger) implements ArgumentParser<T, SlashCommandInteractionEvent, SlashCommandInteractionEvent> {
+
     @Override
     public ParseResult parse(Command<T, SlashCommandInteractionEvent> command, SlashCommandInteractionEvent event) {
         JDAArguments arguments = new JDAArguments(logger, event);
         List<OptionMapping> options = event.getOptions();
-        
+
         List<Argument<SlashCommandInteractionEvent>> allArgs = new ArrayList<>();
         allArgs.addAll(command.getArgs());
-        allArgs.addAll(command.getOptinalArgs());
-        
+        allArgs.addAll(command.getOptionalArgs());
+
         // Validate argument count
         if (options.size() < command.getArgs().size()) {
             return ParseResult.error(new ParseError(
-                ParseError.Type.MISSING_REQUIRED,
-                null,
-                null,
-                "Not enough arguments provided"
+                    ParseError.Type.MISSING_REQUIRED,
+                    null,
+                    null,
+                    "Not enough arguments provided"
             ));
         }
-        
-        int maxOptional = command.getOptinalArgs().size();
+
+        int maxOptional = command.getOptionalArgs().size();
         int providedOptional = options.size() - command.getArgs().size();
         if (providedOptional > maxOptional) {
             return ParseResult.error(new ParseError(
-                ParseError.Type.INVALID_FORMAT,
-                null,
-                null,
-                "Too many arguments provided"
+                    ParseError.Type.INVALID_FORMAT,
+                    null,
+                    null,
+                    "Too many arguments provided"
             ));
         }
-        
+
         // Parse each option
         for (int i = 0; i < options.size(); i++) {
             OptionMapping option = options.get(i);
             Argument<SlashCommandInteractionEvent> arg = allArgs.get(i);
-            
+
             try {
                 populateArgument(arguments, option, arg);
             } catch (ArgumentIncorrectException e) {
                 return ParseResult.error(new ParseError(
-                    ParseError.Type.CONVERSION_FAILED,
-                    option.getName(),
-                    null,
-                    e.getMessage()
+                        ParseError.Type.CONVERSION_FAILED,
+                        option.getName(),
+                        null,
+                        e.getMessage()
                 ));
             }
         }
-        
+
         return ParseResult.success(arguments, options.size());
     }
-    
-    private void populateArgument(JDAArguments arguments, OptionMapping option, 
-                                   Argument<SlashCommandInteractionEvent> arg) {
+
+    private void populateArgument(JDAArguments arguments, OptionMapping option,
+                                  Argument<SlashCommandInteractionEvent> arg) {
         String name = option.getName();
-        
+
         switch (option.getType()) {
             case STRING -> arguments.add(name, String.class, option.getAsString());
-            
+
             case INTEGER -> {
                 if (!(arg.type() instanceof ArgumentType.Simple(Class<?> clazz))) {
                     throw new ArgumentIncorrectException(name);
@@ -97,7 +91,7 @@ public class JDAArgumentParser<T> implements ArgumentParser<T, SlashCommandInter
                     throw new ArgumentIncorrectException(name);
                 }
             }
-            
+
             case NUMBER -> {
                 if (!(arg.type() instanceof ArgumentType.Simple(Class<?> clazz))) {
                     throw new ArgumentIncorrectException(name);
@@ -110,9 +104,9 @@ public class JDAArgumentParser<T> implements ArgumentParser<T, SlashCommandInter
                     throw new ArgumentIncorrectException(name);
                 }
             }
-            
+
             case BOOLEAN -> arguments.add(name, Boolean.class, option.getAsBoolean());
-            
+
             case USER -> {
                 if (!(arg.type() instanceof ArgumentType.Simple(Class<?> clazz))) {
                     throw new ArgumentIncorrectException(name);
@@ -125,12 +119,12 @@ public class JDAArgumentParser<T> implements ArgumentParser<T, SlashCommandInter
                     throw new ArgumentIncorrectException(name);
                 }
             }
-            
+
             case ROLE -> arguments.add(name, Role.class, option.getAsRole());
             case CHANNEL -> arguments.add(name, GuildChannelUnion.class, option.getAsChannel());
             case MENTIONABLE -> arguments.add(name, IMentionable.class, option.getAsMentionable());
             case ATTACHMENT -> arguments.add(name, Message.Attachment.class, option.getAsAttachment());
-            
+
             default -> { /* Unknown type, skip */ }
         }
     }
