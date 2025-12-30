@@ -36,24 +36,6 @@ class CommandManagerTest {
         manager.setLogger(logger);
     }
 
-    static class DummyCommand extends Command<Object, String> {
-        DummyCommand() { super(null, "dummy"); }
-        DummyCommand(String name) { super(null, name); }
-        @Override public void execute(String sender, Arguments args) {}
-    }
-
-    static class FakePlatform implements CommandPlatform<Object, String> {
-        List<String> added = new ArrayList<>();
-        @Override public Object getPlugin() { return null; }
-        @Override public void injectManager(CommandManager<Object, String> cm) {}
-        @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
-        @Override public boolean hasPermission(String sender, String permission) { return true; }
-        @Override public boolean isPlayer(String sender) {return false;}
-        @Override public void sendMessage(String sender, String message) {}
-        @Override public void addCommand(Command<Object, String> command, String label) { added.add(label); }
-        @Override public void removeCommand(String label, boolean sub) {}
-    }
-
     // ----- TESTS -----
     @Test
     void testInfiniteArgsParsing() throws Exception {
@@ -187,6 +169,61 @@ class CommandManagerTest {
         Map<Integer, TabCompleter<String>> map = comps.get("dummy");
         assertTrue(map.containsKey(1));
         assertTrue(map.containsKey(2));
+    }
+
+    static class DummyCommand extends Command<Object, String> {
+        DummyCommand() {
+            super(null, "dummy");
+        }
+
+        DummyCommand(String name) {
+            super(null, name);
+        }
+
+        @Override
+        public void execute(String sender, Arguments args) {
+        }
+    }
+
+    static class FakePlatform implements CommandPlatform<Object, String> {
+        List<String> added = new ArrayList<>();
+
+        @Override
+        public Object getPlugin() {
+            return null;
+        }
+
+        @Override
+        public void injectManager(CommandManager<Object, String> cm) {
+        }
+
+        @Override
+        public java.util.logging.Logger getLogger() {
+            return java.util.logging.Logger.getAnonymousLogger();
+        }
+
+        @Override
+        public boolean hasPermission(String sender, String permission) {
+            return true;
+        }
+
+        @Override
+        public boolean isPlayer(String sender) {
+            return false;
+        }
+
+        @Override
+        public void sendMessage(String sender, String message) {
+        }
+
+        @Override
+        public void addCommand(Command<Object, String> command, String label) {
+            added.add(label);
+        }
+
+        @Override
+        public void removeCommand(String label, boolean sub) {
+        }
     }
 
     static class FakeLogger extends InternalLogger {

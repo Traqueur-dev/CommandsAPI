@@ -20,7 +20,8 @@ import java.util.List;
  * JDA-specific argument parser that uses Discord's OptionMapping.
  * Discord handles type resolution natively, so no string conversion needed.
  */
-public record JDAArgumentParser<T>(Logger logger) implements ArgumentParser<T, SlashCommandInteractionEvent, SlashCommandInteractionEvent> {
+public record JDAArgumentParser<T>(
+        Logger logger) implements ArgumentParser<T, SlashCommandInteractionEvent, SlashCommandInteractionEvent> {
 
     @Override
     public ParseResult parse(Command<T, SlashCommandInteractionEvent> command, SlashCommandInteractionEvent event) {

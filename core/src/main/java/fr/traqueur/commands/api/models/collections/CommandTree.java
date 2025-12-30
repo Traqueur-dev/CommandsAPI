@@ -36,46 +36,6 @@ public class CommandTree<T, S> {
 
     private CommandNode<T, S> root;
 
-    /**
-     * A node representing one segment in the command path.
-     */
-    public static class CommandNode<T, S> {
-
-        private final String label;
-        private final CommandNode<T, S> parent;
-        private final Map<String, CommandNode<T, S>> children = new HashMap<>();
-        private Command<T, S> command;
-        private boolean hadChildren = false;
-
-        public CommandNode(String label, CommandNode<T, S> parent) {
-            this.label = label;
-            this.parent = parent;
-        }
-
-        public String getLabel() {
-            return label;
-        }
-
-        public String getFullLabel() {
-            if (parent == null || parent.label == null) return label;
-            return parent.getFullLabel() + "." + label;
-        }
-
-        public Optional<Command<T, S>> getCommand() {
-            return Optional.ofNullable(command);
-        }
-
-        public Map<String, CommandNode<T, S>> getChildren() {
-            return Collections.unmodifiableMap(children);
-        }
-    }
-
-    /**
-     * Result of a lookup: the deepest matching node and leftover args.
-     */
-    public record MatchResult<T, S>(CommandNode<T, S> node, String[] args) {
-    }
-
     public CommandTree() {
         this.root = new CommandNode<>(null, null);
     }
@@ -133,7 +93,7 @@ public class CommandTree<T, S> {
     /**
      * Validate a single segment of a label.
      *
-     * @param segment the segment to validate
+     * @param segment   the segment to validate
      * @param fullLabel the full label for error messages
      * @throws IllegalArgumentException if invalid
      */
@@ -239,5 +199,45 @@ public class CommandTree<T, S> {
 
     public CommandNode<T, S> getRoot() {
         return root;
+    }
+
+    /**
+     * A node representing one segment in the command path.
+     */
+    public static class CommandNode<T, S> {
+
+        private final String label;
+        private final CommandNode<T, S> parent;
+        private final Map<String, CommandNode<T, S>> children = new HashMap<>();
+        private Command<T, S> command;
+        private boolean hadChildren = false;
+
+        public CommandNode(String label, CommandNode<T, S> parent) {
+            this.label = label;
+            this.parent = parent;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public String getFullLabel() {
+            if (parent == null || parent.label == null) return label;
+            return parent.getFullLabel() + "." + label;
+        }
+
+        public Optional<Command<T, S>> getCommand() {
+            return Optional.ofNullable(command);
+        }
+
+        public Map<String, CommandNode<T, S>> getChildren() {
+            return Collections.unmodifiableMap(children);
+        }
+    }
+
+    /**
+     * Result of a lookup: the deepest matching node and leftover args.
+     */
+    public record MatchResult<T, S>(CommandNode<T, S> node, String[] args) {
     }
 }

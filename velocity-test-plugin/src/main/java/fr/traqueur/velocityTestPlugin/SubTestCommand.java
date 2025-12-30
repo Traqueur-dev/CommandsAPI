@@ -13,10 +13,10 @@ public class SubTestCommand extends Command<VelocityTestPlugin> {
         super(plugin, "sub.inner");
         this.addArgs("test", Integer.class);
         this.addArg("testStr", String.class, (sender, args) -> {
-           args.forEach(arg -> {
-               sender.sendMessage(Component.text("Arg: " + arg));
-           });
-           return List.of();
+            args.forEach(arg -> {
+                sender.sendMessage(Component.text("Arg: " + arg));
+            });
+            return List.of();
         });
         this.addAlias("sub");
     }

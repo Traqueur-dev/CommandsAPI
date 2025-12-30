@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 
 /**
  * Test bot to demonstrate the JDA CommandsAPI.
- *
+ * <p>
  * To run this bot:
  * 1. Set the DISCORD_BOT_TOKEN environment variable
  * 2. Set the DISCORD_GUILD_ID environment variable (optional, for testing)
@@ -19,22 +19,6 @@ import java.util.logging.Logger;
 public class TestBot {
 
     private static final Logger LOGGER = Logger.getLogger(TestBot.class.getName());
-
-    public static void main(String[] args) {
-        String token = System.getenv("DISCORD_BOT_TOKEN");
-        if (token == null || token.isEmpty()) {
-            LOGGER.severe("DISCORD_BOT_TOKEN environment variable not set!");
-            LOGGER.info("Please set your Discord bot token with: export DISCORD_BOT_TOKEN=your_token_here");
-            return;
-        }
-
-        try {
-            new TestBot(token);
-        } catch (Exception e) {
-            LOGGER.severe("Failed to start bot: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
 
     public TestBot(String token) throws InterruptedException {
         LOGGER.info("Starting Discord bot...");
@@ -70,5 +54,21 @@ public class TestBot {
         }
 
         LOGGER.info("Bot is fully operational!");
+    }
+
+    public static void main(String[] args) {
+        String token = System.getenv("DISCORD_BOT_TOKEN");
+        if (token == null || token.isEmpty()) {
+            LOGGER.severe("DISCORD_BOT_TOKEN environment variable not set!");
+            LOGGER.info("Please set your Discord bot token with: export DISCORD_BOT_TOKEN=your_token_here");
+            return;
+        }
+
+        try {
+            new TestBot(token);
+        } catch (Exception e) {
+            LOGGER.severe("Failed to start bot: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

@@ -5,15 +5,6 @@ public record ParseError(Type type,
                          String input,
                          String message) {
 
-    public enum Type {
-        TYPE_NOT_FOUND,
-        CONVERSION_FAILED,
-        ARGUMENT_TOO_LONG,
-        MISSING_REQUIRED,
-        INVALID_FORMAT
-    }
-
-
     public static ParseError typeNotFound(String argName, String typeKey) {
         return new ParseError(Type.TYPE_NOT_FOUND, argName, typeKey,
                 "Unknown argument type: " + typeKey);
@@ -32,5 +23,13 @@ public record ParseError(Type type,
     public static ParseError missingRequired(String argName) {
         return new ParseError(Type.MISSING_REQUIRED, argName, null,
                 "Missing required argument: " + argName);
+    }
+
+    public enum Type {
+        TYPE_NOT_FOUND,
+        CONVERSION_FAILED,
+        ARGUMENT_TOO_LONG,
+        MISSING_REQUIRED,
+        INVALID_FORMAT
     }
 }

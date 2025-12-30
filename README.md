@@ -1,7 +1,9 @@
 # CommandsAPI
 
-**CommandsAPI** is a modular, extensible Java library for building robust, typed command systems across multiple platforms such as **Spigot** and **Velocity**. 
-As of version `4.0.0`, all core logic has been extracted into a dedicated `core` module, enabling seamless multi-platform support.
+**CommandsAPI** is a modular, extensible Java library for building robust, typed command systems across multiple
+platforms such as **Spigot** and **Velocity**.
+As of version `4.0.0`, all core logic has been extracted into a dedicated `core` module, enabling seamless
+multi-platform support.
 
 ---
 
@@ -81,7 +83,8 @@ dependencies {
 ## 💡 Example (Spigot)
 
 Be sure to extends all the classes from the platform you are using (Spigot, Velocity, etc.):
-`fr.traqueur.commandsapi.spigot.CommandManager` for Spigot, `fr.traqueur.commandsapi.velocity.CommandManager` for Velocity, etc.
+`fr.traqueur.commandsapi.spigot.CommandManager` for Spigot, `fr.traqueur.commandsapi.velocity.CommandManager` for
+Velocity, etc.
 
 ```java
 public class HelloWorldCommand extends Command<MyPlugin> {

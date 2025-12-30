@@ -11,7 +11,8 @@ public class LongArgument implements ArgumentConverter<Long> {
     /**
      * Default constructor.
      */
-    public LongArgument() {}
+    public LongArgument() {
+    }
 
     /**
      * Convert a string to a long.

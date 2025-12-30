@@ -79,12 +79,25 @@ class UpdaterTest {
         }
     }
 
-    /** Captures log records for assertions */
+    /**
+     * Captures log records for assertions
+     */
     private static class TestLogHandler extends Handler {
         private final java.util.List<LogRecord> records = new java.util.ArrayList<>();
-        @Override public void publish(LogRecord record) { records.add(record); }
-        @Override public void flush() {}
-        @Override public void close() {}
+
+        @Override
+        public void publish(LogRecord record) {
+            records.add(record);
+        }
+
+        @Override
+        public void flush() {
+        }
+
+        @Override
+        public void close() {
+        }
+
         boolean anyMatch(Level lvl, java.util.function.Predicate<LogRecord> p) {
             return records.stream()
                     .anyMatch(r -> r.getLevel().equals(lvl) && p.test(r));

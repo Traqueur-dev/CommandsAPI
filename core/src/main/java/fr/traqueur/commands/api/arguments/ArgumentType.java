@@ -2,6 +2,13 @@ package fr.traqueur.commands.api.arguments;
 
 public sealed interface ArgumentType permits ArgumentType.Simple, ArgumentType.Infinite {
 
+    static ArgumentType of(Class<?> clazz) {
+        if (clazz.isAssignableFrom(fr.traqueur.commands.api.arguments.Infinite.class)) {
+            return Infinite.INSTANCE;
+        }
+        return new Simple(clazz);
+    }
+
     String key();
 
     /**
@@ -29,13 +36,6 @@ public sealed interface ArgumentType permits ArgumentType.Simple, ArgumentType.I
         public String key() {
             return "infinite";
         }
-    }
-
-    static ArgumentType of(Class<?> clazz) {
-        if(clazz.isAssignableFrom(fr.traqueur.commands.api.arguments.Infinite.class)) {
-            return Infinite.INSTANCE;
-        }
-        return new Simple(clazz);
     }
 
 }

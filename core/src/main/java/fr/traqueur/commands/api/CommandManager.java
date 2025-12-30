@@ -31,6 +31,7 @@ import java.util.*;
  * This class is the command manager.
  * It allows you to register commands and subcommands.
  * It also allows you to register argument converters and tab completer.
+ *
  * @param <T> The type of the platform that will use this command manager.
  * @param <S> The type of the sender that will use this command manager.
  */
@@ -38,12 +39,12 @@ public abstract class CommandManager<T, S> {
 
 
     private final ArgumentParser<T, S, String[]> parser;
-    private final CommandPlatform<T,S> platform;
+    private final CommandPlatform<T, S> platform;
 
     /**
      * The commands registered in the command manager.
      */
-    private final CommandTree<T,S> commands;
+    private final CommandTree<T, S> commands;
 
     /**
      * The argument converters registered in the command manager.
@@ -56,7 +57,7 @@ public abstract class CommandManager<T, S> {
     private final Map<String, Map<Integer, TabCompleter<S>>> completers;
 
 
-    private final CommandInvoker<T,S> invoker;
+    private final CommandInvoker<T, S> invoker;
 
     /**
      * The message handler of the command manager.
@@ -76,9 +77,10 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Create a new command manager.
+     *
      * @param platform The platform of the command manager.
      */
-    public CommandManager(CommandPlatform<T,S> platform) {
+    public CommandManager(CommandPlatform<T, S> platform) {
         Updater.checkUpdates();
         this.platform = platform;
         this.platform.injectManager(this);
@@ -93,25 +95,9 @@ public abstract class CommandManager<T, S> {
         this.registerInternalConverters();
     }
 
-
-    /**
-     * Set the custom logger of the command manager.
-     * @param logger The logger to set.
-     */
-    public void setLogger(Logger logger) {
-        this.logger = logger;
-    }
-
-    /**
-     * Set the message handler of the command manager.
-     * @param messageHandler The message handler to set.
-     */
-    public void setMessageHandler(MessageHandler messageHandler) {
-        this.messageHandler = messageHandler;
-    }
-
     /**
      * Get the message handler of the command manager.
+     *
      * @return The message handler of the command manager.
      */
     public MessageHandler getMessageHandler() {
@@ -119,15 +105,17 @@ public abstract class CommandManager<T, S> {
     }
 
     /**
-     * Set the debug mode of the command manager.
-     * @param debug If the debug mode is enabled.
+     * Set the message handler of the command manager.
+     *
+     * @param messageHandler The message handler to set.
      */
-    public void setDebug(boolean debug) {
-        this.debug = debug;
+    public void setMessageHandler(MessageHandler messageHandler) {
+        this.messageHandler = messageHandler;
     }
 
     /**
      * Get the debug mode of the command manager.
+     *
      * @return If the debug mode is enabled.
      */
     public boolean isDebug() {
@@ -135,10 +123,20 @@ public abstract class CommandManager<T, S> {
     }
 
     /**
+     * Set the debug mode of the command manager.
+     *
+     * @param debug If the debug mode is enabled.
+     */
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+
+    /**
      * Register a command in the command manager.
+     *
      * @param command The command to register.
      */
-    public void registerCommand(Command<T,S> command) {
+    public void registerCommand(Command<T, S> command) {
         for (String label : command.getAllLabels()) {
             this.addCommand(command, label);
             this.registerSubCommands(label, command.getSubcommands());
@@ -147,6 +145,7 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Unregister a command in the command manager.
+     *
      * @param label The label of the command to unregister.
      */
     public void unregisterCommand(String label) {
@@ -155,12 +154,13 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Unregister a command in the command manager.
-     * @param label The label of the command to unregister.
+     *
+     * @param label       The label of the command to unregister.
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregisterCommand(String label, boolean subcommands) {
         String[] rawArgs = label.split("\\.");
-        Optional<Command<T,S>> commandOptional = this.commands.findNode(rawArgs)
+        Optional<Command<T, S>> commandOptional = this.commands.findNode(rawArgs)
                 .flatMap(result -> result.node().getCommand());
 
         if (commandOptional.isEmpty()) {
@@ -171,22 +171,24 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Unregister a command in the command manager.
+     *
      * @param command The command to unregister.
      */
-    public void unregisterCommand(Command<T,S> command) {
+    public void unregisterCommand(Command<T, S> command) {
         this.unregisterCommand(command, true);
     }
 
     /**
      * Unregister a command in the command manager.
-     * @param command The command to unregister.
+     *
+     * @param command     The command to unregister.
      * @param subcommands If the subcommands must be unregistered.
      */
-    public void unregisterCommand(Command<T,S> command, boolean subcommands) {
+    public void unregisterCommand(Command<T, S> command, boolean subcommands) {
         List<String> labels = new ArrayList<>(command.getAllLabels());
         for (String label : labels) {
             this.removeCommand(label, subcommands);
-            if(subcommands) {
+            if (subcommands) {
                 this.unregisterSubCommands(label, command.getSubcommands());
             }
         }
@@ -194,9 +196,10 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Register an argument converter in the command manager.
+     *
      * @param typeClass The class of the type.
      * @param converter The converter of the argument.
-     * @param <C> The type of the argument.
+     * @param <C>       The type of the argument.
      */
     public <C> void registerConverter(Class<C> typeClass, ArgumentConverter<C> converter) {
         this.typeConverters.put(typeClass.getSimpleName().toLowerCase(), new ArgumentConverter.Wrapper<>(typeClass, converter));
@@ -204,13 +207,14 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Parse the arguments of the command.
+     *
      * @param command The command to parse.
-     * @param args The arguments to parse.
+     * @param args    The arguments to parse.
      * @return The arguments parsed.
      * @throws TypeArgumentNotExistException If the type of the argument does not exist.
-     * @throws ArgumentIncorrectException If the argument is incorrect.
+     * @throws ArgumentIncorrectException    If the argument is incorrect.
      */
-    public Arguments parse(Command<T,S> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
+    public Arguments parse(Command<T, S> command, String[] args) throws TypeArgumentNotExistException, ArgumentIncorrectException {
         ParseResult result = parser.parse(command, args);
         if (!result.isSuccess()) {
             ParseError error = result.error();
@@ -225,15 +229,16 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Get the commands of the command manager.
+     *
      * @return The commands of the command manager.
      */
     public CommandTree<T, S> getCommands() {
         return commands;
     }
 
-
     /**
      * Get the completers of the command manager
+     *
      * @return The completers of command manager
      */
     public Map<String, Map<Integer, TabCompleter<S>>> getCompleters() {
@@ -242,14 +247,16 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Get the platform of the command manager.
+     *
      * @return The platform of the command manager.
      */
-    public CommandPlatform<T,S> getPlatform() {
+    public CommandPlatform<T, S> getPlatform() {
         return platform;
     }
 
     /**
      * Get the logger of the command manager.
+     *
      * @return The logger of the command manager.
      */
     public Logger getLogger() {
@@ -257,15 +264,25 @@ public abstract class CommandManager<T, S> {
     }
 
     /**
+     * Set the custom logger of the command manager.
+     *
+     * @param logger The logger to set.
+     */
+    public void setLogger(Logger logger) {
+        this.logger = logger;
+    }
+
+    /**
      * Register a list of subcommands in the command manager.
+     *
      * @param parentLabel The parent label of the commands.
      * @param subcommands The list of subcommands to register.
      */
     private void registerSubCommands(String parentLabel, List<Command<T, S>> subcommands) {
-        if(subcommands == null || subcommands.isEmpty()) {
+        if (subcommands == null || subcommands.isEmpty()) {
             return;
         }
-        for (Command<T,S> subcommand : subcommands) {
+        for (Command<T, S> subcommand : subcommands) {
             List<String> aliasesSub = new ArrayList<>(subcommand.getAllLabels());
             for (String aliasSub : aliasesSub) {
                 this.addCommand(subcommand, parentLabel + "." + aliasSub);
@@ -276,14 +293,15 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Unregister the subcommands of a command.
-     * @param parentLabel The parent label of the subcommands.
+     *
+     * @param parentLabel     The parent label of the subcommands.
      * @param subcommandsList The list of subcommands to unregister.
      */
-    private void unregisterSubCommands(String parentLabel, List<Command<T,S>> subcommandsList) {
-        if(subcommandsList == null || subcommandsList.isEmpty()) {
+    private void unregisterSubCommands(String parentLabel, List<Command<T, S>> subcommandsList) {
+        if (subcommandsList == null || subcommandsList.isEmpty()) {
             return;
         }
-        for (Command<T,S> subcommand : subcommandsList) {
+        for (Command<T, S> subcommand : subcommandsList) {
             List<String> labelsSub = subcommand.getAllLabels();
             for (String labelSub : labelsSub) {
                 this.removeCommand(parentLabel + "." + labelSub, true);
@@ -294,7 +312,8 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Unregister a command in the command manager.
-     * @param label The label of the command.
+     *
+     * @param label      The label of the command.
      * @param subcommand If the subcommand must be unregistered.
      */
     private void removeCommand(String label, boolean subcommand) {
@@ -316,11 +335,12 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Register a command in the command manager.
+     *
      * @param command The command to register.
-     * @param label The label of the command.
+     * @param label   The label of the command.
      */
     private void addCommand(Command<T, S> command, String label) {
-        if(this.isDebug()) {
+        if (this.isDebug()) {
             this.logger.info("Register command " + label);
         }
         List<Argument<S>> args = command.getArgs();
@@ -339,6 +359,7 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Register the completions of the command.
+     *
      * @param labelParts The parts of the label.
      */
     private void addCompletionsForLabel(String[] labelParts) {
@@ -355,9 +376,10 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Register the completions of the arguments.
-     * @param label The label of the command.
+     *
+     * @param label       The label of the command.
      * @param commandSize The size of the command.
-     * @param args The arguments to register.
+     * @param args        The arguments to register.
      */
     private void addCompletionForArgs(String label, int commandSize, List<Argument<S>> args) {
         for (int i = 0; i < args.size(); i++) {
@@ -366,7 +388,7 @@ public abstract class CommandManager<T, S> {
             ArgumentConverter.Wrapper<?> entry = this.typeConverters.get(type);
             TabCompleter<S> argConverter = arg.tabCompleter();
             if (argConverter != null) {
-                this.addCompletion(label,commandSize + i, argConverter);
+                this.addCompletion(label, commandSize + i, argConverter);
             } else if (entry != null && entry.converter() instanceof TabCompleter completer) {
                 this.addCompletion(label, commandSize + i, (TabCompleter<S>) completer);
             } else {
@@ -377,9 +399,10 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Register a tab completer in the command manager.
-     * @param label The label of the command.
+     *
+     * @param label       The label of the command.
      * @param commandSize The size of the command.
-     * @param converter The converter of the tab completer.
+     * @param converter   The converter of the tab completer.
      */
     private void addCompletion(String label, int commandSize, TabCompleter<S> converter) {
         Map<Integer, TabCompleter<S>> mapInner = this.completers.getOrDefault(label, new HashMap<>());
@@ -388,9 +411,9 @@ public abstract class CommandManager<T, S> {
         TabCompleter<S> existing = mapInner.get(commandSize);
 
         if (existing != null) {
-            combined = (s,args) -> {
-                List<String> completions = new ArrayList<>(existing.onCompletion(s,args));
-                completions.addAll(converter.onCompletion(s,args));
+            combined = (s, args) -> {
+                List<String> completions = new ArrayList<>(existing.onCompletion(s, args));
+                completions.addAll(converter.onCompletion(s, args));
                 return completions;
             };
         } else {
@@ -403,6 +426,7 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Get the command invoker of the command manager.
+     *
      * @return The command invoker of the command manager.
      */
     public CommandInvoker<T, S> getInvoker() {
@@ -413,10 +437,10 @@ public abstract class CommandManager<T, S> {
      * Register the internal converters of the command manager.
      */
     private void registerInternalConverters() {
-        this.registerConverter(String.class,  (s) -> s);
+        this.registerConverter(String.class, (s) -> s);
         this.registerConverter(Boolean.class, new BooleanArgument<>());
         this.registerConverter(Integer.class, new IntegerArgument());
         this.registerConverter(Double.class, new DoubleArgument());
-        this.registerConverter(Long.class,  new LongArgument());
+        this.registerConverter(Long.class, new LongArgument());
     }
 }

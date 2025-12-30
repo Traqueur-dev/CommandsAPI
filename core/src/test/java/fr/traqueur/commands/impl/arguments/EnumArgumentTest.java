@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EnumArgumentTest {
 
-    private enum Sample {ONE, TWO, THREE}
     private EnumArgument<Sample, Object> converter;
 
     @BeforeEach
@@ -40,4 +39,6 @@ class EnumArgumentTest {
         assertTrue(completions.contains("TWO"));
         assertTrue(completions.contains("THREE"));
     }
+
+    private enum Sample {ONE, TWO, THREE}
 }

@@ -18,50 +18,42 @@ import java.util.stream.Collectors;
  * This class is the base class for all commands.
  * It contains all the necessary methods to create a command.
  * It is abstract and must be inherited to be used.
+ *
  * @param <T> The plugin that owns the command.
  * @param <S> The type of the sender who use the command.
  */
 public abstract class Command<T, S> {
 
     private static final Pattern DOT_PATTERN = Pattern.compile("\\.");
-
-    private CommandManager<T, S> manager;
-
     /**
      * The plugin that owns the command.
      */
     private final T plugin;
-
     /**
      * The name of the command.
      */
     private final String name;
-
     /**
      * The aliases of the command.
      */
     private final List<String> aliases;
-
     /**
      * The subcommands of the command.
      */
     private final List<Command<T, S>> subcommands;
-
     /**
      * The arguments of the command.
      */
     private final List<Argument<S>> args;
-
     /**
      * The optional arguments of the command.
      */
     private final List<Argument<S>> optionalArgs;
-
     /**
      * The requirements of the command.
      */
     private final List<Requirement<S>> requirements;
-
+    private CommandManager<T, S> manager;
     /**
      * The description of the command.
      */
@@ -96,8 +88,9 @@ public abstract class Command<T, S> {
 
     /**
      * The constructor of the command.
+     *
      * @param plugin The plugin that owns the command.
-     * @param name The name of the command.
+     * @param name   The name of the command.
      */
     public Command(T plugin, String name) {
         this.plugin = plugin;
@@ -117,6 +110,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to set the manager of the command.
+     *
      * @param manager The manager of the command.
      */
     public void setManager(CommandManager<T, S> manager) {
@@ -125,7 +119,8 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called when the command is executed.
-     * @param sender The sender of the command.
+     *
+     * @param sender    The sender of the command.
      * @param arguments The arguments of the command.
      */
     public abstract void execute(S sender, Arguments arguments);
@@ -139,10 +134,11 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to unregister the command.
+     *
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregister(boolean subcommands) {
-        if(this.manager == null) {
+        if (this.manager == null) {
             throw new IllegalArgumentException("The command is not registered.");
         }
         this.manager.unregisterCommand(this, subcommands);
@@ -150,6 +146,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to get the name of the command.
+     *
      * @return The name of the command.
      */
     public final String getName() {
@@ -158,6 +155,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to get the description of the command.
+     *
      * @return The description of the command.
      */
     public final String getDescription() {
@@ -165,7 +163,17 @@ public abstract class Command<T, S> {
     }
 
     /**
+     * This method is called to set the description of the command
+     *
+     * @param description The description of the command.
+     */
+    public final void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
      * This method is called to get the permission of the command.
+     *
      * @return The permission of the command.
      */
     public final String getPermission() {
@@ -173,7 +181,17 @@ public abstract class Command<T, S> {
     }
 
     /**
+     * This method is called to set the permission of the command.
+     *
+     * @param permission The permission of the command.
+     */
+    public final void setPermission(String permission) {
+        this.permission = permission;
+    }
+
+    /**
      * This method is called to get the usage of the command.
+     *
      * @return The usage of the command.
      */
     public final String getUsage() {
@@ -181,7 +199,17 @@ public abstract class Command<T, S> {
     }
 
     /**
+     * This method is called to set the usage of the command.
+     *
+     * @param usage The usage of the command.
+     */
+    public final void setUsage(String usage) {
+        this.usage = usage;
+    }
+
+    /**
      * This method is called to get the aliases of the command.
+     *
      * @return The aliases of the command.
      */
     public final List<String> getAliases() {
@@ -197,9 +225,9 @@ public abstract class Command<T, S> {
         return labels;
     }
 
-
     /**
      * This method is called to get the subcommands of the command.
+     *
      * @return The subcommands of the command.
      */
     public final List<Command<T, S>> getSubcommands() {
@@ -208,6 +236,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to get the arguments of the command.
+     *
      * @return The arguments of the command.
      */
     public final List<Argument<S>> getArgs() {
@@ -216,6 +245,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to get the optional arguments of the command.
+     *
      * @return The optional arguments of the command.
      */
     public final List<Argument<S>> getOptionalArgs() {
@@ -224,6 +254,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to check if the command is only to use in game.
+     *
      * @return If the command is only to use in game.
      */
     public final boolean inGameOnly() {
@@ -232,6 +263,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to get the requirements of the command.
+     *
      * @return The requirements of the command.
      */
     public final List<Requirement<S>> getRequirements() {
@@ -240,6 +272,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to check if the command has infinite arguments.
+     *
      * @return If the command has infinite arguments.
      */
     public final boolean isInfiniteArgs() {
@@ -247,15 +280,8 @@ public abstract class Command<T, S> {
     }
 
     /**
-     * This method is called to set the description of the command
-     * @param description The description of the command.
-     */
-    public final void setDescription(String description) {
-        this.description = description;
-    }
-
-    /**
      * This method is called to set if the command is only to use in game.
+     *
      * @param gameOnly If the command is only to use in game.
      */
     public final void setGameOnly(boolean gameOnly) {
@@ -263,23 +289,8 @@ public abstract class Command<T, S> {
     }
 
     /**
-     * This method is called to set the permission of the command.
-     * @param permission The permission of the command.
-     */
-    public final void setPermission(String permission) {
-        this.permission = permission;
-    }
-
-    /**
-     * This method is called to set the usage of the command.
-     * @param usage The usage of the command.
-     */
-    public final void setUsage(String usage) {
-        this.usage = usage;
-    }
-
-    /**
      * This method is called to add aliases to the command.
+     *
      * @param aliases The aliases to add.
      */
     public final void addAlias(String... aliases) {
@@ -288,6 +299,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to add a alias to the command.
+     *
      * @param alias The alias to add.
      */
     public final void addAlias(String alias) {
@@ -296,6 +308,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to add subcommands to the command.
+     *
      * @param commands The subcommands to add.
      */
     @SafeVarargs
@@ -307,6 +320,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to add arguments to the command.
+     *
      * @param args The arguments to add.
      */
     public final void addArgs(Object... args) {
@@ -325,7 +339,8 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to add arguments to the command.
-     * @param arg The argument to add.
+     *
+     * @param arg  The argument to add.
      * @param type The type of the argument to add.
      */
     public final void addArg(String arg, Class<?> type) {
@@ -334,9 +349,10 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to add arguments to the command.
-     * @param arg The argument to add.
+     *
+     * @param arg       The argument to add.
      * @param converter The converter of the argument.
-     * @param type The type of the argument, can be null if the argument is a string.
+     * @param type      The type of the argument, can be null if the argument is a string.
      */
     public final void addArg(String arg, Class<?> type, TabCompleter<S> converter) {
         this.add(arg, ArgumentType.of(type), converter, false);
@@ -344,6 +360,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to add arguments to the command.
+     *
      * @param args The arguments to add.
      */
     public final void addOptionalArgs(Object... args) {
@@ -361,7 +378,8 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to add optional arguments to the command.
-     * @param arg The argument to add.
+     *
+     * @param arg  The argument to add.
      * @param type The type of the argument to add.
      */
     public final void addOptionalArg(String arg, Class<?> type) {
@@ -370,7 +388,8 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to add optional arguments to the command.
-     * @param arg The argument to add.
+     *
+     * @param arg       The argument to add.
      * @param converter The converter of the argument.
      */
     public final void addOptionalArg(String arg, Class<?> type, TabCompleter<S> converter) {
@@ -401,6 +420,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to add requirements to the command.
+     *
      * @param requirement The requirements to add.
      */
     @SafeVarargs
@@ -410,6 +430,7 @@ public abstract class Command<T, S> {
 
     /**
      * Check if the command is subcommand
+     *
      * @return if the command is subcommand
      */
     public final boolean isSubCommand() {
@@ -418,6 +439,7 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to get the plugin that owns the command.
+     *
      * @return The plugin that owns the command.
      */
     public final T getPlugin() {
@@ -426,8 +448,9 @@ public abstract class Command<T, S> {
 
     /**
      * This method is called to generate a default usage for the command.
+     *
      * @param sender The sender of the command.
-     * @param label The label of the command.
+     * @param label  The label of the command.
      * @return The default usage of the command.
      */
     public String generateDefaultUsage(S sender, String label) {
@@ -477,19 +500,21 @@ public abstract class Command<T, S> {
     }
 
     /**
-     * Change the state of the command
-     * @param state the new state for the command
-     */
-    public void setEnabled(boolean state) {
-        this.enable = state;
-    }
-
-    /**
      * Check if the command is enabled
+     *
      * @return if the command is enabled
      */
     public boolean isEnabled() {
         return enable;
+    }
+
+    /**
+     * Change the state of the command
+     *
+     * @param state the new state for the command
+     */
+    public void setEnabled(boolean state) {
+        this.enable = state;
     }
 
     /**

@@ -11,7 +11,8 @@ public class InternalMessageHandler implements MessageHandler {
     /**
      * Default constructor for the InternalMessageHandler.
      */
-    public InternalMessageHandler() {}
+    public InternalMessageHandler() {
+    }
 
     /**
      * {@inheritDoc}

@@ -2,7 +2,6 @@ package fr.traqueur.commands.jda.requirements;
 
 import fr.traqueur.commands.api.requirements.Requirement;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 import java.util.Arrays;

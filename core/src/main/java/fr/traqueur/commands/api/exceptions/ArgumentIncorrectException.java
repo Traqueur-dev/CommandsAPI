@@ -22,6 +22,7 @@ public class ArgumentIncorrectException extends RuntimeException {
 
     /**
      * Get the input that caused the exception.
+     *
      * @return The input.
      */
     public String getInput() {

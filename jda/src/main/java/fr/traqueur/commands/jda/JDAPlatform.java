@@ -37,16 +37,14 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
      * The logger for this platform.
      */
     private final Logger logger;
-
-    /**
-     * The command manager.
-     */
-    private CommandManager<T, SlashCommandInteractionEvent> commandManager;
-
     /**
      * Map of root command names to their SlashCommandData.
      */
     private final Map<String, SlashCommandData> slashCommands;
+    /**
+     * The command manager.
+     */
+    private CommandManager<T, SlashCommandInteractionEvent> commandManager;
 
     /**
      * Constructor for JDAPlatform.
@@ -131,10 +129,10 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
                 // This is a group, not a leaf subcommand - skip it
                 // Its children will be registered as subcommand groups (parts.length >= 3)
                 logger.warning(String.format(
-                    "Command '%s' has subcommands and will be treated as a subcommand group. " +
-                    "Discord does not support executing intermediate groups. " +
-                    "If you want this group to be executable, create a dedicated subcommand (e.g., '%s.list' or '%s.info').",
-                    label, label, label
+                        "Command '%s' has subcommands and will be treated as a subcommand group. " +
+                                "Discord does not support executing intermediate groups. " +
+                                "If you want this group to be executable, create a dedicated subcommand (e.g., '%s.list' or '%s.info').",
+                        label, label, label
                 ));
                 return;
             }

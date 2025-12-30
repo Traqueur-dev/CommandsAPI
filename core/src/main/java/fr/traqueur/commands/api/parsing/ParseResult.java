@@ -8,14 +8,6 @@ public record ParseResult(
         int consumedCount
 ) {
 
-    public boolean isSuccess() {
-        return error == null && arguments != null;
-    }
-
-    public boolean isError() {
-        return error != null;
-    }
-
     /**
      * Create a successful result.
      */
@@ -28,6 +20,14 @@ public record ParseResult(
      */
     public static ParseResult error(ParseError error) {
         return new ParseResult(null, error, 0);
+    }
+
+    public boolean isSuccess() {
+        return error == null && arguments != null;
+    }
+
+    public boolean isError() {
+        return error != null;
     }
 
 

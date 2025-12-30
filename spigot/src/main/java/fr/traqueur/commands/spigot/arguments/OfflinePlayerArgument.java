@@ -35,7 +35,8 @@ public class OfflinePlayerArgument implements ArgumentConverter<OfflinePlayer>, 
     /**
      * Creates a new OfflinePlayerArgument.
      */
-    public OfflinePlayerArgument() {}
+    public OfflinePlayerArgument() {
+    }
 
     /**
      * {@inheritDoc}

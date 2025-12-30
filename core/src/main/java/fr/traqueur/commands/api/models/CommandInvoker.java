@@ -17,9 +17,10 @@ import java.util.stream.Stream;
 /**
  * CommandInvoker is responsible for invoking and suggesting commands.
  * It performs lookup, permission and requirement checks, usage display, parsing, and execution.
+ *
  * @param manager the command manager to use for command handling
- * @param <T> plugin type
- * @param <S> sender type
+ * @param <T>     plugin type
+ * @param <S>     sender type
  */
 public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
 

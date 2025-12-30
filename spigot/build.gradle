@@ -16,7 +16,7 @@ repositories {
 dependencies {
     api project(":core")
     compileOnly "org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT"
-    testImplementation ("org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT")
+    testImplementation("org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT")
 }
 
 java {

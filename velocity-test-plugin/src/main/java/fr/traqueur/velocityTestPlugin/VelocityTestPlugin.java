@@ -9,15 +9,17 @@ import fr.traqueur.commands.velocity.CommandManager;
 import org.slf4j.Logger;
 
 @Plugin(
-    id = "velocity-test-plugin",
-    name = "velocity-test-plugin",
-    version = BuildConstants.VERSION
-    ,authors = {"Traqueur_"}
+        id = "velocity-test-plugin",
+        name = "velocity-test-plugin",
+        version = BuildConstants.VERSION
+        , authors = {"Traqueur_"}
 )
 public class VelocityTestPlugin {
 
-    @Inject private Logger logger;
-    @Inject private ProxyServer server;
+    @Inject
+    private Logger logger;
+    @Inject
+    private ProxyServer server;
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {

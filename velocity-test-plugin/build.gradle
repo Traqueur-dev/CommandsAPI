@@ -27,9 +27,9 @@ dependencies {
 }
 
 tasks {
-  runVelocity {
-    velocityVersion("3.4.0-SNAPSHOT")
-  }
+    runVelocity {
+        velocityVersion("3.4.0-SNAPSHOT")
+    }
 }
 
 def targetJavaVersion = 21

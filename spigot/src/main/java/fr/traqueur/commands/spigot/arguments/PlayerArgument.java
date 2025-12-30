@@ -33,7 +33,8 @@ public class PlayerArgument implements ArgumentConverter<Player>, TabCompleter<C
     /**
      * Creates a new PlayerArgument.
      */
-    public PlayerArgument() {}
+    public PlayerArgument() {
+    }
 
     /**
      * {@inheritDoc}

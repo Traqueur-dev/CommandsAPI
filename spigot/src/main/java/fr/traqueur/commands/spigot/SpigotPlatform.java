@@ -14,9 +14,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -69,7 +67,8 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
             commandMap = (CommandMap) bukkitCommandMap.get(Bukkit.getServer());
             pluginConstructor = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
             pluginConstructor.setAccessible(true);
-        } catch (IllegalArgumentException | SecurityException | IllegalAccessException | NoSuchFieldException | NoSuchMethodException e) {
+        } catch (IllegalArgumentException | SecurityException | IllegalAccessException | NoSuchFieldException |
+                 NoSuchMethodException e) {
             this.getLogger().severe("Unable to get the command map.");
             plugin.getServer().getPluginManager().disablePlugin(plugin);
         }
@@ -173,7 +172,7 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
      */
     @Override
     public void removeCommand(String label, boolean subcommand) {
-        if(subcommand && this.commandMap.getCommand(label) != null) {
+        if (subcommand && this.commandMap.getCommand(label) != null) {
             Objects.requireNonNull(this.commandMap.getCommand(label)).unregister(commandMap);
         }
     }

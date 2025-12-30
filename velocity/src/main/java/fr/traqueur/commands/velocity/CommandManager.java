@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 
 /**
  * This implementation of {@link fr.traqueur.commands.api.CommandManager} is used to provide the command manager in Spigot context.
+ *
  * @param <T> The type of the plugin, must extend JavaPlugin.
  */
 public class CommandManager<T> extends fr.traqueur.commands.api.CommandManager<T, CommandSource> {
@@ -18,7 +19,7 @@ public class CommandManager<T> extends fr.traqueur.commands.api.CommandManager<T
      * @param server   The server instance associated with this command manager.
      * @param logger   The logger instance associated with this command manager.
      */
-    public CommandManager(T instance, ProxyServer server,Logger logger) {
-        super(new VelocityPlatform<>(instance,server, logger));
+    public CommandManager(T instance, ProxyServer server, Logger logger) {
+        super(new VelocityPlatform<>(instance, server, logger));
     }
 }

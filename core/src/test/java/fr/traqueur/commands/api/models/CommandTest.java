@@ -13,20 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CommandTest {
 
-    private static class DummyCommand extends Command<String, Object> {
-        DummyCommand(String name) {
-            super("plugin", name);
-        }
-        DummyCommand() {
-            super("plugin", "dummy");
-        }
-
-        @Override
-        public void execute(Object sender, Arguments arguments) {
-            // no-op
-        }
-    }
-
     private DummyCommand cmd;
 
     @BeforeEach
@@ -167,15 +153,44 @@ class CommandTest {
     void testUnregisterDelegatesToManager() {
         AtomicBoolean called = new AtomicBoolean(false);
         CommandManager<String, Object> fakeManager = new CommandManager<String, Object>(new CommandPlatform<String, Object>() {
-            @Override public String getPlugin() { return null; }
-            @Override public void injectManager(CommandManager<String, Object> commandManager) {}
-            @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
-            @Override public boolean hasPermission(Object sender, String permission) { return true; }
-            @Override public boolean isPlayer(Object sender) {return false;}
-            @Override public void sendMessage(Object sender, String message) {}
-            @Override public void addCommand(Command<String, Object> command, String label) {}
-            @Override public void removeCommand(String label, boolean subcommand) { called.set(true); }
-        }) {};
+            @Override
+            public String getPlugin() {
+                return null;
+            }
+
+            @Override
+            public void injectManager(CommandManager<String, Object> commandManager) {
+            }
+
+            @Override
+            public java.util.logging.Logger getLogger() {
+                return java.util.logging.Logger.getAnonymousLogger();
+            }
+
+            @Override
+            public boolean hasPermission(Object sender, String permission) {
+                return true;
+            }
+
+            @Override
+            public boolean isPlayer(Object sender) {
+                return false;
+            }
+
+            @Override
+            public void sendMessage(Object sender, String message) {
+            }
+
+            @Override
+            public void addCommand(Command<String, Object> command, String label) {
+            }
+
+            @Override
+            public void removeCommand(String label, boolean subcommand) {
+                called.set(true);
+            }
+        }) {
+        };
         cmd.setManager(fakeManager);
         cmd.unregister();
         assertTrue(called.get());
@@ -212,7 +227,7 @@ class CommandTest {
         cmd.addSubCommand(subA, subB);
         String usage = cmd.generateDefaultUsage(null, "dummy");
         // extract first angle bracket content
-        String inside = usage.substring(usage.indexOf('<')+1, usage.indexOf('>'));
+        String inside = usage.substring(usage.indexOf('<') + 1, usage.indexOf('>'));
         List<String> parts = Arrays.asList(inside.split("\\|"));
         assertTrue(parts.contains("suba"));
         assertTrue(parts.contains("subb"));
@@ -233,12 +248,12 @@ class CommandTest {
         assertTrue(usage.contains("[opt:string]"));
     }
 
-    // --- v5.0.0 new tests ---
-
     @Test
     void setEnabled_defaultIsTrue() {
         assertTrue(cmd.isEnabled());
     }
+
+    // --- v5.0.0 new tests ---
 
     @Test
     void setEnabled_canDisable() {
@@ -294,5 +309,20 @@ class CommandTest {
         List<String> labels = cmd.getAllLabels();
 
         assertEquals("dummy", labels.get(0));
+    }
+
+    private static class DummyCommand extends Command<String, Object> {
+        DummyCommand(String name) {
+            super("plugin", name);
+        }
+
+        DummyCommand() {
+            super("plugin", "dummy");
+        }
+
+        @Override
+        public void execute(Object sender, Arguments arguments) {
+            // no-op
+        }
     }
 }

@@ -24,6 +24,7 @@ public class Arguments {
 
     /**
      * Constructor of the class.
+     *
      * @param logger The logger of the class.
      */
     public Arguments(Logger logger) {
@@ -57,7 +58,7 @@ public class Arguments {
      * Get an argument from the map.
      *
      * @param argument The key of the argument.
-     * @param <T> The type of the argument.
+     * @param <T>      The type of the argument.
      * @return The argument.
      */
     public <T> T get(String argument) {
@@ -69,7 +70,7 @@ public class Arguments {
      * Get an argument from the map as optional.
      *
      * @param argument The key of the argument.
-     * @param <T> The type of the argument.
+     * @param <T>      The type of the argument.
      * @return The argument.
      */
     public <T> Optional<T> getOptional(String argument) {
@@ -79,7 +80,7 @@ public class Arguments {
 
         ArgumentValue argumentValue = this.arguments.getOrDefault(argument, null);
 
-        if(argumentValue == null) {
+        if (argumentValue == null) {
             return Optional.empty();
         }
 
@@ -102,8 +103,8 @@ public class Arguments {
     /**
      * Add an argument to the map.
      *
-     * @param key The key of the argument.
-     * @param type The type of the argument.
+     * @param key    The key of the argument.
+     * @param type   The type of the argument.
      * @param object The object of the argument.
      */
     public <T> void add(String key, Class<T> type, T object) {

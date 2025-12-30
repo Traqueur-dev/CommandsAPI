@@ -73,7 +73,7 @@ public class AdminCommand extends Command<TestBot> {
             String reason = jdaArgs.<String>getOptional("reason").orElse("No reason provided");
 
             jdaArgs.reply(String.format("Would kick user %s for reason: %s",
-                user.getAsMention(), reason));
+                    user.getAsMention(), reason));
         }
     }
 
@@ -94,7 +94,7 @@ public class AdminCommand extends Command<TestBot> {
             String reason = arguments.<String>getOptional("reason").orElse("No reason provided");
 
             arguments.reply(String.format("Would ban user %s for reason: %s",
-                user.getAsMention(), reason));
+                    user.getAsMention(), reason));
         }
     }
 
@@ -138,10 +138,10 @@ public class AdminCommand extends Command<TestBot> {
                             ID: %s
                             Members: %d
                             Owner: %s""",
-                event.getGuild().getName(),
-                event.getGuild().getId(),
-                event.getGuild().getMemberCount(),
-                event.getGuild().getOwner() != null ? event.getGuild().getOwner().getAsMention() : "Unknown"
+                    event.getGuild().getName(),
+                    event.getGuild().getId(),
+                    event.getGuild().getMemberCount(),
+                    event.getGuild().getOwner() != null ? event.getGuild().getOwner().getAsMention() : "Unknown"
             );
 
             jdaArgs.reply(info);

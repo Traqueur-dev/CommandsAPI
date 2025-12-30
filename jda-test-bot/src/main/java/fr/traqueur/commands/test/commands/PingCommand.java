@@ -1,6 +1,5 @@
 package fr.traqueur.commands.test.commands;
 
-import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.jda.Command;
 import fr.traqueur.commands.jda.JDAArguments;
 import fr.traqueur.commands.test.TestBot;
@@ -23,7 +22,7 @@ public class PingCommand extends Command<TestBot> {
         event.reply("Pong! Gateway ping: " + gatewayPing + "ms").queue(response -> {
             response.retrieveOriginal().queue(message -> {
                 long restPing = message.getTimeCreated().toInstant().toEpochMilli() -
-                               event.getTimeCreated().toInstant().toEpochMilli();
+                        event.getTimeCreated().toInstant().toEpochMilli();
                 response.editOriginal("Pong! Gateway ping: " + gatewayPing + "ms | REST ping: " + restPing + "ms").queue();
             });
         });

@@ -29,7 +29,14 @@ public class Updater {
     }
 
     /**
+     * Private constructor to prevent instantiation
+     */
+    private Updater() {
+    }
+
+    /**
      * Set the URL to use to check for the latest release
+     *
      * @param URL_LATEST_RELEASE The URL to use
      */
     public static void setUrlLatestRelease(URL URL_LATEST_RELEASE) {
@@ -38,6 +45,7 @@ public class Updater {
 
     /**
      * Set the logger to use for logging messages
+     *
      * @param LOGGER The logger to use
      */
     public static void setLogger(Logger LOGGER) {
@@ -45,21 +53,17 @@ public class Updater {
     }
 
     /**
-     * Private constructor to prevent instantiation
-     */
-    private Updater() {}
-
-    /**
      * Check if the plugin is up to date and log a warning if it's not
      */
     public static void checkUpdates() {
-        if(!Updater.isUpToDate()) {
+        if (!Updater.isUpToDate()) {
             LOGGER.warning("The framework is not up to date, the latest version is " + Updater.fetchLatestVersion());
         }
     }
 
     /**
      * Get the version of the plugin
+     *
      * @return The version of the plugin
      */
     public static String getVersion() {
@@ -74,6 +78,7 @@ public class Updater {
 
     /**
      * Check if the plugin is up to date
+     *
      * @return True if the plugin is up to date, false otherwise
      */
     public static boolean isUpToDate() {
@@ -87,6 +92,7 @@ public class Updater {
 
     /**
      * Get the latest version of the plugin
+     *
      * @return The latest version of the plugin
      */
     public static String fetchLatestVersion() {
@@ -103,6 +109,7 @@ public class Updater {
 
     /**
      * Get the latest version of the plugin
+     *
      * @return The latest version of the plugin
      */
     private static String getString() throws IOException {
