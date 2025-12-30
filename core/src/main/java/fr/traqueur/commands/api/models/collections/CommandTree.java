@@ -3,21 +3,41 @@ package fr.traqueur.commands.api.models.collections;
 import fr.traqueur.commands.api.models.Command;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * A prefix-tree of commands, supporting nested labels and argument fallback.
+ *
  * @param <T> type of the command context
  * @param <S> type of the command sender
  */
 public class CommandTree<T, S> {
 
+    /**
+     * Pre-compiled pattern for splitting labels.
+     */
+    private static final Pattern DOT_PATTERN = Pattern.compile("\\.");
+
+    /**
+     * Valid label pattern: starts with letter, followed by letters, digits, underscores, or dots.
+     * Each segment must start with a letter.
+     */
+    private static final Pattern VALID_LABEL_SEGMENT = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$");
+
+    /**
+     * Maximum length for a single label segment.
+     */
+    private static final int MAX_SEGMENT_LENGTH = 64;
+
+    /**
+     * Maximum depth for nested commands.
+     */
+    private static final int MAX_DEPTH = 10;
+
     private CommandNode<T, S> root;
 
     /**
      * A node representing one segment in the command path.
-     * Each node can have a command associated with it,
-     * @param <T> type of the command context
-     * @param <S> type of the command sender
      */
     public static class CommandNode<T, S> {
 
@@ -27,81 +47,56 @@ public class CommandTree<T, S> {
         private Command<T, S> command;
         private boolean hadChildren = false;
 
-        /** Create a new command node with the given label and optional parent.
-         * @param label the segment label, e.g. "hello"
-         * @param parent the parent node, or null for root
-         */
         public CommandNode(String label, CommandNode<T, S> parent) {
             this.label = label;
             this.parent = parent;
         }
 
-        /** Get the label of this node segment.
-         * @return the label like "hello"
-         */
         public String getLabel() {
             return label;
         }
 
-        /**
-         * Get the full label path including parent segments.
-         * @return the full label like "parent.child"
-         */
         public String getFullLabel() {
             if (parent == null || parent.label == null) return label;
             return parent.getFullLabel() + "." + label;
         }
 
-        /** Get the command associated with this node, if any.
-         * @return the command, or empty if not set
-         */
         public Optional<Command<T, S>> getCommand() {
             return Optional.ofNullable(command);
         }
 
-        /** Get the parent node, or null if this is the root.
-         * @return the parent node, or null for root
-         */
         public Map<String, CommandNode<T, S>> getChildren() {
             return Collections.unmodifiableMap(children);
         }
+    }
+
+    /**
+     * Result of a lookup: the deepest matching node and leftover args.
+     */
+    public record MatchResult<T, S>(CommandNode<T, S> node, String[] args) {
+    }
+
+    public CommandTree() {
+        this.root = new CommandNode<>(null, null);
     }
 
     public void clear() {
         this.root = new CommandNode<>(null, null);
     }
 
-
-    /**
-     * Create an empty command tree with a root node.
-     * The root node has no label and serves as the starting point for all commands.
-     */
-    public CommandTree() {
-        this.root = new CommandNode<>(null, null);
-    }
-
-    /**
-     * Result of a lookup: the deepest matching node and leftover args.
-     * This is used to find commands based on a base label and raw arguments.
-     *
-     * @param <T>  type of the command context
-     * @param <S>  type of the command sender
-     * @param node The node that matched the base label and any subcommands.
-     *             The args are the remaining segments after the match.
-     * @param args Remaining arguments after the matched node.
-     *             This can be empty if the match was exact.
-     */
-    public record MatchResult<T, S>(CommandNode<T, S> node, String[] args) {
-    }
-
     /**
      * Add or replace a command at the given full label path (dot-separated).
-     * @param label full path like "hello.sub"
+     *
+     * @param label   full path like "hello.sub"
      * @param command the command to attach at that path
+     * @throws IllegalArgumentException if label is invalid
      */
     public void addCommand(String label, Command<T, S> command) {
-        String[] parts = label.split("\\.");
+        validateLabel(label);
+
+        String[] parts = DOT_PATTERN.split(label);
         CommandNode<T, S> node = root;
+
         for (String seg : parts) {
             String key = seg.toLowerCase();
             node.hadChildren = true;
@@ -112,11 +107,59 @@ public class CommandTree<T, S> {
     }
 
     /**
+     * Validate a command label.
+     *
+     * @param label the label to validate
+     * @throws IllegalArgumentException if invalid
+     */
+    private void validateLabel(String label) {
+        if (label == null || label.isEmpty()) {
+            throw new IllegalArgumentException("Command label cannot be null or empty");
+        }
+
+        String[] segments = DOT_PATTERN.split(label);
+
+        if (segments.length > MAX_DEPTH) {
+            throw new IllegalArgumentException(
+                    "Command label exceeds max depth (" + MAX_DEPTH + "): " + label
+            );
+        }
+
+        for (String segment : segments) {
+            validateSegment(segment, label);
+        }
+    }
+
+    /**
+     * Validate a single segment of a label.
+     *
+     * @param segment the segment to validate
+     * @param fullLabel the full label for error messages
+     * @throws IllegalArgumentException if invalid
+     */
+    private void validateSegment(String segment, String fullLabel) {
+        if (segment.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Command label contains empty segment: " + fullLabel
+            );
+        }
+
+        if (segment.length() > MAX_SEGMENT_LENGTH) {
+            throw new IllegalArgumentException(
+                    "Command label segment exceeds max length (" + MAX_SEGMENT_LENGTH + "): " + segment
+            );
+        }
+
+        if (!VALID_LABEL_SEGMENT.matcher(segment).matches()) {
+            throw new IllegalArgumentException(
+                    "Invalid command label segment '" + segment + "' in: " + fullLabel +
+                            ". Segments must start with a letter and contain only letters, digits, or underscores."
+            );
+        }
+    }
+
+    /**
      * Lookup a base label and raw arguments, returning matching node and leftover args.
-     * This allows for partial matches where the command may have subcommands.
-     * @param base the base command label, e.g. "hello"
-     * @param rawArgs the raw arguments to match against subcommands
-     * @return an Optional containing the match result, or empty if not found
      */
     public Optional<MatchResult<T, S>> findNode(String base, String[] rawArgs) {
         if (base == null) return Optional.empty();
@@ -144,9 +187,6 @@ public class CommandTree<T, S> {
 
     /**
      * Lookup by full path segments, with no leftover args.
-     * This finds the exact node matching all segments.
-     * @param segments the path segments like ["root", "sub"]
-     * @return an Optional containing the match result, or empty if not found
      */
     public Optional<MatchResult<T, S>> findNode(String[] segments) {
         if (segments == null || segments.length == 0) return Optional.empty();
@@ -160,11 +200,11 @@ public class CommandTree<T, S> {
 
     /**
      * Remove a command node by its full label.
-     * @param label full path like "root.sub"
-     * @param prune if true, remove entire subtree; otherwise just clear the command at that node
      */
     public void removeCommand(String label, boolean prune) {
-        CommandNode<T, S> target = this.findNode(label.split("\\.")).map(result -> result.node).orElse(null);
+        CommandNode<T, S> target = this.findNode(DOT_PATTERN.split(label))
+                .map(MatchResult::node)
+                .orElse(null);
         if (target == null) return;
 
         if (prune) {
@@ -178,7 +218,7 @@ public class CommandTree<T, S> {
         CommandNode<T, S> parent = node.parent;
         if (parent != null) {
             parent.children.remove(node.label);
-            if(parent.children.isEmpty()){
+            if (parent.children.isEmpty()) {
                 parent.hadChildren = false;
             }
         }
@@ -190,17 +230,13 @@ public class CommandTree<T, S> {
             CommandNode<T, S> parent = node.parent;
             if (parent != null) {
                 parent.children.remove(node.label);
-                if(parent.children.isEmpty()){
+                if (parent.children.isEmpty()) {
                     parent.hadChildren = false;
                 }
             }
         }
     }
 
-    /**
-     * Get the root command node of this tree.
-     * @return the root node, which has no label
-     */
     public CommandNode<T, S> getRoot() {
         return root;
     }

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +22,8 @@ import java.util.stream.Collectors;
  * @param <S> The type of the sender who use the command.
  */
 public abstract class Command<T, S> {
+
+    private static final Pattern DOT_PATTERN = Pattern.compile("\\.");
 
     private CommandManager<T, S> manager;
 
@@ -430,7 +433,7 @@ public abstract class Command<T, S> {
     public String generateDefaultUsage(S sender, String label) {
         StringBuilder usage = new StringBuilder("/");
 
-        String[] parts = label.split("\\.");
+        String[] parts = DOT_PATTERN.split(label);
         usage.append(String.join(" ", parts));
 
         List<Command<T, S>> directSubs = this.getSubcommands().stream()
