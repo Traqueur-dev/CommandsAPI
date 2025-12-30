@@ -1,6 +1,0 @@
-jdk:
-  - openjdk21
-
-build:
-  commands:
-    - ./gradlew core:publishToMavenLocal spigot:publishToMavenLocal velocity:publishToMavenLocal jda:publishToMavenLocal
