@@ -35,17 +35,6 @@ public class CommandBuilder<T, S> {
         this.command = new SimpleCommand(manager.getPlatform().getPlugin(), name);
     }
 
-    /**
-     * Create a standalone builder.
-     *
-     * @param plugin the plugin instance
-     * @param name   the command name
-     */
-    public CommandBuilder(T plugin, String name) {
-        this.manager = null;
-        this.command = new SimpleCommand(plugin, name);
-    }
-
     public CommandBuilder<T, S> description(String description) {
         this.description = description;
         return this;
@@ -152,16 +141,8 @@ public class CommandBuilder<T, S> {
      * Build and register the command.
      *
      * @return the built and registered command
-     * @throws IllegalStateException if builder was not created from a CommandManager
      */
     public Command<T, S> register() {
-        if (this.manager == null) {
-            throw new IllegalStateException(
-                "Cannot register: builder was not created from a CommandManager. " +
-                "Use manager.command(name) instead."
-            );
-        }
-
         Command<T, S> cmd = build();
         this.manager.registerCommand(cmd);
         return cmd;
