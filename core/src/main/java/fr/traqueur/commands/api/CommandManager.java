@@ -9,6 +9,7 @@ import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
 import fr.traqueur.commands.api.logging.MessageHandler;
 import fr.traqueur.commands.api.models.Command;
+import fr.traqueur.commands.api.models.CommandBuilder;
 import fr.traqueur.commands.api.models.CommandInvoker;
 import fr.traqueur.commands.api.models.CommandPlatform;
 import fr.traqueur.commands.api.models.collections.CommandTree;
@@ -300,6 +301,17 @@ public abstract class CommandManager<T, S> {
         this.platform.removeCommand(label, subcommand);
         this.commands.removeCommand(label, subcommand);
         this.completers.remove(label);
+    }
+
+    /**
+     * Create a new command builder bound to this manager.
+     * This allows for a fluent API without specifying generic types.
+     *
+     * @param name the command name
+     * @return a new command builder
+     */
+    public CommandBuilder<T, S> command(String name) {
+        return new CommandBuilder<>(this, name);
     }
 
     /**
