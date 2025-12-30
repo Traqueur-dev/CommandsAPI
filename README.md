@@ -49,11 +49,11 @@ traqueur-dev-commandsapi/
 
 ```groovy
 repositories {
-    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.groupez.dev/<repository>' } // snapshots or releases
 }
 
 dependencies {
-    implementation 'com.github.Traqueur-dev.CommandsAPI:platform-spigot:[version]' // or platform-velocity
+    implementation 'fr.traqueur.commands:platform-spigot:[version]' // or platform-velocity or platform-<your-platform>
 }
 ```
 
@@ -62,15 +62,15 @@ dependencies {
 ```xml
 <repositories>
     <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
+        <id>groupez-releases</id>
+        <url>https://repo.groupez.dev/releases</url>
     </repository>
 </repositories>
 
 <dependencies>
     <dependency>
-        <groupId>com.github.Traqueur-dev.CommandsAPI</groupId>
-        <artifactId>platform-spigot</artifactId> <!-- or platform-velocity -->
+        <groupId>fr.traqueur.commands</groupId>
+        <artifactId>platform-spigot</artifactId> <!-- or platform-velocity or platform-<your-platform> -->
         <version>[version]</version>
     </dependency>
 </dependencies>
