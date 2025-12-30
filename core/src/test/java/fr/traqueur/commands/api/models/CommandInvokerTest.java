@@ -131,6 +131,82 @@ class CommandInvokerTest {
         assertTrue(suggests.contains("sub"));
     }
 
+    // --- v5.0.0 new tests ---
+
+    @Test
+    void invoke_disabledCommand_sendsDisabledMessage() {
+        cmd.setEnabled(false);
+        when(messageHandler.getCommandDisabledMessage()).thenReturn("COMMAND_DISABLED");
+
+        boolean result = manager.getInvoker().invoke("user", "base", new String[]{});
+
+        assertTrue(result); // Command was found, message sent
+        verify(platform).sendMessage("user", "COMMAND_DISABLED");
+    }
+
+    @Test
+    void invoke_disabledCommand_doesNotExecute() {
+        AtomicBoolean executed = new AtomicBoolean(false);
+
+        DummyCommand trackedCmd = new DummyCommand() {
+            @Override
+            public void execute(String sender, Arguments arguments) {
+                executed.set(true);
+            }
+        };
+        trackedCmd.setEnabled(false);
+        manager.getCommands().addCommand("tracked", trackedCmd);
+
+        when(messageHandler.getCommandDisabledMessage()).thenReturn("DISABLED");
+
+        manager.getInvoker().invoke("user", "tracked", new String[]{});
+
+        assertFalse(executed.get());
+    }
+
+    @Test
+    void invoke_reEnabledCommand_executesNormally() {
+        AtomicBoolean executed = new AtomicBoolean(false);
+
+        DummyCommand trackedCmd = new DummyCommand() {
+            @Override
+            public void execute(String sender, Arguments arguments) {
+                executed.set(true);
+            }
+        };
+
+        // Disable then re-enable
+        trackedCmd.setEnabled(false);
+        trackedCmd.setEnabled(true);
+
+        manager.getCommands().addCommand("tracked", trackedCmd);
+
+        boolean result = manager.getInvoker().invoke("user", "tracked", new String[]{});
+
+        assertTrue(result);
+        assertTrue(executed.get());
+    }
+
+    @Test
+    void invoke_enabledByDefault_executesNormally() {
+        AtomicBoolean executed = new AtomicBoolean(false);
+
+        DummyCommand trackedCmd = new DummyCommand() {
+            @Override
+            public void execute(String sender, Arguments arguments) {
+                executed.set(true);
+            }
+        };
+
+        // Don't call setEnabled - should be enabled by default
+        manager.getCommands().addCommand("tracked", trackedCmd);
+
+        boolean result = manager.getInvoker().invoke("user", "tracked", new String[]{});
+
+        assertTrue(result);
+        assertTrue(executed.get());
+    }
+
     static class DummyCommand extends Command<String, String> {
         DummyCommand() {
             super(null, "base");

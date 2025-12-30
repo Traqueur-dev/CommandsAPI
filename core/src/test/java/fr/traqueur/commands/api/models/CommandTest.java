@@ -232,4 +232,67 @@ class CommandTest {
         assertTrue(usage.contains("<req:string>"));
         assertTrue(usage.contains("[opt:string]"));
     }
+
+    // --- v5.0.0 new tests ---
+
+    @Test
+    void setEnabled_defaultIsTrue() {
+        assertTrue(cmd.isEnabled());
+    }
+
+    @Test
+    void setEnabled_canDisable() {
+        cmd.setEnabled(false);
+        assertFalse(cmd.isEnabled());
+    }
+
+    @Test
+    void setEnabled_canReEnable() {
+        cmd.setEnabled(false);
+        assertFalse(cmd.isEnabled());
+
+        cmd.setEnabled(true);
+        assertTrue(cmd.isEnabled());
+    }
+
+    @Test
+    void getAllLabels_returnsNameOnly_whenNoAliases() {
+        List<String> labels = cmd.getAllLabels();
+
+        assertEquals(1, labels.size());
+        assertEquals("dummy", labels.get(0));
+    }
+
+    @Test
+    void getAllLabels_returnsNameAndAliases() {
+        cmd.addAlias("d1", "d2", "d3");
+
+        List<String> labels = cmd.getAllLabels();
+
+        assertEquals(4, labels.size());
+        assertEquals("dummy", labels.getFirst()); // Name first
+        assertTrue(labels.contains("d1"));
+        assertTrue(labels.contains("d2"));
+        assertTrue(labels.contains("d3"));
+    }
+
+    @Test
+    void getAliases_doesNotIncludeName() {
+        cmd.addAlias("alias1");
+
+        List<String> aliases = cmd.getAliases();
+
+        assertEquals(1, aliases.size());
+        assertFalse(aliases.contains("dummy"));
+        assertTrue(aliases.contains("alias1"));
+    }
+
+    @Test
+    void getAllLabels_nameAlwaysFirst() {
+        cmd.addAlias("aaa"); // alphabetically before "dummy"
+
+        List<String> labels = cmd.getAllLabels();
+
+        assertEquals("dummy", labels.get(0));
+    }
 }
