@@ -99,7 +99,6 @@ processor.register(new MyCommands());
 - `@CommandContainer` - Marque une classe contenant des commandes
 - `@Command(name, description, permission, usage)` - Définit une commande
 - `@Arg("name")` - Marque un paramètre d'argument
-- `@Optional` - Marque un argument comme optionnel
 - `@Infinite` - Argument infini (prend tout le reste)
 - `@Alias("alias1", "alias2")` - Définit des alias
 - `@TabComplete(command, arg)` - Définit l'autocomplétion
@@ -113,11 +112,12 @@ public void admin(CommandSender sender) {
 
 @Command(name = "admin.kick", description = "Kick a player")
 public void adminKick(CommandSender sender,
-                      @Arg("player") Player target,
-                      @Arg("reason") @Optional String reason) {
-    // Accessible via /admin kick <player> [reason]
+                      @Arg("player") Player target) {
+    // Accessible via /admin kick <player>
 }
 ```
+
+**Note:** Les arguments optionnels doivent être ajoutés via le CommandBuilder ou la classe Command directement. Les annotations ne supportent que les arguments requis.
 
 **Types de Sender Automatiques:**
 ```java
