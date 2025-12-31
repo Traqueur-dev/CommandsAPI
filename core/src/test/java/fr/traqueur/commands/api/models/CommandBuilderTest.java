@@ -1,34 +1,34 @@
 package fr.traqueur.commands.api.models;
 
-import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.requirements.Requirement;
+import fr.traqueur.commands.test.mocks.MockCommandManager;
+import fr.traqueur.commands.test.mocks.MockPlatform;
+import fr.traqueur.commands.test.mocks.MockSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class CommandBuilderTest {
 
-    private CommandManager<Object, Object> manager;
-    private FakePlatform platform;
+    private MockCommandManager manager;
+    private MockPlatform platform;
 
     @BeforeEach
     void setUp() {
-        platform = new FakePlatform();
-        manager = new CommandManager<>(platform) {
-        };
+        manager = new MockCommandManager();
+        platform = manager.getMockPlatform();
     }
 
     // --- Basic building ---
 
     @Test
     void build_simpleCommand_success() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .description("Test description")
                 .usage("/test")
                 .permission("test.use")
@@ -44,7 +44,7 @@ class CommandBuilderTest {
 
     @Test
     void build_withoutExecutor_throwsException() {
-        CommandBuilder<Object, Object> builder = manager.command("test")
+        CommandBuilder<Object, MockSender> builder = manager.command("test")
                 .description("Test");
 
         assertThrows(IllegalStateException.class, builder::build);
@@ -52,7 +52,7 @@ class CommandBuilderTest {
 
     @Test
     void build_withGameOnly_setsFlag() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .gameOnly()
                 .executor((sender, args) -> {
                 })
@@ -63,7 +63,7 @@ class CommandBuilderTest {
 
     @Test
     void build_withGameOnlyFalse_clearsFlag() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .gameOnly(false)
                 .executor((sender, args) -> {
                 })
@@ -76,7 +76,7 @@ class CommandBuilderTest {
 
     @Test
     void build_withArgs_addsArguments() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .arg("name", String.class)
                 .arg("count", Integer.class)
                 .executor((sender, args) -> {
@@ -90,7 +90,7 @@ class CommandBuilderTest {
 
     @Test
     void build_withOptionalArgs_addsOptionalArguments() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .arg("required", String.class)
                 .optionalArg("optional1", Integer.class)
                 .optionalArg("optional2", Double.class)
@@ -106,7 +106,7 @@ class CommandBuilderTest {
 
     @Test
     void build_withTabCompleter_addsCustomCompleter() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .arg("player", String.class, (sender, args) -> List.of("Alice", "Bob"))
                 .executor((sender, args) -> {
                 })
@@ -119,7 +119,7 @@ class CommandBuilderTest {
 
     @Test
     void build_withAlias_addsAlias() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .alias("t")
                 .executor((sender, args) -> {
                 })
@@ -131,7 +131,7 @@ class CommandBuilderTest {
 
     @Test
     void build_withAliases_addsMultipleAliases() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .aliases("t", "tst", "te")
                 .executor((sender, args) -> {
                 })
@@ -147,12 +147,12 @@ class CommandBuilderTest {
 
     @Test
     void build_withSubcommand_addsSubcommand() {
-        Command<Object, Object> sub = manager.command("sub")
+        Command<Object, MockSender> sub = manager.command("sub")
                 .executor((sender, args) -> {
                 })
                 .build();
 
-        Command<Object, Object> cmd = manager.command("main")
+        Command<Object, MockSender> cmd = manager.command("main")
                 .subcommand(sub)
                 .executor((sender, args) -> {
                 })
@@ -164,17 +164,17 @@ class CommandBuilderTest {
 
     @Test
     void build_withSubcommands_addsMultipleSubcommands() {
-        Command<Object, Object> sub1 = manager.command("sub1")
+        Command<Object, MockSender> sub1 = manager.command("sub1")
                 .executor((sender, args) -> {
                 })
                 .build();
 
-        Command<Object, Object> sub2 = manager.command("sub2")
+        Command<Object, MockSender> sub2 = manager.command("sub2")
                 .executor((sender, args) -> {
                 })
                 .build();
 
-        Command<Object, Object> cmd = manager.command("main")
+        Command<Object, MockSender> cmd = manager.command("main")
                 .subcommands(sub1, sub2)
                 .executor((sender, args) -> {
                 })
@@ -187,9 +187,9 @@ class CommandBuilderTest {
 
     @Test
     void build_withRequirement_addsRequirement() {
-        Requirement<Object> req = new Requirement<>() {
+        Requirement<MockSender> req = new Requirement<MockSender>() {
             @Override
-            public boolean check(Object sender) {
+            public boolean check(MockSender sender) {
                 return true;
             }
 
@@ -199,7 +199,7 @@ class CommandBuilderTest {
             }
         };
 
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .requirement(req)
                 .executor((sender, args) -> {
                 })
@@ -211,11 +211,11 @@ class CommandBuilderTest {
 
     @Test
     void build_withRequirements_addsMultipleRequirements() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .requirements(
-                        new Requirement<>() {
+                        new Requirement<MockSender>() {
                             @Override
-                            public boolean check(Object sender) {
+                            public boolean check(MockSender sender) {
                                 return true;
                             }
 
@@ -224,9 +224,9 @@ class CommandBuilderTest {
                                 return "";
                             }
                         },
-                        new Requirement<>() {
+                        new Requirement<MockSender>() {
                             @Override
-                            public boolean check(Object sender) {
+                            public boolean check(MockSender sender) {
                                 return false;
                             }
 
@@ -249,13 +249,13 @@ class CommandBuilderTest {
     void build_executorIsCalled() {
         AtomicReference<String> received = new AtomicReference<>();
 
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .executor((sender, args) -> {
                     received.set("executed");
                 })
                 .build();
 
-        cmd.execute(null, new Arguments(new fr.traqueur.commands.impl.logging.InternalLogger(Logger.getLogger("test"))));
+        cmd.execute(null, new Arguments(new fr.traqueur.commands.impl.logging.InternalLogger(java.util.logging.Logger.getLogger("test"))));
 
         assertEquals("executed", received.get());
     }
@@ -264,18 +264,18 @@ class CommandBuilderTest {
 
     @Test
     void register_registersCommandInManager() {
-        Command<Object, Object> cmd = manager.command("registered")
+        Command<Object, MockSender> cmd = manager.command("registered")
                 .executor((sender, args) -> {
                 })
                 .register();
 
-        assertTrue(platform.registeredLabels.contains("registered"));
+        assertTrue(platform.getRegisteredLabels().contains("registered"));
         assertTrue(manager.getCommands().findNode("registered", new String[]{}).isPresent());
     }
 
     @Test
     void register_returnsBuiltCommand() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .description("Test")
                 .executor((sender, args) -> {
                 })
@@ -290,12 +290,12 @@ class CommandBuilderTest {
 
     @Test
     void build_fluentChain_allOptions() {
-        Command<Object, Object> sub = manager.command("sub")
+        Command<Object, MockSender> sub = manager.command("sub")
                 .executor((sender, args) -> {
                 })
                 .build();
 
-        Command<Object, Object> cmd = manager.command("complex")
+        Command<Object, MockSender> cmd = manager.command("complex")
                 .description("Complex command")
                 .usage("/complex <arg> [opt]")
                 .permission("complex.use")
@@ -304,9 +304,9 @@ class CommandBuilderTest {
                 .arg("required", String.class)
                 .optionalArg("optional", Integer.class)
                 .subcommand(sub)
-                .requirement(new Requirement<>() {
+                .requirement(new Requirement<MockSender>() {
                     @Override
-                    public boolean check(Object sender) {
+                    public boolean check(MockSender sender) {
                         return true;
                     }
 
@@ -335,7 +335,7 @@ class CommandBuilderTest {
 
     @Test
     void build_defaultValues_areEmpty() {
-        Command<Object, Object> cmd = manager.command("minimal")
+        Command<Object, MockSender> cmd = manager.command("minimal")
                 .executor((sender, args) -> {
                 })
                 .build();
@@ -354,7 +354,7 @@ class CommandBuilderTest {
 
     @Test
     void build_commandIsEnabled_byDefault() {
-        Command<Object, Object> cmd = manager.command("test")
+        Command<Object, MockSender> cmd = manager.command("test")
                 .executor((sender, args) -> {
                 })
                 .build();
@@ -362,47 +362,4 @@ class CommandBuilderTest {
         assertTrue(cmd.isEnabled());
     }
 
-    // --- Helper classes ---
-
-    static class FakePlatform implements CommandPlatform<Object, Object> {
-        java.util.List<String> registeredLabels = new java.util.ArrayList<>();
-
-        @Override
-        public Object getPlugin() {
-            return new Object();
-        }
-
-        @Override
-        public void injectManager(CommandManager<Object, Object> cm) {
-        }
-
-        @Override
-        public Logger getLogger() {
-            return Logger.getAnonymousLogger();
-        }
-
-        @Override
-        public boolean hasPermission(Object sender, String permission) {
-            return true;
-        }
-
-        @Override
-        public boolean isPlayer(Object sender) {
-            return false;
-        }
-
-        @Override
-        public void sendMessage(Object sender, String message) {
-        }
-
-        @Override
-        public void addCommand(Command<Object, Object> command, String label) {
-            registeredLabels.add(label);
-        }
-
-        @Override
-        public void removeCommand(String label, boolean sub) {
-            registeredLabels.remove(label);
-        }
-    }
 }

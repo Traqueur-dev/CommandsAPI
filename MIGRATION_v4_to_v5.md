@@ -52,7 +52,89 @@ dependencies {
 
 ## ✨ Nouvelles Fonctionnalités
 
-### 2. ArgumentParser - Parsing Typé
+### 2. Annotations Addon - Commandes par Annotations
+
+**Nouveau module pour créer des commandes via annotations** (alternative à l'héritage et au builder).
+
+**Installation:**
+```xml
+<dependency>
+    <groupId>fr.traqueur.commands</groupId>
+    <artifactId>annotations-addon</artifactId>
+    <version>5.0.0</version>
+</dependency>
+```
+
+```groovy
+dependencies {
+    implementation 'fr.traqueur.commands:annotations-addon:5.0.0'
+}
+```
+
+**Exemple Simple:**
+```java
+@CommandContainer
+public class MyCommands {
+
+    @Command(name = "hello", description = "Say hello")
+    public void helloCommand(CommandSender sender, @Arg("player") Player target) {
+        sender.sendMessage("Hello " + target.getName());
+    }
+
+    @TabComplete(command = "hello", arg = "player")
+    public List<String> completePlayers(CommandSender sender) {
+        return Bukkit.getOnlinePlayers().stream()
+            .map(Player::getName)
+            .toList();
+    }
+}
+
+// Enregistrement
+AnnotationCommandProcessor<MyPlugin, CommandSender> processor =
+    new AnnotationCommandProcessor<>(manager);
+processor.register(new MyCommands());
+```
+
+**Fonctionnalités:**
+- `@CommandContainer` - Marque une classe contenant des commandes
+- `@Command(name, description, permission, usage)` - Définit une commande
+- `@Arg("name")` - Marque un paramètre d'argument
+- `@Optional` - Marque un argument comme optionnel
+- `@Infinite` - Argument infini (prend tout le reste)
+- `@Alias("alias1", "alias2")` - Définit des alias
+- `@TabComplete(command, arg)` - Définit l'autocomplétion
+
+**Commandes Hiérarchiques:**
+```java
+@Command(name = "admin")
+public void admin(CommandSender sender) {
+    sender.sendMessage("Admin menu");
+}
+
+@Command(name = "admin.kick", description = "Kick a player")
+public void adminKick(CommandSender sender,
+                      @Arg("player") Player target,
+                      @Arg("reason") @Optional String reason) {
+    // Accessible via /admin kick <player> [reason]
+}
+```
+
+**Types de Sender Automatiques:**
+```java
+// Accepte n'importe quel sender
+@Command(name = "broadcast")
+public void broadcast(CommandSender sender, @Arg("message") String msg) { }
+
+// Joueurs uniquement (auto gameOnly)
+@Command(name = "heal")
+public void heal(Player player) {
+    player.setHealth(20.0);
+}
+```
+
+---
+
+### 3. ArgumentParser - Parsing Typé
 
 Nouveau système de parsing avec gestion d'erreurs typée.
 
@@ -86,7 +168,7 @@ public record ParseError(Type type, String argument, String input, String messag
 
 ---
 
-### 3. CommandBuilder - API Fluent
+### 4. CommandBuilder - API Fluent
 
 **Nouvelle façon de créer des commandes sans héritage:**
 
@@ -130,7 +212,7 @@ CommandBuilder<T, S> builder = manager.command("name")
 
 ---
 
-### 4. Cache pour PlayerArgument
+### 5. Cache pour PlayerArgument
 
 **Optimisation automatique** pour les arguments Player (Spigot).
 
@@ -153,7 +235,7 @@ public class PlayerArgument implements ArgumentConverter<Player>, TabCompleter<C
 
 ---
 
-### 5. Optimisations de Performance
+### 6. Optimisations de Performance
 
 **CommandTree amélioré:**
 - Validation stricte des labels (max 64 caractères par segment, max 10 niveaux)
@@ -233,12 +315,14 @@ manager.command("hello")
 
 ## 🆕 Ce qui est Nouveau (non breaking)
 
+✅ **Annotations Addon** - Créez des commandes par annotations (@Command, @Arg, @TabComplete)
 ✅ **ArgumentParser** - System de parsing extensible
 ✅ **CommandBuilder** - Alternative fluent à l'héritage
 ✅ **Cache PlayerArgument** - Autocomplétion optimisée
 ✅ **ParseResult/ParseError** - Gestion d'erreurs typée
+✅ **SenderResolver** - Résolution automatique de types de sender
 ✅ **Updater async** - Vérification non-bloquante
-✅ **Tests** - Coverage améliorée
+✅ **Tests** - Coverage améliorée + Mocks partagés (core/test/mocks)
 
 ## 🔄 Ce qui Reste Compatible
 
@@ -248,3 +332,82 @@ manager.command("hello")
 ✅ `Requirement` system
 ✅ Converters customs
 ✅ Subcommands
+
+---
+
+## 🎯 3 Façons de Créer des Commandes en v5.0.0
+
+### 1. Héritage Classique (v4 compatible)
+```java
+public class HelloCommand extends Command<MyPlugin, CommandSender> {
+    public HelloCommand(MyPlugin plugin) {
+        super(plugin, "hello");
+        addArg("player", Player.class);
+    }
+
+    @Override
+    public void execute(CommandSender sender, Arguments args) {
+        Player target = args.get("player");
+        sender.sendMessage("Hello " + target.getName());
+    }
+}
+manager.registerCommand(new HelloCommand(plugin));
+```
+
+### 2. Builder (Nouveau v5)
+```java
+manager.command("hello")
+    .arg("player", Player.class)
+    .executor((sender, args) -> {
+        Player target = args.get("player");
+        sender.sendMessage("Hello " + target.getName());
+    })
+    .register();
+```
+
+### 3. Annotations (Nouveau v5 - Addon)
+```java
+@CommandContainer
+public class Commands {
+    @Command(name = "hello")
+    public void hello(CommandSender sender, @Arg("player") Player target) {
+        sender.sendMessage("Hello " + target.getName());
+    }
+}
+new AnnotationCommandProcessor<>(manager).register(new Commands());
+```
+
+---
+
+## 🧪 Tests - Mocks Partagés
+
+**Nouveau en v5.0.0:** Mocks réutilisables dans `core` pour faciliter les tests.
+
+```java
+import fr.traqueur.commands.test.mocks.*;
+
+// Dans vos tests
+MockCommandManager manager = new MockCommandManager();
+MockPlatform platform = manager.getMockPlatform();
+
+// Créer un mock sender
+MockSender sender = new MockSender() {
+    @Override
+    public void sendMessage(String message) { /* ... */ }
+
+    @Override
+    public boolean hasPermission(String permission) { return true; }
+};
+
+// Enregistrer et tester
+manager.command("test").executor((s, args) -> {
+    s.sendMessage("Test");
+}).register();
+
+assertTrue(platform.hasCommand("test"));
+```
+
+**Avantages:**
+- Pas besoin de Mockito pour les tests simples
+- Mocks cohérents entre modules
+- Simplifie les tests platform-agnostic

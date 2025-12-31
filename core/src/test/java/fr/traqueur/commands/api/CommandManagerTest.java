@@ -6,9 +6,11 @@ import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.ArgumentNotExistException;
 import fr.traqueur.commands.api.models.Command;
-import fr.traqueur.commands.api.models.CommandPlatform;
 import fr.traqueur.commands.api.models.collections.CommandTree;
 import fr.traqueur.commands.impl.logging.InternalLogger;
+import fr.traqueur.commands.test.mocks.MockCommandManager;
+import fr.traqueur.commands.test.mocks.MockPlatform;
+import fr.traqueur.commands.test.mocks.MockSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -23,15 +25,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class CommandManagerTest {
 
     private FakeLogger logger;
-    private CommandManager<Object, String> manager;
-    private FakePlatform platform;
+    private MockCommandManager manager;
+    private MockPlatform platform;
 
     @BeforeEach
     void setUp() {
-        platform = new FakePlatform();
-        manager = new CommandManager<>(platform) {
-        };
-        platform.injectManager(manager);
+        manager = new MockCommandManager();
+        platform = manager.getMockPlatform();
         logger = new FakeLogger();
         manager.setLogger(logger);
     }
@@ -39,9 +39,9 @@ class CommandManagerTest {
     // ----- TESTS -----
     @Test
     void testInfiniteArgsParsing() throws Exception {
-        Command<Object, String> cmd = new Command<>(null, "test") {
+        Command<Object, MockSender> cmd = new Command<>(null, "test") {
             @Override
-            public void execute(String sender, Arguments arguments) {
+            public void execute(MockSender sender, Arguments arguments) {
             }
         };
         cmd.setManager(manager);
@@ -57,7 +57,7 @@ class CommandManagerTest {
 
     @Test
     void testInfiniteArgsStopsFurtherParsing() throws Exception {
-        Command<Object, String> cmd = new DummyCommand();
+        Command<Object, MockSender> cmd = new DummyCommand();
         cmd.setManager(manager);
         cmd.addArgs("first", String.class);
         cmd.addArgs("rest", Infinite.class);
@@ -71,7 +71,7 @@ class CommandManagerTest {
 
     @Test
     void testNoExtraAfterInfinite() throws Exception {
-        Command<Object, String> cmd = new DummyCommand();
+        Command<Object, MockSender> cmd = new DummyCommand();
         cmd.setManager(manager);
         cmd.addArg("x", Infinite.class);
         cmd.addArg("y", String.class);
@@ -84,7 +84,7 @@ class CommandManagerTest {
 
     @Test
     void testOptionalArgs_onlyDefault() throws Exception {
-        Command<Object, String> cmd = new DummyCommand();
+        Command<Object, MockSender> cmd = new DummyCommand();
         cmd.addArgs("req", String.class);
         cmd.addOptionalArgs("opt1", Integer.class);
         cmd.addOptionalArgs("opt2", Double.class);
@@ -101,7 +101,7 @@ class CommandManagerTest {
 
     @Test
     void testBasicArgParsing_correctTypes() throws Exception {
-        Command<Object, String> cmd = new DummyCommand();
+        Command<Object, MockSender> cmd = new DummyCommand();
         cmd.addArgs("num", Integer.class);
         cmd.addOptionalArgs("opt", String.class);
 
@@ -117,13 +117,13 @@ class CommandManagerTest {
 
     @Test
     void addArgs_withOddArgs_shouldThrow() {
-        Command<Object, String> cmd = new DummyCommand();
+        Command<Object, MockSender> cmd = new DummyCommand();
         assertThrows(IllegalArgumentException.class, () -> cmd.addArgs("bad"));
     }
 
     @Test
     void testArgumentIncorrectException_onBadType() {
-        Command<Object, String> cmd = new DummyCommand();
+        Command<Object, MockSender> cmd = new DummyCommand();
         cmd.addArgs("n", Integer.class);
         String[] input = {"notAnInt"};
         assertThrows(ArgumentIncorrectException.class, () -> manager.parse(cmd, input));
@@ -131,12 +131,12 @@ class CommandManagerTest {
 
     @Test
     void testCommandRegistration_entriesInTree() {
-        Command<Object, String> cmd = new DummyCommand("main");
+        Command<Object, MockSender> cmd = new DummyCommand("main");
         cmd.addAlias("m");
         cmd.addSubCommand(new DummyCommand("sub"));
 
         manager.registerCommand(cmd);
-        CommandTree<Object, String> tree = manager.getCommands();
+        CommandTree<Object, MockSender> tree = manager.getCommands();
         assertTrue(tree.getRoot().getChildren().containsKey("main"));
         assertTrue(tree.getRoot().getChildren().containsKey("m"));
         assertTrue(tree.findNode("main", new String[]{"sub"}).isPresent());
@@ -150,7 +150,7 @@ class CommandManagerTest {
         main.addSubCommand(sub);
 
         manager.registerCommand(main);
-        List<String> added = platform.added;
+        List<String> added = platform.getRegisteredLabels();
         assertTrue(added.contains("dummy"));
         assertTrue(added.contains("a1"));
         assertTrue(added.contains("a2"));
@@ -159,19 +159,19 @@ class CommandManagerTest {
 
     @Test
     void addCommand_shouldRegisterCompletersForArgs() {
-        Command<Object, String> cmd = new DummyCommand();
+        Command<Object, MockSender> cmd = new DummyCommand();
         cmd.addArgs("intArg", Integer.class);
         cmd.addOptionalArgs("optArg", Double.class);
         manager.registerCommand(cmd);
 
-        Map<String, Map<Integer, TabCompleter<String>>> comps = manager.getCompleters();
+        Map<String, Map<Integer, TabCompleter<MockSender>>> comps = manager.getCompleters();
         assertTrue(comps.containsKey("dummy"));
-        Map<Integer, TabCompleter<String>> map = comps.get("dummy");
+        Map<Integer, TabCompleter<MockSender>> map = comps.get("dummy");
         assertTrue(map.containsKey(1));
         assertTrue(map.containsKey(2));
     }
 
-    static class DummyCommand extends Command<Object, String> {
+    static class DummyCommand extends Command<Object, MockSender> {
         DummyCommand() {
             super(null, "dummy");
         }
@@ -181,48 +181,7 @@ class CommandManagerTest {
         }
 
         @Override
-        public void execute(String sender, Arguments args) {
-        }
-    }
-
-    static class FakePlatform implements CommandPlatform<Object, String> {
-        List<String> added = new ArrayList<>();
-
-        @Override
-        public Object getPlugin() {
-            return null;
-        }
-
-        @Override
-        public void injectManager(CommandManager<Object, String> cm) {
-        }
-
-        @Override
-        public java.util.logging.Logger getLogger() {
-            return java.util.logging.Logger.getAnonymousLogger();
-        }
-
-        @Override
-        public boolean hasPermission(String sender, String permission) {
-            return true;
-        }
-
-        @Override
-        public boolean isPlayer(String sender) {
-            return false;
-        }
-
-        @Override
-        public void sendMessage(String sender, String message) {
-        }
-
-        @Override
-        public void addCommand(Command<Object, String> command, String label) {
-            added.add(label);
-        }
-
-        @Override
-        public void removeCommand(String label, boolean sub) {
+        public void execute(MockSender sender, Arguments args) {
         }
     }
 

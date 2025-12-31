@@ -2,7 +2,7 @@ package fr.traqueur.commands.annotations.commands;
 
 import fr.traqueur.commands.annotations.Command;
 import fr.traqueur.commands.annotations.CommandContainer;
-import fr.traqueur.commands.annotations.MockSender;
+import fr.traqueur.commands.test.mocks.*;
 
 import java.util.ArrayList;
 import java.util.List;

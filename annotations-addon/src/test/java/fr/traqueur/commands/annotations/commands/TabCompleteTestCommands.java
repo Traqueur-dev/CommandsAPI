@@ -1,6 +1,7 @@
 package fr.traqueur.commands.annotations.commands;
 
 import fr.traqueur.commands.annotations.*;
+import fr.traqueur.commands.test.mocks.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;

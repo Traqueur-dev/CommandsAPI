@@ -1,7 +1,8 @@
 package fr.traqueur.commands.api.models;
 
-import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.arguments.Arguments;
+import fr.traqueur.commands.test.mocks.MockCommandManager;
+import fr.traqueur.commands.test.mocks.MockSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,48 +15,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class CommandTest {
 
     private DummyCommand cmd;
+    private MockCommandManager manager;
 
     @BeforeEach
     void setUp() {
-        CommandPlatform<String, Object> platform = new CommandPlatform<>() {
-            @Override
-            public String getPlugin() {
-                return null;
-            }
-
-            @Override
-            public void injectManager(CommandManager<String, Object> commandManager) {
-            }
-
-            @Override
-            public java.util.logging.Logger getLogger() {
-                return java.util.logging.Logger.getAnonymousLogger();
-            }
-
-            @Override
-            public boolean hasPermission(Object sender, String permission) {
-                return true;
-            }
-
-            @Override
-            public boolean isPlayer(Object sender) {
-                return false;
-            }
-
-            @Override
-            public void sendMessage(Object sender, String message) {
-            }
-
-            @Override
-            public void addCommand(Command<String, Object> command, String label) {
-            }
-
-            @Override
-            public void removeCommand(String label, boolean subcommand) {
-            }
-        };
-        CommandManager<String, Object> manager = new CommandManager<>(platform) {
-        };
+        manager = new MockCommandManager();
         cmd = new DummyCommand();
         cmd.setManager(manager);
     }
@@ -96,7 +60,7 @@ class CommandTest {
     void testAddSubCommandAndIsSubcommandFlag() {
         DummyCommand sub = new DummyCommand();
         cmd.addSubCommand(sub);
-        List<Command<String, Object>> subs = cmd.getSubcommands();
+        List<Command<Object, MockSender>> subs = cmd.getSubcommands();
         assertEquals(1, subs.size());
         assertTrue(subs.contains(sub));
         assertTrue(sub.isSubCommand());
@@ -104,96 +68,16 @@ class CommandTest {
 
     @Test
     void testRegisterDelegatesToManager() {
-        AtomicBoolean called = new AtomicBoolean(false);
-        CommandManager<String, Object> fakeManager = new CommandManager<>(new CommandPlatform<String, Object>() {
-            @Override
-            public String getPlugin() {
-                return null;
-            }
-
-            @Override
-            public void injectManager(CommandManager<String, Object> commandManager) {
-            }
-
-            @Override
-            public java.util.logging.Logger getLogger() {
-                return java.util.logging.Logger.getAnonymousLogger();
-            }
-
-            @Override
-            public boolean hasPermission(Object sender, String permission) {
-                return true;
-            }
-
-            @Override
-            public boolean isPlayer(Object sender) {
-                return false;
-            }
-
-            @Override
-            public void sendMessage(Object sender, String message) {
-            }
-
-            @Override
-            public void addCommand(Command<String, Object> command, String label) {
-                called.set(true);
-            }
-
-            @Override
-            public void removeCommand(String label, boolean subcommand) {
-            }
-        }) {
-        };
-        cmd.setManager(fakeManager);
-        fakeManager.registerCommand(cmd);
-        assertTrue(called.get());
+        manager.registerCommand(cmd);
+        assertTrue(manager.getMockPlatform().hasCommand("dummy"));
     }
 
     @Test
     void testUnregisterDelegatesToManager() {
-        AtomicBoolean called = new AtomicBoolean(false);
-        CommandManager<String, Object> fakeManager = new CommandManager<String, Object>(new CommandPlatform<String, Object>() {
-            @Override
-            public String getPlugin() {
-                return null;
-            }
-
-            @Override
-            public void injectManager(CommandManager<String, Object> commandManager) {
-            }
-
-            @Override
-            public java.util.logging.Logger getLogger() {
-                return java.util.logging.Logger.getAnonymousLogger();
-            }
-
-            @Override
-            public boolean hasPermission(Object sender, String permission) {
-                return true;
-            }
-
-            @Override
-            public boolean isPlayer(Object sender) {
-                return false;
-            }
-
-            @Override
-            public void sendMessage(Object sender, String message) {
-            }
-
-            @Override
-            public void addCommand(Command<String, Object> command, String label) {
-            }
-
-            @Override
-            public void removeCommand(String label, boolean subcommand) {
-                called.set(true);
-            }
-        }) {
-        };
-        cmd.setManager(fakeManager);
+        manager.registerCommand(cmd);
+        assertTrue(manager.getMockPlatform().hasCommand("dummy"));
         cmd.unregister();
-        assertTrue(called.get());
+        assertFalse(manager.getMockPlatform().hasCommand("dummy"));
     }
 
     @Test
@@ -311,17 +195,17 @@ class CommandTest {
         assertEquals("dummy", labels.get(0));
     }
 
-    private static class DummyCommand extends Command<String, Object> {
+    private static class DummyCommand extends Command<Object, MockSender> {
         DummyCommand(String name) {
-            super("plugin", name);
+            super(null, name);
         }
 
         DummyCommand() {
-            super("plugin", "dummy");
+            super(null, "dummy");
         }
 
         @Override
-        public void execute(Object sender, Arguments arguments) {
+        public void execute(MockSender sender, Arguments arguments) {
             // no-op
         }
     }

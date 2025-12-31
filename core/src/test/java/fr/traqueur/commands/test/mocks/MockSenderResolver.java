@@ -1,7 +1,10 @@
-package fr.traqueur.commands.annotations;
+package fr.traqueur.commands.test.mocks;
 
 import fr.traqueur.commands.api.resolver.SenderResolver;
 
+/**
+ * Mock sender resolver for testing purposes.
+ */
 public class MockSenderResolver implements SenderResolver<MockSender> {
 
     @Override

@@ -1,4 +1,4 @@
-package fr.traqueur.commands.annotations;
+package fr.traqueur.commands.test.mocks;
 
 import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.models.Command;
@@ -8,6 +8,10 @@ import fr.traqueur.commands.api.resolver.SenderResolver;
 import java.util.*;
 import java.util.logging.Logger;
 
+/**
+ * Mock platform for testing purposes.
+ * Provides a minimal implementation for testing command registration and execution.
+ */
 public class MockPlatform implements CommandPlatform<Object, MockSender> {
 
     private final Object plugin = new Object();
@@ -15,7 +19,7 @@ public class MockPlatform implements CommandPlatform<Object, MockSender> {
     private final MockSenderResolver senderResolver = new MockSenderResolver();
     private final Map<String, Command<Object, MockSender>> registeredCommands = new HashMap<>();
     private final List<String> registeredLabels = new ArrayList<>();
-    
+
     private CommandManager<Object, MockSender> commandManager;
 
     @Override

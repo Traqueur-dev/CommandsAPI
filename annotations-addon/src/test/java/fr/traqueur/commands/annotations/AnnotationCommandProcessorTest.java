@@ -3,6 +3,7 @@ package fr.traqueur.commands.annotations;
 import fr.traqueur.commands.annotations.commands.*;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.models.Command;
+import fr.traqueur.commands.test.mocks.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
