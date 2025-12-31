@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines aliases for a {@link Command} or {@link Subcommand}.
+ * Defines aliases for a {@link Command}.
  * 
  * <p>Example:</p>
  * <pre>{@code

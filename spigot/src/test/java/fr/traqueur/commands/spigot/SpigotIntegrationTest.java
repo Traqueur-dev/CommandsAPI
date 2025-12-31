@@ -58,6 +58,29 @@ class SpigotIntegrationTest {
             @Override
             public void removeCommand(String label, boolean subcommand) {
             }
+
+            @Override
+            public fr.traqueur.commands.api.resolver.SenderResolver<CommandSender> getSenderResolver() {
+                return new fr.traqueur.commands.api.resolver.SenderResolver<CommandSender>() {
+                    @Override
+                    public boolean canResolve(Class<?> type) {
+                        return CommandSender.class.isAssignableFrom(type) || Player.class.isAssignableFrom(type);
+                    }
+
+                    @Override
+                    public Object resolve(CommandSender sender, Class<?> type) {
+                        if (type.isInstance(sender)) {
+                            return type.cast(sender);
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public boolean isGameOnly(Class<?> type) {
+                        return Player.class.isAssignableFrom(type);
+                    }
+                };
+            }
         }) {
         };
         manager.registerConverter(Player.class, new PlayerArgument());

@@ -200,7 +200,7 @@ class AnnotationCommandProcessorTest {
             processor.register(commands);
 
             Command<Object, MockSender> heal = platform.getCommand("heal");
-            
+
             assertEquals(0, heal.getArgs().size());
             assertEquals(1, heal.getOptionalArgs().size());
             assertEquals("target", heal.getOptionalArgs().get(0).name());
@@ -213,12 +213,12 @@ class AnnotationCommandProcessorTest {
             processor.register(commands);
 
             Command<Object, MockSender> give = platform.getCommand("give");
-            
+
             assertEquals(1, give.getArgs().size());
-            assertEquals("item", give.getArgs().get(0).name());
-            
+            assertEquals("item", give.getArgs().getFirst().name());
+
             assertEquals(1, give.getOptionalArgs().size());
-            assertEquals("amount", give.getOptionalArgs().get(0).name());
+            assertEquals("amount", give.getOptionalArgs().getFirst().name());
         }
     }
 

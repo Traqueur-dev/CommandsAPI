@@ -9,6 +9,8 @@ import fr.traqueur.commands.api.resolver.SenderResolver;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -72,7 +74,6 @@ public class AnnotationCommandProcessor<T, S> {
         }
 
         // Third pass: build ALL commands first
-        // Key: fullPath, Value: command
         Map<String, Command<T, S>> builtCommands = new LinkedHashMap<>();
         Set<String> rootCommands = new LinkedHashSet<>();
 
@@ -80,9 +81,6 @@ public class AnnotationCommandProcessor<T, S> {
             String parentPath = getParentPath(info.name);
             boolean hasParentInBatch = parentPath != null && allPaths.contains(parentPath);
 
-            // Build command with appropriate name
-            // - If parent exists in batch: use short name (will be added via addSubCommand)
-            // - If no parent in batch (orphan): use full path (core will create parents)
             Command<T, S> command = buildCommand(info.handler, info.method, info.name, hasParentInBatch);
             builtCommands.put(info.name, command);
         }
@@ -92,17 +90,15 @@ public class AnnotationCommandProcessor<T, S> {
             String parentPath = getParentPath(info.name);
 
             if (parentPath != null && allPaths.contains(parentPath)) {
-                // Parent exists in our batch -> add as subcommand
                 Command<T, S> parent = builtCommands.get(parentPath);
                 Command<T, S> child = builtCommands.get(info.name);
                 parent.addSubCommand(child);
             } else {
-                // No parent in batch -> this is a root command (or orphan)
                 rootCommands.add(info.name);
             }
         }
 
-        // Fifth pass: register only root commands (manager handles subcommands)
+        // Fifth pass: register only root commands
         for (String rootPath : rootCommands) {
             Command<T, S> rootCommand = builtCommands.get(rootPath);
             manager.registerCommand(rootCommand);
@@ -129,8 +125,6 @@ public class AnnotationCommandProcessor<T, S> {
         fr.traqueur.commands.annotations.Command annotation =
                 method.getAnnotation(fr.traqueur.commands.annotations.Command.class);
 
-        // If parent exists in batch: use short name (will be added via addSubCommand)
-        // If no parent (orphan/root): use full path (core will create parent hierarchy)
         String commandName = hasParentInBatch ? getCommandName(fullPath) : fullPath;
 
         CommandBuilder<T, S> builder = manager.command(commandName)
@@ -146,8 +140,15 @@ public class AnnotationCommandProcessor<T, S> {
         processParameters(builder, method, fullPath);
 
         Parameter[] params = method.getParameters();
-        if (params.length > 0 && senderResolver.isGameOnly(params[0].getType())) {
-            builder.gameOnly();
+        if (params.length > 0) {
+            Class<?> senderType = params[0].getType();
+            // Handle Optional<Player> as sender (extract inner type)
+            if (senderType == Optional.class) {
+                senderType = extractOptionalType(params[0]);
+            }
+            if (senderResolver.isGameOnly(senderType)) {
+                builder.gameOnly();
+            }
         }
 
         method.setAccessible(true);
@@ -166,14 +167,24 @@ public class AnnotationCommandProcessor<T, S> {
 
     private void processParameters(CommandBuilder<T, S> builder, Method method, String commandPath) {
         Parameter[] params = method.getParameters();
+        Type[] genericTypes = method.getGenericParameterTypes();
 
         for (int i = 0; i < params.length; i++) {
             Parameter param = params[i];
+            Class<?> paramType = param.getType();
 
-            if (i == 0 && senderResolver.canResolve(param.getType())) {
-                continue;
+            // First parameter is sender (skip it for args)
+            if (i == 0) {
+                Class<?> senderType = paramType;
+                if (paramType == Optional.class) {
+                    senderType = extractOptionalType(param);
+                }
+                if (senderResolver.canResolve(senderType)) {
+                    continue;
+                }
             }
 
+            // Must have @Arg annotation
             Arg argAnnotation = param.getAnnotation(Arg.class);
             if (argAnnotation == null) {
                 throw new IllegalArgumentException(
@@ -183,16 +194,26 @@ public class AnnotationCommandProcessor<T, S> {
             }
 
             String argName = argAnnotation.value();
-            Class<?> argType = param.getType();
-            boolean isOptional = param.isAnnotationPresent(Optional.class);
-            boolean isInfinite = param.isAnnotationPresent(fr.traqueur.commands.annotations.Infinite.class);
+            boolean isOptional = paramType == Optional.class;
+            boolean isInfinite = param.isAnnotationPresent(Infinite.class);
 
+            // Determine the actual argument type
+            Class<?> argType;
+            if (isOptional) {
+                argType = extractOptionalType(param);
+            } else {
+                argType = paramType;
+            }
+
+            // If @Infinite, use Infinite.class as the type
             if (isInfinite) {
                 argType = fr.traqueur.commands.api.arguments.Infinite.class;
             }
 
+            // Get tab completer if exists
             TabCompleter<S> completer = getTabCompleter(commandPath, argName);
 
+            // Add argument to builder
             if (isOptional) {
                 if (completer != null) {
                     builder.optionalArg(argName, argType, completer);
@@ -207,6 +228,22 @@ public class AnnotationCommandProcessor<T, S> {
                 }
             }
         }
+    }
+
+    /**
+     * Extract the inner type from Optional<T>.
+     */
+    private Class<?> extractOptionalType(Parameter param) {
+        Type genericType = param.getParameterizedType();
+        if (genericType instanceof ParameterizedType parameterizedType) {
+            Type[] typeArgs = parameterizedType.getActualTypeArguments();
+            if (typeArgs.length > 0 && typeArgs[0] instanceof Class<?> innerClass) {
+                return innerClass;
+            }
+        }
+        throw new IllegalArgumentException(
+                "Cannot extract type from Optional parameter: " + param.getName()
+        );
     }
 
     @SuppressWarnings("unchecked")
@@ -248,18 +285,26 @@ public class AnnotationCommandProcessor<T, S> {
 
             for (int i = 0; i < params.length; i++) {
                 Parameter param = params[i];
+                Class<?> paramType = param.getType();
+                boolean isOptional = paramType == Optional.class;
 
-                if (i == 0 && senderResolver.canResolve(param.getType())) {
-                    invokeArgs[i] = senderResolver.resolve(sender, param.getType());
-                    continue;
+                // First param: sender
+                if (i == 0) {
+                    Class<?> senderType = isOptional ? extractOptionalType(param) : paramType;
+                    if (senderResolver.canResolve(senderType)) {
+                        Object resolved = senderResolver.resolve(sender, senderType);
+                        invokeArgs[i] = isOptional ? Optional.ofNullable(resolved) : resolved;
+                        continue;
+                    }
                 }
 
+                // Other params: @Arg
                 Arg argAnnotation = param.getAnnotation(Arg.class);
                 if (argAnnotation != null) {
                     String argName = argAnnotation.value();
 
-                    if (param.isAnnotationPresent(Optional.class)) {
-                        invokeArgs[i] = args.getOptional(argName).orElse(null);
+                    if (isOptional) {
+                        invokeArgs[i] = args.getOptional(argName);
                     } else {
                         invokeArgs[i] = args.get(argName);
                     }
