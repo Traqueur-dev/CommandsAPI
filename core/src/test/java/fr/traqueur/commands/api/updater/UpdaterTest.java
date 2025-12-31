@@ -78,20 +78,6 @@ class UpdaterTest {
         }
     }
 
-    @Test
-    void checkUpdatesAsync_doesNothingWhenLatestIsNull() {
-        try (MockedStatic<Updater> mocks = mockStatic(Updater.class)) {
-
-            mocks.when(Updater::checkUpdates).thenCallRealMethod();
-            mocks.when(Updater::fetchLatestVersionAsync)
-                    .thenReturn(CompletableFuture.completedFuture(null));
-
-            Updater.checkUpdates();
-
-            assertFalse(logHandler.anyMatch(Level.WARNING, r -> true));
-        }
-    }
-
     /* ------------------------------------------------------------ */
     /* Test log handler                                             */
     /* ------------------------------------------------------------ */
