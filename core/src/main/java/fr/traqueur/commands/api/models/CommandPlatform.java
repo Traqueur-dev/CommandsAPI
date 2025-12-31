@@ -1,6 +1,7 @@
 package fr.traqueur.commands.api.models;
 
 import fr.traqueur.commands.api.CommandManager;
+import fr.traqueur.commands.api.resolver.SenderResolver;
 
 import java.util.logging.Logger;
 
@@ -74,4 +75,14 @@ public interface CommandPlatform<T, S> {
      * @param subcommand true if the command is a subcommand, false otherwise.
      */
     void removeCommand(String label, boolean subcommand);
+
+    /**
+     * Gets the sender resolver for this platform.
+     * <p>Used by the annotations-addon to resolve method parameter types.</p>
+     *
+     * @return The sender resolver for this platform.
+     * @since 5.0.0
+     */
+    SenderResolver<S> getSenderResolver();
+
 }

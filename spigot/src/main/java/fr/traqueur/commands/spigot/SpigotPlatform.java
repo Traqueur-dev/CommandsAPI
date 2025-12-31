@@ -4,6 +4,7 @@ import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.exceptions.CommandRegistrationException;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandPlatform;
+import fr.traqueur.commands.api.resolver.SenderResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandMap;
@@ -175,5 +176,10 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
         if (subcommand && this.commandMap.getCommand(label) != null) {
             Objects.requireNonNull(this.commandMap.getCommand(label)).unregister(commandMap);
         }
+    }
+
+    @Override
+    public SenderResolver<CommandSender> getSenderResolver() {
+        return new SpigotSenderResolver();
     }
 }

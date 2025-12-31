@@ -69,7 +69,7 @@ subprojects {
         testLogging {
             showStandardStreams = true
             events("passed", "skipped", "failed", "standardOut", "standardError")
-            exceptionFormat "full"
+            exceptionFormat = "full"
         }
     }
 
@@ -101,6 +101,8 @@ subprojects {
 
                 if (project.name == 'core') {
                     artifactId = 'core'
+                } else if (project.name == 'annotations-addon') {
+                    artifactId = 'annotations-addon'
                 } else {
                     def platform = project.name.replaceFirst(/^platform-/, '')
                     artifactId = "platform-${platform}"

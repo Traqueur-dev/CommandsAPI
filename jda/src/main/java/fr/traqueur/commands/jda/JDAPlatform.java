@@ -4,6 +4,7 @@ import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandPlatform;
+import fr.traqueur.commands.api.resolver.SenderResolver;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -186,6 +187,11 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
         if (!subcommand && parts.length == 1) {
             slashCommands.remove(rootName);
         }
+    }
+
+    @Override
+    public SenderResolver<SlashCommandInteractionEvent> getSenderResolver() {
+        return new JDASenderResolver();
     }
 
     /**

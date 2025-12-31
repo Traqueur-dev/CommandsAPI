@@ -5,6 +5,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandPlatform;
+import fr.traqueur.commands.api.resolver.SenderResolver;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -152,6 +153,11 @@ public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
         } else {
             this.server.getCommandManager().unregister(label);
         }
+    }
+
+    @Override
+    public SenderResolver<CommandSource> getSenderResolver() {
+        return new VelocitySenderResolver();
     }
 
     /**
