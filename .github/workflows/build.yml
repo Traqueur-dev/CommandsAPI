@@ -20,6 +20,7 @@ jobs:
     name: Build and Publish CommandsAPI
     uses: GroupeZ-dev/actions/.github/workflows/build.yml@main
     with:
+      default-branch: "master"
       project-name: "CommandsAPI"
       publish: true
       publish-on-discord: false
