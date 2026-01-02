@@ -1,7 +1,7 @@
 package fr.traqueur.commands.jda.requirements;
 
 import fr.traqueur.commands.api.requirements.Requirement;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import fr.traqueur.commands.jda.JDAInteractionContext;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,7 +9,7 @@ import java.util.Collection;
 /**
  * Requirement that checks if the command is executed in a specific guild.
  */
-public class GuildRequirement implements Requirement<SlashCommandInteractionEvent> {
+public class GuildRequirement implements Requirement<JDAInteractionContext> {
 
     private final Collection<Long> guildIds;
     private final String errorMessage;
@@ -36,11 +36,11 @@ public class GuildRequirement implements Requirement<SlashCommandInteractionEven
     }
 
     @Override
-    public boolean check(SlashCommandInteractionEvent event) {
-        if (event.getGuild() == null) {
+    public boolean check(JDAInteractionContext context) {
+        if (context.getGuild() == null) {
             return false;
         }
-        return guildIds.contains(event.getGuild().getIdLong());
+        return guildIds.contains(context.getGuild().getIdLong());
     }
 
     @Override

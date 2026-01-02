@@ -4,7 +4,9 @@ import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.collections.CommandTree;
 import org.openjdk.jmh.annotations.*;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -16,10 +18,10 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class CommandLookupBenchmark {
 
-    @Param({ "1000", "10000", "50000" })
+    @Param({"1000", "10000", "50000"})
     public int N;
 
-    @Param({ "1", "2", "3" })
+    @Param({"1", "2", "3"})
     public int maxDepth;
 
     private Map<String, DummyCommand> flatMap;
@@ -29,7 +31,7 @@ public class CommandLookupBenchmark {
     @Setup(Level.Trial)
     public void setup() {
         flatMap = new HashMap<>(N);
-        tree    = new CommandTree<>();
+        tree = new CommandTree<>();
 
         rawLabels = new String[N];
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
@@ -74,7 +76,12 @@ public class CommandLookupBenchmark {
     }
 
     public static class DummyCommand extends Command<DummyCommand, Object> {
-        public DummyCommand(String name) { super(null, name); }
-        @Override public void execute(Object s, fr.traqueur.commands.api.arguments.Arguments a) {}
+        public DummyCommand(String name) {
+            super(null, name);
+        }
+
+        @Override
+        public void execute(Object s, fr.traqueur.commands.api.arguments.Arguments a) {
+        }
     }
 }

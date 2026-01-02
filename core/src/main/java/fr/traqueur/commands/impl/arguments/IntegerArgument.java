@@ -11,7 +11,8 @@ public class IntegerArgument implements ArgumentConverter<Integer> {
     /**
      * Default constructor.
      */
-    public IntegerArgument() {}
+    public IntegerArgument() {
+    }
 
     /**
      * Converts a string to an integer.

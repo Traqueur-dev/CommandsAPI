@@ -1,10 +1,12 @@
 package fr.traqueur.commands.api.models;
 
 import fr.traqueur.commands.api.CommandManager;
+import fr.traqueur.commands.api.resolver.SenderResolver;
 
 import java.util.logging.Logger;
 
-/** * Represents a command platform.
+/**
+ * Represents a command platform.
  * <p> This interface is used to manage commands in a specific platform. </p>
  *
  * @param <T> The type of the plugin.
@@ -36,7 +38,7 @@ public interface CommandPlatform<T, S> {
     /**
      * Checks if the sender has a specific permission.
      *
-     * @param sender The sender to check.
+     * @param sender     The sender to check.
      * @param permission The permission to check.
      * @return true if the sender has the permission, false otherwise.
      */
@@ -53,7 +55,7 @@ public interface CommandPlatform<T, S> {
     /**
      * Sends a message to the sender.
      *
-     * @param sender The sender to send the message to.
+     * @param sender  The sender to send the message to.
      * @param message The message to send.
      */
     void sendMessage(S sender, String message);
@@ -62,15 +64,25 @@ public interface CommandPlatform<T, S> {
      * Adds a command to the platform.
      *
      * @param command The command to add.
-     * @param label The label of the command.
+     * @param label   The label of the command.
      */
     void addCommand(Command<T, S> command, String label);
 
     /**
      * Removes a command from the platform.
      *
-     * @param label The label of the command to remove.
+     * @param label      The label of the command to remove.
      * @param subcommand true if the command is a subcommand, false otherwise.
      */
     void removeCommand(String label, boolean subcommand);
+
+    /**
+     * Gets the sender resolver for this platform.
+     * <p>Used by the annotations-addon to resolve method parameter types.</p>
+     *
+     * @return The sender resolver for this platform.
+     * @since 5.0.0
+     */
+    SenderResolver<S> getSenderResolver();
+
 }

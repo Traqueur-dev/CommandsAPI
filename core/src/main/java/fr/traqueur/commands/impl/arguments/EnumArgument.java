@@ -16,18 +16,6 @@ import java.util.stream.Collectors;
 public class EnumArgument<T extends Enum<T>, S> implements ArgumentConverter<T>, TabCompleter<S> {
 
     /**
-     * Creates a new EnumArgument instance for the specified enum class.
-     *
-     * @param enumClass The class of the enum
-     * @param <E> The type of the enum
-     * @param <S> The type of the sender (e.g., player, console)
-     * @return A new instance of EnumArgument
-     */
-    public static <E extends Enum<E>, S> EnumArgument<E, S> of(Class<E> enumClass) {
-        return new EnumArgument<>(enumClass);
-    }
-
-    /**
      * The class of the enum type this argument converter handles.
      */
     private final Class<T> clazz;
@@ -39,6 +27,18 @@ public class EnumArgument<T extends Enum<T>, S> implements ArgumentConverter<T>,
      */
     public EnumArgument(Class<T> clazz) {
         this.clazz = clazz;
+    }
+
+    /**
+     * Creates a new EnumArgument instance for the specified enum class.
+     *
+     * @param enumClass The class of the enum
+     * @param <E>       The type of the enum
+     * @param <S>       The type of the sender (e.g., player, console)
+     * @return A new instance of EnumArgument
+     */
+    public static <E extends Enum<E>, S> EnumArgument<E, S> of(Class<E> enumClass) {
+        return new EnumArgument<>(enumClass);
     }
 
     /**

@@ -9,13 +9,13 @@ public class Sub2TestCommand extends Command<VelocityTestPlugin> {
 
     public Sub2TestCommand(VelocityTestPlugin plugin) {
         super(plugin, "sub2");
-        this.addArgs("test");
+        this.addArgs("test", Integer.class);
         this.addAlias("sub2.inner");
     }
 
     @Override
     public void execute(CommandSource sender, Arguments args) {
-        args.getAsInt("test").ifPresent(test -> sender.sendMessage(Component.text("Test: " + test)));
+        args.<Integer>getOptional("test").ifPresent(test -> sender.sendMessage(Component.text("Test: " + test)));
         sender.sendMessage(Component.text(this.getUsage()));
     }
 }

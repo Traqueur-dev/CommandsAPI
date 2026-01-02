@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -34,60 +35,71 @@ class UpdaterTest {
 
     @Test
     void getVersion_readsFromCommandsProperties() {
-        // commands.properties in test/resources contains 'version=0.0.1'
         String version = Updater.getVersion();
         assertNotNull(version);
         assertEquals("1.0.0", version);
     }
 
     @Test
-    void testIsUpToDate_withStaticMock_equalVersions() {
+    void checkUpdatesAsync_logsWarningWhenNotUpToDate() {
         try (MockedStatic<Updater> mocks = mockStatic(Updater.class)) {
-            // stub real method to call through
-            mocks.when(Updater::isUpToDate).thenCallRealMethod();
-            mocks.when(Updater::getVersion).thenReturn("1.0.0");
-            mocks.when(Updater::fetchLatestVersion).thenReturn("1.0.0");
 
-            assertTrue(Updater.isUpToDate());
-            mocks.verify(Updater::getVersion);
-            mocks.verify(Updater::fetchLatestVersion);
-        }
-    }
-
-    @Test
-    void testIsUpToDate_withStaticMock_differentVersions() {
-        try (MockedStatic<Updater> mocks = mockStatic(Updater.class)) {
-            mocks.when(Updater::isUpToDate).thenCallRealMethod();
-            mocks.when(Updater::getVersion).thenReturn("1.0.0");
-            mocks.when(Updater::fetchLatestVersion).thenReturn("2.0.0");
-
-            assertFalse(Updater.isUpToDate());
-        }
-    }
-
-    @Test
-    void testCheckUpdates_logsWarningWhenNotUpToDate() {
-        try (MockedStatic<Updater> mocks = mockStatic(Updater.class)) {
             mocks.when(Updater::checkUpdates).thenCallRealMethod();
             mocks.when(Updater::getVersion).thenReturn("1.0.0");
-            mocks.when(Updater::fetchLatestVersion).thenReturn("2.0.0");
+            mocks.when(Updater::fetchLatestVersionAsync)
+                    .thenReturn(CompletableFuture.completedFuture("2.0.0"));
 
             Updater.checkUpdates();
+
             assertTrue(logHandler.anyMatch(Level.WARNING,
-                    rec -> rec.getMessage().contains("latest version is 2.0.0")
+                    r -> r.getMessage().contains("not up to date")
+            ));
+
+            assertTrue(logHandler.anyMatch(Level.WARNING,
+                    r -> r.getMessage().contains("Latest: 2.0.0")
             ));
         }
     }
 
-    /** Captures log records for assertions */
+    @Test
+    void checkUpdatesAsync_logsUpToDateWhenVersionsMatch() {
+        try (MockedStatic<Updater> mocks = mockStatic(Updater.class)) {
+
+            mocks.when(Updater::checkUpdates).thenCallRealMethod();
+            mocks.when(Updater::getVersion).thenReturn("1.0.0");
+            mocks.when(Updater::fetchLatestVersionAsync)
+                    .thenReturn(CompletableFuture.completedFuture("1.0.0"));
+
+            Updater.checkUpdates();
+
+            assertTrue(logHandler.anyMatch(Level.INFO,
+                    r -> r.getMessage().contains("up to date")
+            ));
+        }
+    }
+
+    /* ------------------------------------------------------------ */
+    /* Test log handler                                             */
+    /* ------------------------------------------------------------ */
+
     private static class TestLogHandler extends Handler {
+
         private final java.util.List<LogRecord> records = new java.util.ArrayList<>();
-        @Override public void publish(LogRecord record) { records.add(record); }
-        @Override public void flush() {}
-        @Override public void close() {}
-        boolean anyMatch(Level lvl, java.util.function.Predicate<LogRecord> p) {
+
+        @Override
+        public void publish(LogRecord record) {
+            records.add(record);
+        }
+
+        @Override
+        public void flush() {}
+
+        @Override
+        public void close() {}
+
+        boolean anyMatch(Level level, java.util.function.Predicate<LogRecord> predicate) {
             return records.stream()
-                    .anyMatch(r -> r.getLevel().equals(lvl) && p.test(r));
+                    .anyMatch(r -> r.getLevel().equals(level) && predicate.test(r));
         }
     }
 }

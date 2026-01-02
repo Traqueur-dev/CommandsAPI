@@ -7,6 +7,7 @@ public class ArgsWithInfiniteArgumentException extends Exception {
 
     /**
      * Create a new instance of the exception with the default message.
+     *
      * @param optional if the argument is optional
      */
     public ArgsWithInfiniteArgumentException(boolean optional) {

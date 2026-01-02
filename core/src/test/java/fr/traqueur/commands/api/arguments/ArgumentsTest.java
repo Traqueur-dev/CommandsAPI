@@ -1,93 +1,30 @@
 package fr.traqueur.commands.api.arguments;
+
+import fr.traqueur.commands.api.exceptions.ArgumentNotExistException;
 import fr.traqueur.commands.impl.logging.InternalLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 class ArgumentsTest {
 
-    private InternalLogger logger;
     private Arguments args;
 
     @BeforeEach
     void setUp() {
-        logger = Mockito.mock(InternalLogger.class);
-        args = new Arguments(logger);
+        this.args = new Arguments(new InternalLogger(Logger.getLogger("ArgumentsTest")));
     }
 
     @Test
-    void testIntCast_validAndInvalid() {
-        args.add("num", String.class, "42");
-        assertEquals(42, args.getAsInt("num", 0));
-        args.add("bad", String.class, "abc");
-        assertEquals(0, args.getAsInt("bad", 0));
-    }
-
-    @Test
-    void testDoubleCast_validAndInvalid() {
-        args.add("d", String.class, "3.14");
-        assertEquals(3.14, args.getAsDouble("d", 0.0));
-        args.add("badD", String.class, "pi");
-        assertEquals(0.0, args.getAsDouble("badD", 0.0));
-    }
-
-    @Test
-    void testBooleanCast() {
-        args.add("b1", String.class, "true");
-        args.add("b2", String.class, "FALSE");
-        assertTrue(args.getAsBoolean("b1", false));
-        assertFalse(args.getAsBoolean("b2", true));
-    }
-
-    @Test
-    void testStringCast_default() {
-        assertEquals("def", args.getAsString("missing", "def"));
-        args.add("s", String.class, "hello");
-        assertEquals("hello", args.getAsString("s", "cfg"));
-    }
-
-    @Test
-    void testLongFloatShortByteChar() {
-        args.add("L", String.class, "1234567890123");
-        assertEquals(1234567890123L, args.getAsLong("L", 0L));
-        args.add("f", String.class, "2.5");
-        assertEquals(2.5f, args.getAsFloat("f", 0f));
-        args.add("sh", String.class, "7");
-        assertEquals((short)7, args.getAsShort("sh", (short)0));
-        args.add("by", String.class, "8");
-        assertEquals((byte)8, args.getAsByte("by", (byte)0));
-        args.add("c", String.class, "z");
-        assertEquals('z', args.getAsChar("c", 'x'));
-    }
-
-    @Test
-    void testOptionalPresentAndEmpty() {
-        args.add("opt", String.class, "val");
-        Optional<String> optVal = args.getAsString("opt");
-        assertTrue(optVal.isPresent());
-        assertEquals("val", optVal.get());
-        assertFalse(args.getAsInt("none").isPresent());
-    }
-
-    @Test
-    void testGetGeneric_andErrorLogging() {
-        args.add("gen", Integer.class, 5);
-        String wrong = args.getAs("gen", String.class, "def");
-        assertEquals("def", wrong);
-    }
-
-    @Test
-    void testGetThrowsArgumentNotExistLogged() {
-        assertNull(args.get("xxx"));
-        verify(logger).error(contains("xxx"));
+    void testGetThrowsArgumentNotExistThrow() {
+        assertThrows(ArgumentNotExistException.class, () -> args.get("xxx"));
     }
 
     @Test
@@ -99,21 +36,115 @@ class ArgumentsTest {
     }
 
     @Test
-    void getAs_logsErrorWhenWrongType() {
-        InternalLogger mockLogger = Mockito.mock(InternalLogger.class);
-        Arguments args = new Arguments(mockLogger);
-        args.add("num", Integer.class, 123);
-        Optional<String> result = args.getAs("num", String.class);
-        assertFalse(result.isPresent());
-        verify(mockLogger).error(contains("The argument num is not the good type."));
+    void getOptional_onEmptyMapReturnsEmptyWithoutError() {
+        Optional<?> opt = args.getOptional("anything");
+        assertTrue(opt.isEmpty());
+    }
+
+    // --- New utility methods tests ---
+
+    @Test
+    void toMap_returnsMapWithValues() {
+        args.add("name", String.class, "Alice");
+        args.add("age", Integer.class, 25);
+
+        Map<String, Object> map = args.toMap();
+
+        assertEquals(2, map.size());
+        assertEquals("Alice", map.get("name"));
+        assertEquals(25, map.get("age"));
     }
 
     @Test
-    void getOptional_onEmptyMapReturnsEmptyWithoutError() {
-        InternalLogger mockLogger = Mockito.mock(InternalLogger.class);
-        Arguments args = new Arguments(mockLogger);
-        Optional<?> opt = args.getOptional("anything");
-        assertFalse(opt.isPresent());
-        verify(mockLogger, never()).error(anyString());
+    void toMap_emptyArguments_returnsEmptyMap() {
+        Map<String, Object> map = args.toMap();
+        assertTrue(map.isEmpty());
+    }
+
+    @Test
+    void size_returnsCorrectCount() {
+        assertEquals(0, args.size());
+
+        args.add("a", String.class, "value1");
+        assertEquals(1, args.size());
+
+        args.add("b", Integer.class, 42);
+        assertEquals(2, args.size());
+    }
+
+    @Test
+    void isEmpty_returnsTrueWhenEmpty() {
+        assertTrue(args.isEmpty());
+    }
+
+    @Test
+    void isEmpty_returnsFalseWhenNotEmpty() {
+        args.add("key", String.class, "value");
+        assertFalse(args.isEmpty());
+    }
+
+    @Test
+    void getKeys_returnsAllKeys() {
+        args.add("first", String.class, "a");
+        args.add("second", Integer.class, 1);
+        args.add("third", Double.class, 1.5);
+
+        Set<String> keys = args.getKeys();
+
+        assertEquals(3, keys.size());
+        assertTrue(keys.contains("first"));
+        assertTrue(keys.contains("second"));
+        assertTrue(keys.contains("third"));
+    }
+
+    @Test
+    void getKeys_returnsUnmodifiableSet() {
+        args.add("key", String.class, "value");
+
+        Set<String> keys = args.getKeys();
+
+        assertThrows(UnsupportedOperationException.class, () -> keys.add("new"));
+    }
+
+    @Test
+    void forEach_iteratesAllEntries() {
+        args.add("a", String.class, "valueA");
+        args.add("b", String.class, "valueB");
+
+        AtomicInteger count = new AtomicInteger(0);
+        args.forEach((key, value) -> {
+            count.incrementAndGet();
+            assertTrue(key.equals("a") || key.equals("b"));
+        });
+
+        assertEquals(2, count.get());
+    }
+
+    @Test
+    void has_returnsTrueForExistingKey() {
+        args.add("exists", String.class, "value");
+
+        assertTrue(args.has("exists"));
+    }
+
+    @Test
+    void has_returnsFalseForMissingKey() {
+        assertFalse(args.has("missing"));
+    }
+
+    @Test
+    void get_withDefaultValue_returnsValueWhenPresent() {
+        args.add("key", String.class, "actual");
+
+        String result = args.<String>getOptional("key").orElse("default");
+
+        assertEquals("actual", result);
+    }
+
+    @Test
+    void get_withDefaultValue_returnsDefaultWhenMissing() {
+        String result = args.<String>getOptional("missing").orElse("default");
+
+        assertEquals("default", result);
     }
 }

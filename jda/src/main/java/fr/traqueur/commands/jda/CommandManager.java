@@ -1,13 +1,6 @@
 package fr.traqueur.commands.jda;
 
-import fr.traqueur.commands.jda.arguments.*;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 import java.util.logging.Logger;
 
@@ -17,7 +10,7 @@ import java.util.logging.Logger;
  *
  * @param <T> The type of the bot instance.
  */
-public class CommandManager<T> extends fr.traqueur.commands.api.CommandManager<T, SlashCommandInteractionEvent> {
+public class CommandManager<T> extends fr.traqueur.commands.api.CommandManager<T, JDAInteractionContext> {
 
     /**
      * The JDA platform instance.
@@ -33,24 +26,7 @@ public class CommandManager<T> extends fr.traqueur.commands.api.CommandManager<T
      */
     public CommandManager(T bot, JDA jda, Logger logger) {
         super(new JDAPlatform<>(bot, jda, logger));
-        this.jdaPlatform = (JDAPlatform<T>) getPlatform();
-
-        // Register JDA-specific argument converters with JDA context
-        this.registerJDAConverters(jda);
-    }
-
-    /**
-     * Register JDA-specific argument converters.
-     * This method is called automatically in the constructor.
-     *
-     * @param jda The JDA instance to inject into converters.
-     */
-    private void registerJDAConverters(JDA jda) {
-        registerConverter(User.class, new UserArgument(jda));
-        registerConverter(Member.class, new MemberArgument(jda));
-        registerConverter(Role.class, new RoleArgument(jda));
-        registerConverter(GuildChannelUnion.class, new ChannelArgument(jda));
-        registerConverter(Message.Attachment.class, new AttachmentArgument(jda));
+        this.jdaPlatform = (JDAPlatform<T>) super.getPlatform();
     }
 
     /**

@@ -9,19 +9,10 @@ import org.bukkit.entity.Player;
 /**
  * The class WorldRequirement.
  * <p>
- *     This class is used to represent a world requirement.
+ * This class is used to represent a world requirement.
  * </p>
  */
 public class WorldRequirement implements Requirement<CommandSender> {
-
-    /**
-     * Create a new world requirement.
-     * @param name The name of the world
-     * @return The world requirement
-     */
-    public static Requirement of(String name) {
-        return new WorldRequirement(Bukkit.getWorld(name));
-    }
 
     /**
      * The world.
@@ -30,19 +21,30 @@ public class WorldRequirement implements Requirement<CommandSender> {
 
     /**
      * Create a new world requirement.
+     *
      * @param world The world
      */
     public WorldRequirement(World world) {
         this.world = world;
     }
 
+    /**
+     * Create a new world requirement.
+     *
+     * @param name The name of the world
+     * @return The world requirement
+     */
+    public static Requirement of(String name) {
+        return new WorldRequirement(Bukkit.getWorld(name));
+    }
+
     @Override
     public boolean check(CommandSender sender) {
-        return sender instanceof Player && this.world != null  && ((Player) sender).getWorld().getUID().equals(this.world.getUID());
+        return sender instanceof Player && this.world != null && ((Player) sender).getWorld().getUID().equals(this.world.getUID());
     }
 
     @Override
     public String errorMessage() {
-        return "&cSender must be in world " + this.world.getName()+ ".";
+        return "&cSender must be in world " + this.world.getName() + ".";
     }
 }

@@ -2,14 +2,14 @@ package fr.traqueur.commands.velocity;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
-import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.CommandManager;
+import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandPlatform;
+import fr.traqueur.commands.api.resolver.SenderResolver;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 /**
@@ -148,11 +148,16 @@ public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
      */
     @Override
     public void removeCommand(String label, boolean subcommand) {
-        if(subcommand && this.server.getCommandManager().getCommandMeta(label) != null) {
+        if (subcommand && this.server.getCommandManager().getCommandMeta(label) != null) {
             this.server.getCommandManager().unregister(this.server.getCommandManager().getCommandMeta(label));
         } else {
             this.server.getCommandManager().unregister(label);
         }
+    }
+
+    @Override
+    public SenderResolver<CommandSource> getSenderResolver() {
+        return new VelocitySenderResolver();
     }
 
     /**

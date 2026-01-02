@@ -4,15 +4,12 @@ import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandPlatform;
+import fr.traqueur.commands.api.resolver.SenderResolver;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
+import net.dv8tion.jda.api.interactions.commands.build.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +22,7 @@ import java.util.logging.Logger;
  *
  * @param <T> The type of the bot instance.
  */
-public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractionEvent> {
+public class JDAPlatform<T> implements CommandPlatform<T, JDAInteractionContext> {
 
     /**
      * The bot instance associated with this platform.
@@ -41,16 +38,14 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
      * The logger for this platform.
      */
     private final Logger logger;
-
-    /**
-     * The command manager.
-     */
-    private CommandManager<T, SlashCommandInteractionEvent> commandManager;
-
     /**
      * Map of root command names to their SlashCommandData.
      */
     private final Map<String, SlashCommandData> slashCommands;
+    /**
+     * The command manager.
+     */
+    private CommandManager<T, JDAInteractionContext> commandManager;
 
     /**
      * Constructor for JDAPlatform.
@@ -72,7 +67,7 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
     }
 
     @Override
-    public void injectManager(CommandManager<T, SlashCommandInteractionEvent> commandManager) {
+    public void injectManager(CommandManager<T, JDAInteractionContext> commandManager) {
         this.commandManager = commandManager;
         this.jda.addEventListener(new JDAExecutor<>(commandManager));
     }
@@ -83,7 +78,7 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
     }
 
     @Override
-    public boolean hasPermission(SlashCommandInteractionEvent sender, String permission) {
+    public boolean hasPermission(JDAInteractionContext sender, String permission) {
         if (sender.getMember() == null) {
             return false;
         }
@@ -97,22 +92,24 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
     }
 
     @Override
-    public boolean isPlayer(SlashCommandInteractionEvent sender) {
+    public boolean isPlayer(JDAInteractionContext sender) {
         // In Discord context, we consider guild-only commands
         return sender.isFromGuild();
     }
 
     @Override
-    public void sendMessage(SlashCommandInteractionEvent sender, String message) {
-        if (!sender.isAcknowledged()) {
-            sender.reply(message).queue();
-        } else {
-            sender.getHook().sendMessage(message).queue();
+    public void sendMessage(JDAInteractionContext sender, String message) {
+        if (sender.getEvent() instanceof SlashCommandInteractionEvent event) {
+            if (!event.isAcknowledged()) {
+                event.reply(message).queue();
+            } else {
+                event.getHook().sendMessage(message).queue();
+            }
         }
     }
 
     @Override
-    public void addCommand(Command<T, SlashCommandInteractionEvent> command, String label) {
+    public void addCommand(Command<T, JDAInteractionContext> command, String label) {
         String[] parts = label.split("\\.");
         String rootName = parts[0].toLowerCase();
 
@@ -135,10 +132,10 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
                 // This is a group, not a leaf subcommand - skip it
                 // Its children will be registered as subcommand groups (parts.length >= 3)
                 logger.warning(String.format(
-                    "Command '%s' has subcommands and will be treated as a subcommand group. " +
-                    "Discord does not support executing intermediate groups. " +
-                    "If you want this group to be executable, create a dedicated subcommand (e.g., '%s.list' or '%s.info').",
-                    label, label, label
+                        "Command '%s' has subcommands and will be treated as a subcommand group. " +
+                                "Discord does not support executing intermediate groups. " +
+                                "If you want this group to be executable, create a dedicated subcommand (e.g., '%s.list' or '%s.info').",
+                        label, label, label
                 ));
                 return;
             }
@@ -154,7 +151,7 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
             addArgumentsToSubcommand(subcommand, command);
             slashCommand.addSubcommands(subcommand);
 
-        } else if (parts.length >= 3) {
+        } else {
             // Subcommand group: /command group subcommand
             String groupName = parts[1].toLowerCase();
             String subName = parts[2].toLowerCase();
@@ -194,22 +191,27 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
         }
     }
 
+    @Override
+    public SenderResolver<JDAInteractionContext> getSenderResolver() {
+        return new JDASenderResolver();
+    }
+
     /**
      * Add arguments to a slash command.
      *
      * @param slashCommand The slash command data.
      * @param command      The command instance.
      */
-    private void addArgumentsToCommand(SlashCommandData slashCommand, Command<T, SlashCommandInteractionEvent> command) {
-        List<Argument<SlashCommandInteractionEvent>> args = command.getArgs();
-        List<Argument<SlashCommandInteractionEvent>> optionalArgs = command.getOptinalArgs();
+    private void addArgumentsToCommand(SlashCommandData slashCommand, Command<T, JDAInteractionContext> command) {
+        List<Argument<JDAInteractionContext>> args = command.getArgs();
+        List<Argument<JDAInteractionContext>> optionalArgs = command.getOptionalArgs();
 
-        for (Argument<SlashCommandInteractionEvent> arg : args) {
+        for (Argument<JDAInteractionContext> arg : args) {
             OptionData option = createOptionData(arg, true);
             slashCommand.addOptions(option);
         }
 
-        for (Argument<SlashCommandInteractionEvent> arg : optionalArgs) {
+        for (Argument<JDAInteractionContext> arg : optionalArgs) {
             OptionData option = createOptionData(arg, false);
             slashCommand.addOptions(option);
         }
@@ -221,16 +223,16 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
      * @param subcommand The subcommand data.
      * @param command    The command instance.
      */
-    private void addArgumentsToSubcommand(SubcommandData subcommand, Command<T, SlashCommandInteractionEvent> command) {
-        List<Argument<SlashCommandInteractionEvent>> args = command.getArgs();
-        List<Argument<SlashCommandInteractionEvent>> optionalArgs = command.getOptinalArgs();
+    private void addArgumentsToSubcommand(SubcommandData subcommand, Command<T, JDAInteractionContext> command) {
+        List<Argument<JDAInteractionContext>> args = command.getArgs();
+        List<Argument<JDAInteractionContext>> optionalArgs = command.getOptionalArgs();
 
-        for (Argument<SlashCommandInteractionEvent> arg : args) {
+        for (Argument<JDAInteractionContext> arg : args) {
             OptionData option = createOptionData(arg, true);
             subcommand.addOptions(option);
         }
 
-        for (Argument<SlashCommandInteractionEvent> arg : optionalArgs) {
+        for (Argument<JDAInteractionContext> arg : optionalArgs) {
             OptionData option = createOptionData(arg, false);
             subcommand.addOptions(option);
         }
@@ -243,14 +245,41 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
      * @param required Whether the argument is required.
      * @return The OptionData.
      */
-    private OptionData createOptionData(Argument<SlashCommandInteractionEvent> arg, boolean required) {
-        String[] parts = arg.arg().split(CommandManager.TYPE_PARSER);
-        String name = parts[0].trim().toLowerCase();
-        String type = parts.length > 1 ? parts[1].trim() : "string";
+    private OptionData createOptionData(Argument<JDAInteractionContext> arg, boolean required) {
+        String name = arg.name();
 
-        OptionType optionType = mapToOptionType(type);
+        OptionType optionType = mapToOptionType(arg.type().key());
 
-        return new OptionData(optionType, name, "Argument: " + name, required);
+        OptionData optionData = new OptionData(optionType, name, "Argument: " + name, required);
+
+        // Enable autocomplete if:
+        // 1. The argument has a custom TabCompleter, OR
+        // 2. A general TabCompleter exists for this type
+        if (hasTabCompleter(arg)) {
+            optionData.setAutoComplete(true);
+        }
+
+        return optionData;
+    }
+
+    /**
+     * Check if an argument has a TabCompleter (either custom or general).
+     *
+     * @param arg The argument to check.
+     * @return true if a TabCompleter exists for this argument.
+     */
+    private boolean hasTabCompleter(Argument<JDAInteractionContext> arg) {
+        // Check for custom TabCompleter on the argument itself
+        if (arg.tabCompleter() != null) {
+            return true;
+        }
+
+        // Check for general TabCompleter registered for this type
+        if (commandManager != null) {
+            return commandManager.hasTabCompleterForType(arg.type().key());
+        }
+
+        return false;
     }
 
     /**
@@ -330,7 +359,7 @@ public class JDAPlatform<T> implements CommandPlatform<T, SlashCommandInteractio
      *
      * @return The command manager.
      */
-    public CommandManager<T, SlashCommandInteractionEvent> getCommandManager() {
+    public CommandManager<T, JDAInteractionContext> getCommandManager() {
         return commandManager;
     }
 }

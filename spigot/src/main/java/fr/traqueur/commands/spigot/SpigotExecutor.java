@@ -10,6 +10,7 @@ import java.util.List;
 
 /**
  * Represents the executor of the commands.
+ *
  * @param <T> The type of the plugin that owns the executor.
  */
 public class SpigotExecutor<T extends Plugin> implements CommandExecutor, org.bukkit.command.TabCompleter {
@@ -26,7 +27,8 @@ public class SpigotExecutor<T extends Plugin> implements CommandExecutor, org.bu
 
     /**
      * The constructor of the executor.
-     * @param plugin The plugin that owns the executor.
+     *
+     * @param plugin         The plugin that owns the executor.
      * @param commandManager The command manager.
      */
     public SpigotExecutor(T plugin, CommandManager<T, CommandSender> commandManager) {
@@ -36,14 +38,15 @@ public class SpigotExecutor<T extends Plugin> implements CommandExecutor, org.bu
 
     /**
      * Parse the label of the command.
+     *
      * @param label The label of the command.
      * @return The parsed label or null if the label is not valid.
      */
     private String parseLabel(String label) {
-        if(label.contains(":")) {
+        if (label.contains(":")) {
             String[] split = label.split(":");
             label = split[1];
-            if(!split[0].equalsIgnoreCase(plugin.getName())) {
+            if (!split[0].equalsIgnoreCase(plugin.getName())) {
                 return null;
             }
         }
@@ -52,10 +55,11 @@ public class SpigotExecutor<T extends Plugin> implements CommandExecutor, org.bu
 
     /**
      * This method is called when a command is executed.
-     * @param sender The sender of the command.
+     *
+     * @param sender  The sender of the command.
      * @param command The command executed.
-     * @param label The label of the command.
-     * @param args The arguments of the command.
+     * @param label   The label of the command.
+     * @param args    The arguments of the command.
      * @return If the command is executed.
      */
     @Override
@@ -71,16 +75,17 @@ public class SpigotExecutor<T extends Plugin> implements CommandExecutor, org.bu
 
     /**
      * This method is called when a tab is completed.
+     *
      * @param commandSender The sender of the command.
-     * @param command The command completed.
-     * @param label The label of the command.
-     * @param args The arguments of the command.
+     * @param command       The command completed.
+     * @param label         The label of the command.
+     * @param args          The arguments of the command.
      * @return The list of completions.
      */
     @Override
     public List<String> onTabComplete(CommandSender commandSender, org.bukkit.command.Command command, String label, String[] args) {
         String labelLower = this.parseLabel(label);
-        if(labelLower == null) {
+        if (labelLower == null) {
             return Collections.emptyList();
         }
         return this.commandManager.getInvoker().suggest(commandSender, labelLower, args);

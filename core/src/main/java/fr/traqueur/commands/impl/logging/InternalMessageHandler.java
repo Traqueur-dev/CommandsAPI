@@ -11,7 +11,8 @@ public class InternalMessageHandler implements MessageHandler {
     /**
      * Default constructor for the InternalMessageHandler.
      */
-    public InternalMessageHandler() {}
+    public InternalMessageHandler() {
+    }
 
     /**
      * {@inheritDoc}
@@ -43,6 +44,14 @@ public class InternalMessageHandler implements MessageHandler {
     @Override
     public String getRequirementMessage() {
         return "The requirement %requirement% was not met";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getCommandDisabledMessage() {
+        return "&cThis command is currently disabled.";
     }
 
 }
