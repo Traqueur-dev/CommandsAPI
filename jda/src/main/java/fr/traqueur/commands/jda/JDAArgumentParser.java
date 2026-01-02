@@ -21,14 +21,14 @@ import java.util.List;
  * Discord handles type resolution natively, so no string conversion needed.
  */
 public record JDAArgumentParser<T>(
-        Logger logger) implements ArgumentParser<T, SlashCommandInteractionEvent, SlashCommandInteractionEvent> {
+        Logger logger) implements ArgumentParser<T, JDAInteractionContext, SlashCommandInteractionEvent> {
 
     @Override
-    public ParseResult parse(Command<T, SlashCommandInteractionEvent> command, SlashCommandInteractionEvent event) {
+    public ParseResult parse(Command<T, JDAInteractionContext> command, SlashCommandInteractionEvent event) {
         JDAArguments arguments = new JDAArguments(logger, event);
         List<OptionMapping> options = event.getOptions();
 
-        List<Argument<SlashCommandInteractionEvent>> allArgs = new ArrayList<>();
+        List<Argument<JDAInteractionContext>> allArgs = new ArrayList<>();
         allArgs.addAll(command.getArgs());
         allArgs.addAll(command.getOptionalArgs());
 
@@ -56,7 +56,7 @@ public record JDAArgumentParser<T>(
         // Parse each option
         for (int i = 0; i < options.size(); i++) {
             OptionMapping option = options.get(i);
-            Argument<SlashCommandInteractionEvent> arg = allArgs.get(i);
+            Argument<JDAInteractionContext> arg = allArgs.get(i);
 
             try {
                 populateArgument(arguments, option, arg);
@@ -74,7 +74,7 @@ public record JDAArgumentParser<T>(
     }
 
     private void populateArgument(JDAArguments arguments, OptionMapping option,
-                                  Argument<SlashCommandInteractionEvent> arg) {
+                                  Argument<JDAInteractionContext> arg) {
         String name = option.getName();
 
         switch (option.getType()) {

@@ -246,6 +246,32 @@ public abstract class CommandManager<T, S> {
     }
 
     /**
+     * Check if a TabCompleter exists for the given type.
+     *
+     * @param type The type to check.
+     * @return true if a TabCompleter is registered for this type.
+     */
+    public boolean hasTabCompleterForType(String type) {
+        ArgumentConverter.Wrapper<?> wrapper = this.typeConverters.get(type.toLowerCase());
+        return wrapper != null && wrapper.converter() instanceof TabCompleter;
+    }
+
+    /**
+     * Get the TabCompleter for the given type.
+     *
+     * @param type The type to get the TabCompleter for.
+     * @return The TabCompleter for this type, or null if none exists.
+     */
+    @SuppressWarnings("unchecked")
+    public TabCompleter<S> getTabCompleterForType(String type) {
+        ArgumentConverter.Wrapper<?> wrapper = this.typeConverters.get(type.toLowerCase());
+        if (wrapper != null && wrapper.converter() instanceof TabCompleter) {
+            return (TabCompleter<S>) wrapper.converter();
+        }
+        return null;
+    }
+
+    /**
      * Get the platform of the command manager.
      *
      * @return The platform of the command manager.

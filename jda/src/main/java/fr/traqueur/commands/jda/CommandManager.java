@@ -1,7 +1,6 @@
 package fr.traqueur.commands.jda;
 
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 import java.util.logging.Logger;
 
@@ -11,7 +10,7 @@ import java.util.logging.Logger;
  *
  * @param <T> The type of the bot instance.
  */
-public class CommandManager<T> extends fr.traqueur.commands.api.CommandManager<T, SlashCommandInteractionEvent> {
+public class CommandManager<T> extends fr.traqueur.commands.api.CommandManager<T, JDAInteractionContext> {
 
     /**
      * The JDA platform instance.

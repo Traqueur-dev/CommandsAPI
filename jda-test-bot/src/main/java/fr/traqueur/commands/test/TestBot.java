@@ -2,11 +2,11 @@ package fr.traqueur.commands.test;
 
 import fr.traqueur.commands.annotations.AnnotationCommandProcessor;
 import fr.traqueur.commands.jda.CommandManager;
+import fr.traqueur.commands.jda.JDAInteractionContext;
 import fr.traqueur.commands.test.commands.*;
-import fr.traqueur.commands.test.commands.annoted.TestAnnotedCommands;
+import fr.traqueur.commands.test.commands.annoted.*;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.util.logging.Logger;
@@ -38,12 +38,16 @@ public class TestBot {
         CommandManager<TestBot> commandManager = new CommandManager<>(this, jda, LOGGER);
         commandManager.setDebug(true);
 
-        AnnotationCommandProcessor<TestBot, SlashCommandInteractionEvent> annotationProcessor =
+        AnnotationCommandProcessor<TestBot, JDAInteractionContext> annotationProcessor =
                 new AnnotationCommandProcessor<>(commandManager);
 
-        // Register commands
-        LOGGER.info("Registering commands...");
+        // Register annotated commands
+        LOGGER.info("Registering annotated commands...");
         annotationProcessor.register(new TestAnnotedCommands());
+        annotationProcessor.register(new SimpleAnnotatedCommands());
+        annotationProcessor.register(new OptionalArgsCommands());
+        annotationProcessor.register(new TabCompleteCommands());
+        annotationProcessor.register(new HierarchicalCommands());
 
         commandManager.registerCommand(new PingCommand(this));
         commandManager.registerCommand(new UserInfoCommand(this));

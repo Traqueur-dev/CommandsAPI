@@ -2,8 +2,8 @@ package fr.traqueur.commands.test.commands;
 
 import fr.traqueur.commands.jda.Command;
 import fr.traqueur.commands.jda.JDAArguments;
+import fr.traqueur.commands.jda.JDAInteractionContext;
 import fr.traqueur.commands.test.TestBot;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 /**
  * Math command with subcommands demonstrating the command tree structure.
@@ -27,7 +27,7 @@ public class MathCommand extends Command<TestBot> {
     }
 
     @Override
-    public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+    public void execute(JDAInteractionContext context, JDAArguments arguments) {
         // This won't be called since we have subcommands
     }
 
@@ -42,7 +42,7 @@ public class MathCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             double a = arguments.get("a");
             double b = arguments.get("b");
             double result = a + b;
@@ -62,7 +62,7 @@ public class MathCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             double a = arguments.get("a");
             double b = arguments.get("b");
             double result = a - b;
@@ -82,7 +82,7 @@ public class MathCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             double a = arguments.get("a");
             double b = arguments.get("b");
             double result = a * b;
@@ -102,7 +102,7 @@ public class MathCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             double a = arguments.get("a");
             double b = arguments.get("b");
 

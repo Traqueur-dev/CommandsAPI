@@ -2,6 +2,7 @@ package fr.traqueur.commands.test.commands;
 
 import fr.traqueur.commands.jda.Command;
 import fr.traqueur.commands.jda.JDAArguments;
+import fr.traqueur.commands.jda.JDAInteractionContext;
 import fr.traqueur.commands.test.TestBot;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -36,7 +37,7 @@ public class AdminCommand extends Command<TestBot> {
     }
 
     @Override
-    public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+    public void execute(JDAInteractionContext context, JDAArguments arguments) {
         // This won't be called since we have subcommands
     }
 
@@ -50,7 +51,7 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             // This won't be called since we have subcommands
         }
     }
@@ -67,7 +68,7 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             JDAArguments jdaArgs = jda(arguments);
             User user = jdaArgs.get("user");
             String reason = jdaArgs.<String>getOptional("reason").orElse("No reason provided");
@@ -89,7 +90,7 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             User user = arguments.get("user");
             String reason = arguments.<String>getOptional("reason").orElse("No reason provided");
 
@@ -108,7 +109,7 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             // This won't be called since we have subcommands
         }
     }
@@ -123,7 +124,8 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
+            SlashCommandInteractionEvent event = (SlashCommandInteractionEvent) context.getEvent();
             JDAArguments jdaArgs = jda(arguments);
 
             if (event.getGuild() == null) {
@@ -159,7 +161,7 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             JDAArguments jdaArgs = jda(arguments);
             String option = jdaArgs.get("option");
             String value = jdaArgs.get("value");

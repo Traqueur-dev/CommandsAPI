@@ -1,6 +1,7 @@
 package fr.traqueur.commands.test.commands.annoted;
 
 import fr.traqueur.commands.annotations.*;
+import fr.traqueur.commands.jda.JDAInteractionContext;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 import java.util.Arrays;
@@ -13,13 +14,14 @@ public class TestAnnotedCommands {
 
     @Command(name = "testannoted", description = "A test annoted command", usage = "/testannoted")
     @Alias(value = {"ta", "testa"})
-    public void testAnnotedCommand(SlashCommandInteractionEvent event, @Arg("arg1") int argument1, @Arg("arg2") Optional<String> argument2) {
+    public void testAnnotedCommand(JDAInteractionContext context, @Arg("arg1") int argument1, @Arg("arg2") Optional<String> argument2) {
+        SlashCommandInteractionEvent event = (SlashCommandInteractionEvent) context.getEvent();
         String arg2Value = argument2.orElse("no value provided");
         event.reply("You executed the testannoted command with arg1: " + argument1 + " and arg2: " + arg2Value).setEphemeral(true).queue();
     }
 
     @TabComplete(command="testannoted", arg="arg2")
-    public List<String> tabCompleteArg2(SlashCommandInteractionEvent event, String currentInput) {
+    public List<String> tabCompleteArg2(JDAInteractionContext context, String currentInput) {
         List<String> suggestions = Arrays.asList("option1", "option2", "option3");
         return suggestions.stream()
                 .filter(option -> option.startsWith(currentInput))
