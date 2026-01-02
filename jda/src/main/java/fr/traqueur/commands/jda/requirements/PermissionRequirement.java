@@ -1,8 +1,8 @@
 package fr.traqueur.commands.jda.requirements;
 
 import fr.traqueur.commands.api.requirements.Requirement;
+import fr.traqueur.commands.jda.JDAInteractionContext;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,7 +10,7 @@ import java.util.Collection;
 /**
  * Requirement that checks if the user has specific Discord permissions.
  */
-public class PermissionRequirement implements Requirement<SlashCommandInteractionEvent> {
+public class PermissionRequirement implements Requirement<JDAInteractionContext> {
 
     private final Collection<Permission> permissions;
     private final String errorMessage;
@@ -37,11 +37,11 @@ public class PermissionRequirement implements Requirement<SlashCommandInteractio
     }
 
     @Override
-    public boolean check(SlashCommandInteractionEvent event) {
-        if (event.getMember() == null) {
+    public boolean check(JDAInteractionContext context) {
+        if (context.getMember() == null) {
             return false;
         }
-        return event.getMember().hasPermission(permissions);
+        return context.getMember().hasPermission(permissions);
     }
 
     @Override

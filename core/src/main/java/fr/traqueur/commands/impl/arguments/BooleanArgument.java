@@ -9,6 +9,7 @@ import java.util.List;
 /**
  * BooleanArgument is the argument that allow to get a boolean from a string.
  * It's used in the CommandManager to get a boolean from a string.
+ *
  * @param <S> the type of the sender
  */
 public class BooleanArgument<S> implements ArgumentConverter<Boolean>, TabCompleter<S> {
@@ -22,10 +23,10 @@ public class BooleanArgument<S> implements ArgumentConverter<Boolean>, TabComple
 
     @Override
     public Boolean apply(String s) {
-        if(s == null || s.isEmpty()) {
+        if (s == null || s.isEmpty()) {
             return null;
         }
-        if(s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")) {
+        if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")) {
             return Boolean.parseBoolean(s);
         }
         return null;

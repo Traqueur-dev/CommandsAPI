@@ -1,9 +1,8 @@
-// Placez ce fichier sous core/src/test/java/fr/traqueur/commands/api/
-
 package fr.traqueur.commands.api.models;
 
-import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.arguments.Arguments;
+import fr.traqueur.commands.test.mocks.MockCommandManager;
+import fr.traqueur.commands.test.mocks.MockSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,45 +14,23 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CommandTest {
 
-    private static class DummyCommand extends Command<String, Object> {
-        DummyCommand(String name) {
-            super("plugin", name);
-        }
-        DummyCommand() {
-            super("plugin", "dummy");
-        }
-
-        @Override
-        public void execute(Object sender, Arguments arguments) {
-            // no-op
-        }
-    }
-
     private DummyCommand cmd;
-    private CommandPlatform<String, Object> platform;
+    private MockCommandManager manager;
 
     @BeforeEach
     void setUp() {
-        platform = new CommandPlatform<String, Object>() {
-            @Override public String getPlugin() { return null; }
-            @Override public void injectManager(CommandManager<String, Object> commandManager) {}
-            @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
-            @Override public boolean hasPermission(Object sender, String permission) { return true; }
-            @Override public boolean isPlayer(Object sender) {return false;}
-            @Override public void sendMessage(Object sender, String message) {}
-            @Override public void addCommand(Command<String, Object> command, String label) {}
-            @Override public void removeCommand(String label, boolean subcommand) {}
-        };
+        manager = new MockCommandManager();
         cmd = new DummyCommand();
+        cmd.setManager(manager);
     }
 
     @Test
     void testAliasesAndName() {
         assertEquals("dummy", cmd.getName());
-        assertEquals(1, cmd.getAliases().size());
+        assertEquals(0, cmd.getAliases().size());
         cmd.addAlias("d1", "d2");
         List<String> aliases = cmd.getAliases();
-        assertEquals(3, cmd.getAliases().size());
+        assertEquals(2, cmd.getAliases().size());
         assertTrue(aliases.contains("d1"));
         assertTrue(aliases.contains("d2"));
     }
@@ -83,7 +60,7 @@ class CommandTest {
     void testAddSubCommandAndIsSubcommandFlag() {
         DummyCommand sub = new DummyCommand();
         cmd.addSubCommand(sub);
-        List<Command<String, Object>> subs = cmd.getSubcommands();
+        List<Command<Object, MockSender>> subs = cmd.getSubcommands();
         assertEquals(1, subs.size());
         assertTrue(subs.contains(sub));
         assertTrue(sub.isSubCommand());
@@ -91,60 +68,21 @@ class CommandTest {
 
     @Test
     void testRegisterDelegatesToManager() {
-        AtomicBoolean called = new AtomicBoolean(false);
-        CommandManager<String, Object> fakeManager = new CommandManager<String, Object>(new CommandPlatform<String, Object>() {
-            @Override public String getPlugin() { return null; }
-            @Override public void injectManager(CommandManager<String, Object> commandManager) {}
-            @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
-            @Override public boolean hasPermission(Object sender, String permission) { return true; }
-            @Override public boolean isPlayer(Object sender) {return false;}
-            @Override public void sendMessage(Object sender, String message) {}
-            @Override public void addCommand(Command<String, Object> command, String label) {called.set(true);}
-            @Override public void removeCommand(String label, boolean subcommand) {  }
-        }) {};
-        cmd.setManager(fakeManager);
-        fakeManager.registerCommand(cmd);
-        assertTrue(called.get());
+        manager.registerCommand(cmd);
+        assertTrue(manager.getMockPlatform().hasCommand("dummy"));
     }
 
     @Test
     void testUnregisterDelegatesToManager() {
-        AtomicBoolean called = new AtomicBoolean(false);
-        CommandManager<String, Object> fakeManager = new CommandManager<String, Object>(new CommandPlatform<String, Object>() {
-            @Override public String getPlugin() { return null; }
-            @Override public void injectManager(CommandManager<String, Object> commandManager) {}
-            @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
-            @Override public boolean hasPermission(Object sender, String permission) { return true; }
-            @Override public boolean isPlayer(Object sender) {return false;}
-            @Override public void sendMessage(Object sender, String message) {}
-            @Override public void addCommand(Command<String, Object> command, String label) {}
-            @Override public void removeCommand(String label, boolean subcommand) { called.set(true); }
-        }) {};
-        cmd.setManager(fakeManager);
+        manager.registerCommand(cmd);
+        assertTrue(manager.getMockPlatform().hasCommand("dummy"));
         cmd.unregister();
-        assertTrue(called.get());
-    }
-
-    @Test
-    void testAddArgsAndOptionalArgs() {
-        // add required args
-        cmd.addArgs("arg1", String.class);
-        cmd.addArgs("arg2"); // string type
-        assertEquals(2, cmd.getArgs().size());
-        assertEquals("arg1:string", cmd.getArgs().get(0).arg().toLowerCase());
-        assertEquals("arg2:string", cmd.getArgs().get(1).arg().toLowerCase());
-        
-        // add optional args
-        cmd.addOptionalArgs("opt1", Integer.class);
-        cmd.addOptionalArgs("opt2");
-        assertEquals(2, cmd.getOptinalArgs().size());
-        assertEquals("opt1:integer", cmd.getOptinalArgs().get(0).arg().toLowerCase());
-        assertEquals("opt2:string", cmd.getOptinalArgs().get(1).arg().toLowerCase());
+        assertFalse(manager.getMockPlatform().hasCommand("dummy"));
     }
 
     @Test
     void usage_noSubs_noArgs() {
-        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        String usage = cmd.generateDefaultUsage(null, "dummy");
         assertEquals("/dummy", usage);
     }
 
@@ -152,7 +90,7 @@ class CommandTest {
     void usage_onlyRequiredArgs() {
         cmd.addArgs("arg1", String.class);
         cmd.addArgs("arg2", Integer.class);
-        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        String usage = cmd.generateDefaultUsage(null, "dummy");
         assertTrue(usage.startsWith("/dummy <arg1:string> <arg2:integer>"));
     }
 
@@ -160,7 +98,8 @@ class CommandTest {
     void usage_requiredAndOptionalArgs() {
         cmd.addArgs("arg", String.class);
         cmd.addOptionalArgs("opt", Double.class);
-        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        String usage = cmd.generateDefaultUsage(null, "dummy");
+        System.out.println(usage);
         assertTrue(usage.contains("<arg:string>"));
         assertTrue(usage.contains("[opt:double]"));
     }
@@ -170,9 +109,9 @@ class CommandTest {
         DummyCommand subA = new DummyCommand("suba");
         DummyCommand subB = new DummyCommand("subb");
         cmd.addSubCommand(subA, subB);
-        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        String usage = cmd.generateDefaultUsage(null, "dummy");
         // extract first angle bracket content
-        String inside = usage.substring(usage.indexOf('<')+1, usage.indexOf('>'));
+        String inside = usage.substring(usage.indexOf('<') + 1, usage.indexOf('>'));
         List<String> parts = Arrays.asList(inside.split("\\|"));
         assertTrue(parts.contains("suba"));
         assertTrue(parts.contains("subb"));
@@ -186,10 +125,88 @@ class CommandTest {
         cmd.addArgs("req", String.class);
         cmd.addOptionalArgs("opt", String.class);
 
-        String usage = cmd.generateDefaultUsage(platform, null, "dummy");
+        String usage = cmd.generateDefaultUsage(null, "dummy");
         // expect "/dummy <x|y> <req:string> [opt:string]"
         assertTrue(usage.startsWith("/dummy <x|y>"));
         assertTrue(usage.contains("<req:string>"));
         assertTrue(usage.contains("[opt:string]"));
+    }
+
+    @Test
+    void setEnabled_defaultIsTrue() {
+        assertTrue(cmd.isEnabled());
+    }
+
+    // --- v5.0.0 new tests ---
+
+    @Test
+    void setEnabled_canDisable() {
+        cmd.setEnabled(false);
+        assertFalse(cmd.isEnabled());
+    }
+
+    @Test
+    void setEnabled_canReEnable() {
+        cmd.setEnabled(false);
+        assertFalse(cmd.isEnabled());
+
+        cmd.setEnabled(true);
+        assertTrue(cmd.isEnabled());
+    }
+
+    @Test
+    void getAllLabels_returnsNameOnly_whenNoAliases() {
+        List<String> labels = cmd.getAllLabels();
+
+        assertEquals(1, labels.size());
+        assertEquals("dummy", labels.get(0));
+    }
+
+    @Test
+    void getAllLabels_returnsNameAndAliases() {
+        cmd.addAlias("d1", "d2", "d3");
+
+        List<String> labels = cmd.getAllLabels();
+
+        assertEquals(4, labels.size());
+        assertEquals("dummy", labels.getFirst()); // Name first
+        assertTrue(labels.contains("d1"));
+        assertTrue(labels.contains("d2"));
+        assertTrue(labels.contains("d3"));
+    }
+
+    @Test
+    void getAliases_doesNotIncludeName() {
+        cmd.addAlias("alias1");
+
+        List<String> aliases = cmd.getAliases();
+
+        assertEquals(1, aliases.size());
+        assertFalse(aliases.contains("dummy"));
+        assertTrue(aliases.contains("alias1"));
+    }
+
+    @Test
+    void getAllLabels_nameAlwaysFirst() {
+        cmd.addAlias("aaa"); // alphabetically before "dummy"
+
+        List<String> labels = cmd.getAllLabels();
+
+        assertEquals("dummy", labels.get(0));
+    }
+
+    private static class DummyCommand extends Command<Object, MockSender> {
+        DummyCommand(String name) {
+            super(null, name);
+        }
+
+        DummyCommand() {
+            super(null, "dummy");
+        }
+
+        @Override
+        public void execute(MockSender sender, Arguments arguments) {
+            // no-op
+        }
     }
 }

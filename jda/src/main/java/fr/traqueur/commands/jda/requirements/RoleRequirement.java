@@ -1,9 +1,8 @@
 package fr.traqueur.commands.jda.requirements;
 
 import fr.traqueur.commands.api.requirements.Requirement;
+import fr.traqueur.commands.jda.JDAInteractionContext;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,7 +10,7 @@ import java.util.Collection;
 /**
  * Requirement that checks if the user has specific Discord roles.
  */
-public class RoleRequirement implements Requirement<SlashCommandInteractionEvent> {
+public class RoleRequirement implements Requirement<JDAInteractionContext> {
 
     private final Collection<Long> roleIds;
     private final String errorMessage;
@@ -42,8 +41,8 @@ public class RoleRequirement implements Requirement<SlashCommandInteractionEvent
     }
 
     @Override
-    public boolean check(SlashCommandInteractionEvent event) {
-        Member member = event.getMember();
+    public boolean check(JDAInteractionContext context) {
+        Member member = context.getMember();
         if (member == null) {
             return false;
         }

@@ -23,15 +23,66 @@ class SpigotIntegrationTest {
     @BeforeEach
     void setUp() {
         manager = new fr.traqueur.commands.api.CommandManager<Object, CommandSender>(new CommandPlatform<Object, CommandSender>() {
-            @Override public Object getPlugin() { return null; }
-            @Override public void injectManager(fr.traqueur.commands.api.CommandManager<Object, CommandSender> cm) {}
-            @Override public java.util.logging.Logger getLogger() { return java.util.logging.Logger.getAnonymousLogger(); }
-            @Override public boolean hasPermission(CommandSender sender, String permission) { return true; }
-            @Override public boolean isPlayer(CommandSender sender) {return sender instanceof Player;}
-            @Override public void sendMessage(CommandSender sender, String message) {}
-            @Override public void addCommand(Command<Object, CommandSender> command, String label) {}
-            @Override public void removeCommand(String label, boolean subcommand) {}
-        }) {};
+            @Override
+            public Object getPlugin() {
+                return null;
+            }
+
+            @Override
+            public void injectManager(fr.traqueur.commands.api.CommandManager<Object, CommandSender> cm) {
+            }
+
+            @Override
+            public java.util.logging.Logger getLogger() {
+                return java.util.logging.Logger.getAnonymousLogger();
+            }
+
+            @Override
+            public boolean hasPermission(CommandSender sender, String permission) {
+                return true;
+            }
+
+            @Override
+            public boolean isPlayer(CommandSender sender) {
+                return sender instanceof Player;
+            }
+
+            @Override
+            public void sendMessage(CommandSender sender, String message) {
+            }
+
+            @Override
+            public void addCommand(Command<Object, CommandSender> command, String label) {
+            }
+
+            @Override
+            public void removeCommand(String label, boolean subcommand) {
+            }
+
+            @Override
+            public fr.traqueur.commands.api.resolver.SenderResolver<CommandSender> getSenderResolver() {
+                return new fr.traqueur.commands.api.resolver.SenderResolver<CommandSender>() {
+                    @Override
+                    public boolean canResolve(Class<?> type) {
+                        return CommandSender.class.isAssignableFrom(type) || Player.class.isAssignableFrom(type);
+                    }
+
+                    @Override
+                    public Object resolve(CommandSender sender, Class<?> type) {
+                        if (type.isInstance(sender)) {
+                            return type.cast(sender);
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public boolean isGameOnly(Class<?> type) {
+                        return Player.class.isAssignableFrom(type);
+                    }
+                };
+            }
+        }) {
+        };
         manager.registerConverter(Player.class, new PlayerArgument());
         bukkitStatic = Mockito.mockStatic(Bukkit.class);
     }

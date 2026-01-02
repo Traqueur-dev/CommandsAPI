@@ -1,8 +1,8 @@
 package fr.traqueur.commands.test.commands;
 
-import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.jda.Command;
 import fr.traqueur.commands.jda.JDAArguments;
+import fr.traqueur.commands.jda.JDAInteractionContext;
 import fr.traqueur.commands.test.TestBot;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -37,7 +37,7 @@ public class AdminCommand extends Command<TestBot> {
     }
 
     @Override
-    public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+    public void execute(JDAInteractionContext context, JDAArguments arguments) {
         // This won't be called since we have subcommands
     }
 
@@ -51,7 +51,7 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             // This won't be called since we have subcommands
         }
     }
@@ -68,18 +68,13 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             JDAArguments jdaArgs = jda(arguments);
-            User user = jdaArgs.getUser("user").orElse(null);
-            String reason = jdaArgs.getAsString("reason").orElse("No reason provided");
-
-            if (user == null) {
-                jdaArgs.replyEphemeral("User not found!");
-                return;
-            }
+            User user = jdaArgs.get("user");
+            String reason = jdaArgs.<String>getOptional("reason").orElse("No reason provided");
 
             jdaArgs.reply(String.format("Would kick user %s for reason: %s",
-                user.getAsMention(), reason));
+                    user.getAsMention(), reason));
         }
     }
 
@@ -95,17 +90,12 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
-            User user = arguments.getUser("user").orElse(null);
-            String reason = arguments.getAsString("reason").orElse("No reason provided");
-
-            if (user == null) {
-                arguments.replyEphemeral("User not found!");
-                return;
-            }
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
+            User user = arguments.get("user");
+            String reason = arguments.<String>getOptional("reason").orElse("No reason provided");
 
             arguments.reply(String.format("Would ban user %s for reason: %s",
-                user.getAsMention(), reason));
+                    user.getAsMention(), reason));
         }
     }
 
@@ -119,7 +109,7 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             // This won't be called since we have subcommands
         }
     }
@@ -134,7 +124,8 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
+            SlashCommandInteractionEvent event = (SlashCommandInteractionEvent) context.getEvent();
             JDAArguments jdaArgs = jda(arguments);
 
             if (event.getGuild() == null) {
@@ -149,10 +140,10 @@ public class AdminCommand extends Command<TestBot> {
                             ID: %s
                             Members: %d
                             Owner: %s""",
-                event.getGuild().getName(),
-                event.getGuild().getId(),
-                event.getGuild().getMemberCount(),
-                event.getGuild().getOwner() != null ? event.getGuild().getOwner().getAsMention() : "Unknown"
+                    event.getGuild().getName(),
+                    event.getGuild().getId(),
+                    event.getGuild().getMemberCount(),
+                    event.getGuild().getOwner() != null ? event.getGuild().getOwner().getAsMention() : "Unknown"
             );
 
             jdaArgs.reply(info);
@@ -170,10 +161,10 @@ public class AdminCommand extends Command<TestBot> {
         }
 
         @Override
-        public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+        public void execute(JDAInteractionContext context, JDAArguments arguments) {
             JDAArguments jdaArgs = jda(arguments);
-            String option = jdaArgs.getAsString("option").orElse("unknown");
-            String value = jdaArgs.getAsString("value").orElse("unknown");
+            String option = jdaArgs.get("option");
+            String value = jdaArgs.get("value");
 
             jdaArgs.reply(String.format("Would set setting '%s' to '%s'", option, value));
         }

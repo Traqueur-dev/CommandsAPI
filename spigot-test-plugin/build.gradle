@@ -28,7 +28,7 @@ tasks {
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.3-R0.1-SNAPSHOT")
     implementation project(":spigot")
-    implementation project(":core")
+    implementation project(":annotations-addon")
 }
 
 def targetJavaVersion = 21

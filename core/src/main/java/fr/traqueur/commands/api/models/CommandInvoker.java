@@ -5,12 +5,12 @@ import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
-import fr.traqueur.commands.api.logging.MessageHandler;
 import fr.traqueur.commands.api.models.collections.CommandTree;
 import fr.traqueur.commands.api.models.collections.CommandTree.MatchResult;
 import fr.traqueur.commands.api.requirements.Requirement;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,31 +18,25 @@ import java.util.stream.Stream;
  * CommandInvoker is responsible for invoking and suggesting commands.
  * It performs lookup, permission and requirement checks, usage display, parsing, and execution.
  *
- * @param <T> plugin type
- * @param <S> sender type
+ * @param manager the command manager to use for command handling
+ * @param <T>     plugin type
+ * @param <S>     sender type
  */
-public class CommandInvoker<T, S> {
+public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
 
-    private final CommandManager<T, S> manager;
-
-    /**
-     * Constructs a CommandInvoker with the given command manager.
-     * @param manager the command manager to use for command handling
-     */
-    public CommandInvoker(CommandManager<T, S> manager) {
-        this.manager = manager;
-    }
+    private static final Pattern DOT_PATTERN = Pattern.compile("\\.");
 
     /**
      * Invokes a command based on the provided source, base label, and raw arguments.
-     * @param base the base command label (e.g. "hello")
+     *
+     * @param base    the base command label (e.g. "hello")
      * @param rawArgs the arguments of the command
-     * @param source the command sender (e.g. a player or console)
+     * @param source  the command sender (e.g. a player or console)
      * @return true if a command handler was executed or a message sent; false if command not found
      */
     public boolean invoke(S source, String base, String[] rawArgs) {
         Optional<CommandContext<T, S>> contextOpt = findCommandContext(base, rawArgs);
-        if (!contextOpt.isPresent()) {
+        if (contextOpt.isEmpty()) {
             return false;
         }
 
@@ -57,47 +51,66 @@ public class CommandInvoker<T, S> {
 
     /**
      * Find and prepare command context.
-     * @param base the base command label
+     *
+     * @param base    the base command label
      * @param rawArgs the raw arguments
      * @return the command context if found
      */
     private Optional<CommandContext<T, S>> findCommandContext(String base, String[] rawArgs) {
         Optional<MatchResult<T, S>> found = manager.getCommands().findNode(base, rawArgs);
-        if (!found.isPresent()) {
+        if (found.isEmpty()) {
             return Optional.empty();
         }
 
         MatchResult<T, S> result = found.get();
-        CommandTree.CommandNode<T, S> node = result.node;
+        CommandTree.CommandNode<T, S> node = result.node();
         Optional<Command<T, S>> cmdOpt = node.getCommand();
 
-        if (!cmdOpt.isPresent()) {
+        if (cmdOpt.isEmpty()) {
             return Optional.empty();
         }
 
         Command<T, S> command = cmdOpt.get();
         String label = node.getFullLabel() != null ? node.getFullLabel() : base;
-        String[] args = result.args;
+        String[] args = result.args();
 
         return Optional.of(new CommandContext<>(command, label, args));
     }
 
     /**
-     * Validate command execution conditions (in-game, permissions, requirements, usage).
-     * @param source the command sender
+     * Validate command execution conditions (enabled, in-game, permissions, requirements, usage).
+     *
+     * @param source  the command sender
      * @param context the command context
      * @return true if all validations passed, false otherwise (message already sent to user)
      */
     private boolean validateCommandExecution(S source, CommandContext<T, S> context) {
-        return checkInGameOnly(source, context.command)
+        return checkEnabled(source, context.command)
+                && checkInGameOnly(source, context.command)
                 && checkPermission(source, context.command)
                 && checkRequirements(source, context.command)
                 && checkUsage(source, context);
     }
 
     /**
+     * Check if command is enabled.
+     *
+     * @param source  the command sender
+     * @param command the command to check
+     * @return true if command is enabled
+     */
+    private boolean checkEnabled(S source, Command<T, S> command) {
+        if (!command.isEnabled()) {
+            manager.getPlatform().sendMessage(source, manager.getMessageHandler().getCommandDisabledMessage());
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Check if command requires in-game execution.
-     * @param source the command sender
+     *
+     * @param source  the command sender
      * @param command the command to check
      * @return true if check passed or not applicable
      */
@@ -111,7 +124,8 @@ public class CommandInvoker<T, S> {
 
     /**
      * Check if sender has required permission.
-     * @param source the command sender
+     *
+     * @param source  the command sender
      * @param command the command to check
      * @return true if check passed or no permission required
      */
@@ -126,7 +140,8 @@ public class CommandInvoker<T, S> {
 
     /**
      * Check if all requirements are satisfied.
-     * @param source the command sender
+     *
+     * @param source  the command sender
      * @param command the command to check
      * @return true if all requirements passed
      */
@@ -143,6 +158,7 @@ public class CommandInvoker<T, S> {
 
     /**
      * Build error message for failed requirement.
+     *
      * @param req the failed requirement
      * @return the error message
      */
@@ -155,7 +171,8 @@ public class CommandInvoker<T, S> {
 
     /**
      * Check if argument count is valid.
-     * @param source the command sender
+     *
+     * @param source  the command sender
      * @param context the command context
      * @return true if usage is correct
      */
@@ -164,7 +181,7 @@ public class CommandInvoker<T, S> {
         String[] args = context.args;
 
         int min = command.getArgs().size();
-        int max = command.isInfiniteArgs() ? Integer.MAX_VALUE : min + command.getOptinalArgs().size();
+        int max = command.isInfiniteArgs() ? Integer.MAX_VALUE : min + command.getOptionalArgs().size();
 
         if (args.length < min || args.length > max) {
             String usage = buildUsageMessage(source, context);
@@ -176,7 +193,8 @@ public class CommandInvoker<T, S> {
 
     /**
      * Build usage message for command.
-     * @param source the command sender
+     *
+     * @param source  the command sender
      * @param context the command context
      * @return the usage message
      */
@@ -185,13 +203,14 @@ public class CommandInvoker<T, S> {
         String label = context.label;
 
         return command.getUsage().isEmpty()
-                ? command.generateDefaultUsage(manager.getPlatform(), source, label)
+                ? command.generateDefaultUsage(source, label)
                 : command.getUsage();
     }
 
     /**
      * Execute the command with error handling.
-     * @param source the command sender
+     *
+     * @param source  the command sender
      * @param context the command context
      * @return true if execution succeeded or error was handled, false for internal errors
      */
@@ -209,6 +228,7 @@ public class CommandInvoker<T, S> {
 
     /**
      * Handle type argument not exist error.
+     *
      * @param source the command sender
      * @return false to indicate internal error
      */
@@ -219,8 +239,9 @@ public class CommandInvoker<T, S> {
 
     /**
      * Handle incorrect argument error.
+     *
      * @param source the command sender
-     * @param e the exception
+     * @param e      the exception
      * @return true to indicate error was handled
      */
     private boolean handleArgumentIncorrectError(S source, ArgumentIncorrectException e) {
@@ -230,26 +251,12 @@ public class CommandInvoker<T, S> {
     }
 
     /**
-     * Internal context class to hold command execution data.
-     */
-    private static class CommandContext<T, S> {
-        final Command<T, S> command;
-        final String label;
-        final String[] args;
-
-        CommandContext(Command<T, S> command, String label, String[] args) {
-            this.command = command;
-            this.label = label;
-            this.args = args;
-        }
-    }
-
-    /**
      * Suggests command completions based on the provided source, base label, and arguments.
      * This method checks for available tab completers and filters suggestions based on the current input.
+     *
      * @param source the command sender (e.g. a player or console)
-     * @param base the command label           (e.g. "hello")
-     * @param args the arguments provided to the command
+     * @param base   the command label           (e.g. "hello")
+     * @param args   the arguments provided to the command
      * @return the list of suggestion
      */
     public List<String> suggest(S source, String base, String[] args) {
@@ -257,8 +264,8 @@ public class CommandInvoker<T, S> {
         String lastArg = args.length > 0 ? args[args.length - 1] : "";
         if (found.isPresent()) {
             MatchResult<T, S> result = found.get();
-            CommandTree.CommandNode<T, S> node = result.node;
-            String[] rawArgs = result.args;
+            CommandTree.CommandNode<T, S> node = result.node();
+            String[] rawArgs = result.args();
             String label = Optional.ofNullable(node.getFullLabel()).orElse(base);
             Map<Integer, TabCompleter<S>> map = manager.getCompleters().get(label);
             if (map != null) {
@@ -288,6 +295,17 @@ public class CommandInvoker<T, S> {
                 .collect(Collectors.toList());
     }
 
+    private boolean allowedSuggestion(S src, String label, String opt) {
+        String full = label + "." + opt.toLowerCase();
+        Optional<Command<T, S>> copt = manager.getCommands()
+                .findNode(DOT_PATTERN.split(full))
+                .flatMap(r -> r.node().getCommand());
+        if (copt.isEmpty()) return true;
+        Command<T, S> c = copt.get();
+        return c.getRequirements().stream().allMatch(r -> r.check(src))
+                && (c.getPermission().isEmpty() || manager.getPlatform().hasPermission(src, c.getPermission()));
+    }
+
     private CommandTree.CommandNode<T, S> traverseNode(CommandTree.CommandNode<T, S> node, String[] args) {
         int index = 0;
         while (index < args.length - 1) {
@@ -308,12 +326,9 @@ public class CommandInvoker<T, S> {
         return candidate.equalsIgnoreCase(current) || candidate.toLowerCase().startsWith(lower);
     }
 
-    private boolean allowedSuggestion(S src, String label, String opt) {
-        String full = label + "." + opt.toLowerCase();
-        Optional<Command<T,S>> copt = manager.getCommands().findNode(full.split("\\.")).flatMap(r -> r.node.getCommand());
-        if (!copt.isPresent()) return true;
-        Command<T,S> c = copt.get();
-        return c.getRequirements().stream().allMatch(r -> r.check(src))
-                && (c.getPermission().isEmpty() || manager.getPlatform().hasPermission(src, c.getPermission()));
+    /**
+     * Internal context class to hold command execution data.
+     */
+    private record CommandContext<T, S>(Command<T, S> command, String label, String[] args) {
     }
 }

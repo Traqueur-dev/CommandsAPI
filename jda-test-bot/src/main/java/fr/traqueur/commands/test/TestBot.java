@@ -1,7 +1,10 @@
 package fr.traqueur.commands.test;
 
+import fr.traqueur.commands.annotations.AnnotationCommandProcessor;
 import fr.traqueur.commands.jda.CommandManager;
+import fr.traqueur.commands.jda.JDAInteractionContext;
 import fr.traqueur.commands.test.commands.*;
+import fr.traqueur.commands.test.commands.annoted.*;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -10,7 +13,7 @@ import java.util.logging.Logger;
 
 /**
  * Test bot to demonstrate the JDA CommandsAPI.
- *
+ * <p>
  * To run this bot:
  * 1. Set the DISCORD_BOT_TOKEN environment variable
  * 2. Set the DISCORD_GUILD_ID environment variable (optional, for testing)
@@ -19,22 +22,6 @@ import java.util.logging.Logger;
 public class TestBot {
 
     private static final Logger LOGGER = Logger.getLogger(TestBot.class.getName());
-
-    public static void main(String[] args) {
-        String token = System.getenv("DISCORD_BOT_TOKEN");
-        if (token == null || token.isEmpty()) {
-            LOGGER.severe("DISCORD_BOT_TOKEN environment variable not set!");
-            LOGGER.info("Please set your Discord bot token with: export DISCORD_BOT_TOKEN=your_token_here");
-            return;
-        }
-
-        try {
-            new TestBot(token);
-        } catch (Exception e) {
-            LOGGER.severe("Failed to start bot: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
 
     public TestBot(String token) throws InterruptedException {
         LOGGER.info("Starting Discord bot...");
@@ -51,8 +38,17 @@ public class TestBot {
         CommandManager<TestBot> commandManager = new CommandManager<>(this, jda, LOGGER);
         commandManager.setDebug(true);
 
-        // Register commands
-        LOGGER.info("Registering commands...");
+        AnnotationCommandProcessor<TestBot, JDAInteractionContext> annotationProcessor =
+                new AnnotationCommandProcessor<>(commandManager);
+
+        // Register annotated commands
+        LOGGER.info("Registering annotated commands...");
+        annotationProcessor.register(new TestAnnotedCommands());
+        annotationProcessor.register(new SimpleAnnotatedCommands());
+        annotationProcessor.register(new OptionalArgsCommands());
+        annotationProcessor.register(new TabCompleteCommands());
+        annotationProcessor.register(new HierarchicalCommands());
+
         commandManager.registerCommand(new PingCommand(this));
         commandManager.registerCommand(new UserInfoCommand(this));
         commandManager.registerCommand(new MathCommand(this));
@@ -70,5 +66,21 @@ public class TestBot {
         }
 
         LOGGER.info("Bot is fully operational!");
+    }
+
+    public static void main(String[] args) {
+        String token = System.getenv("DISCORD_BOT_TOKEN");
+        if (token == null || token.isEmpty()) {
+            LOGGER.severe("DISCORD_BOT_TOKEN environment variable not set!");
+            LOGGER.info("Please set your Discord bot token with: export DISCORD_BOT_TOKEN=your_token_here");
+            return;
+        }
+
+        try {
+            new TestBot(token);
+        } catch (Exception e) {
+            LOGGER.severe("Failed to start bot: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

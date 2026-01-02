@@ -1,8 +1,8 @@
 package fr.traqueur.commands.test.commands;
 
-import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.jda.Command;
 import fr.traqueur.commands.jda.JDAArguments;
+import fr.traqueur.commands.jda.JDAInteractionContext;
 import fr.traqueur.commands.test.TestBot;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.IMentionable;
@@ -22,21 +22,21 @@ public class UserInfoCommand extends Command<TestBot> {
         super(bot, "userinfo");
         this.setDescription("Get information about a user");
         this.setGameOnly(true); // Guild-only command
-        this.addOptionalArgs("user", User.class);
+        this.addOptionalArgs("user", Member.class);
     }
 
     @Override
-    public void execute(SlashCommandInteractionEvent event, JDAArguments arguments) {
+    public void execute(JDAInteractionContext context, JDAArguments arguments) {
+        SlashCommandInteractionEvent event = (SlashCommandInteractionEvent) context.getEvent();
         JDAArguments jdaArgs = jda(arguments);
 
         // Get the target user (defaults to the command executor)
-        User user = jdaArgs.getUser("user").orElse(event.getUser());
-        Member member = event.getGuild().getMember(user);
-
+        Member member = jdaArgs.<Member>getOptional("user").orElse(event.getMember());
         if (member == null) {
             jdaArgs.reply("User not found in this server!");
             return;
         }
+        User user = member.getUser();
 
         // Build embed
         EmbedBuilder embed = new EmbedBuilder()

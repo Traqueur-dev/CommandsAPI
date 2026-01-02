@@ -1,7 +1,9 @@
 # CommandsAPI
 
-**CommandsAPI** is a modular, extensible Java library for building robust, typed command systems across multiple platforms such as **Spigot** and **Velocity**. 
-As of version `4.0.0`, all core logic has been extracted into a dedicated `core` module, enabling seamless multi-platform support.
+**CommandsAPI** is a modular, extensible Java library for building robust, typed command systems across multiple
+platforms such as **Spigot** and **Velocity**.
+As of version `4.0.0`, all core logic has been extracted into a dedicated `core` module, enabling seamless
+multi-platform support.
 
 ---
 
@@ -47,11 +49,11 @@ traqueur-dev-commandsapi/
 
 ```groovy
 repositories {
-    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.groupez.dev/<repository>' } // snapshots or releases
 }
 
 dependencies {
-    implementation 'com.github.Traqueur-dev.CommandsAPI:platform-spigot:[version]' // or platform-velocity
+    implementation 'fr.traqueur.commands:platform-spigot:[version]' // or platform-velocity or platform-<your-platform>
 }
 ```
 
@@ -60,15 +62,15 @@ dependencies {
 ```xml
 <repositories>
     <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
+        <id>groupez-releases</id>
+        <url>https://repo.groupez.dev/releases</url>
     </repository>
 </repositories>
 
 <dependencies>
     <dependency>
-        <groupId>com.github.Traqueur-dev.CommandsAPI</groupId>
-        <artifactId>platform-spigot</artifactId> <!-- or platform-velocity -->
+        <groupId>fr.traqueur.commands</groupId>
+        <artifactId>platform-spigot</artifactId> <!-- or platform-velocity or platform-<your-platform> -->
         <version>[version]</version>
     </dependency>
 </dependencies>
@@ -81,7 +83,8 @@ dependencies {
 ## 💡 Example (Spigot)
 
 Be sure to extends all the classes from the platform you are using (Spigot, Velocity, etc.):
-`fr.traqueur.commandsapi.spigot.CommandManager` for Spigot, `fr.traqueur.commandsapi.velocity.CommandManager` for Velocity, etc.
+`fr.traqueur.commandsapi.spigot.CommandManager` for Spigot, `fr.traqueur.commandsapi.velocity.CommandManager` for
+Velocity, etc.
 
 ```java
 public class HelloWorldCommand extends Command<MyPlugin> {

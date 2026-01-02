@@ -10,19 +10,19 @@ public class SubTestCommand extends Command<TestPlugin> {
 
     public SubTestCommand(TestPlugin plugin) {
         super(plugin, "sub.inner");
-        this.addArgs("test");
-        this.addArgs("testStr", String.class, (sender, args) -> {
-           args.forEach(arg -> {
-               sender.sendMessage("Arg: " + arg);
-           });
-           return List.of();
+        this.addArgs("test", Integer.class);
+        this.addArg("testStr", String.class, (sender, args) -> {
+            args.forEach(arg -> {
+                sender.sendMessage("Arg: " + arg);
+            });
+            return List.of();
         });
         this.addAlias("sub");
     }
 
     @Override
     public void execute(CommandSender sender, Arguments arguments) {
-        int test = arguments.getAsInt("test", -1);
+        int test = arguments.<Integer>getOptional("test").orElse(-1);
         String testStr = arguments.get("testStr");
         sender.sendMessage("Test: " + test + " TestStr: " + testStr);
         sender.sendMessage(this.getUsage());

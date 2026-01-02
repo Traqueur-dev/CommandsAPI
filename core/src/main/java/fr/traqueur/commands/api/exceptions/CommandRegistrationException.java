@@ -19,7 +19,7 @@ public class CommandRegistrationException extends RuntimeException {
      * Constructs a new exception with the specified detail message and cause.
      *
      * @param message the detail message
-     * @param cause the cause of the exception
+     * @param cause   the cause of the exception
      */
     public CommandRegistrationException(String message, Throwable cause) {
         super(message, cause);

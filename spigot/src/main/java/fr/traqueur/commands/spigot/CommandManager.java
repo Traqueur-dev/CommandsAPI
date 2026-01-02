@@ -9,6 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * This implementation of {@link fr.traqueur.commands.api.CommandManager} is used to provide the command manager in Spigot context.
+ *
  * @param <T> The type of the plugin, must extend JavaPlugin.
  */
 public class CommandManager<T extends JavaPlugin> extends fr.traqueur.commands.api.CommandManager<T, CommandSender> {
