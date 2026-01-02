@@ -8,6 +8,7 @@ repositories {
 
 dependencies {
     implementation project(":jda")
+    implementation project(":annotations-addon")
     implementation("net.dv8tion:JDA:5.2.1") {
         exclude module: 'opus-java'
     }

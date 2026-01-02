@@ -1,9 +1,12 @@
 package fr.traqueur.commands.test;
 
+import fr.traqueur.commands.annotations.AnnotationCommandProcessor;
 import fr.traqueur.commands.jda.CommandManager;
 import fr.traqueur.commands.test.commands.*;
+import fr.traqueur.commands.test.commands.annoted.TestAnnotedCommands;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 import java.util.logging.Logger;
@@ -35,8 +38,13 @@ public class TestBot {
         CommandManager<TestBot> commandManager = new CommandManager<>(this, jda, LOGGER);
         commandManager.setDebug(true);
 
+        AnnotationCommandProcessor<TestBot, SlashCommandInteractionEvent> annotationProcessor =
+                new AnnotationCommandProcessor<>(commandManager);
+
         // Register commands
         LOGGER.info("Registering commands...");
+        annotationProcessor.register(new TestAnnotedCommands());
+
         commandManager.registerCommand(new PingCommand(this));
         commandManager.registerCommand(new UserInfoCommand(this));
         commandManager.registerCommand(new MathCommand(this));
