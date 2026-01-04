@@ -465,18 +465,9 @@ public abstract class CommandManager<T, S> {
      */
     private void registerInternalConverters() {
         this.registerConverter(String.class, (s) -> s);
-
-        // Register both primitive and wrapper types for DefaultArgumentParser (Spigot/Velocity).
-        // JDA's ArgumentParser handles primitives internally, but text-based platforms need explicit registration.
-        // Wrapper types (Integer.class, Long.class, etc.) are registered for compatibility with wrapper usage.
-        // Primitive types (int.class, long.class, etc.) are registered to support primitive method parameters.
         this.registerConverter(Boolean.class, new BooleanArgument<>());
-        this.registerConverter(boolean.class, new BooleanArgument<>());
         this.registerConverter(Integer.class, new IntegerArgument());
-        this.registerConverter(int.class, new IntegerArgument());
         this.registerConverter(Double.class, new DoubleArgument());
-        this.registerConverter(double.class, new DoubleArgument());
         this.registerConverter(Long.class, new LongArgument());
-        this.registerConverter(long.class, new LongArgument());
     }
 }
