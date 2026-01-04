@@ -20,10 +20,10 @@ public class DefaultArgumentParser<T, S> implements ArgumentParser<T, S, String[
 
     private static final int MAX_INFINITE_LENGTH = 10_000;
 
-    private final Map<String, ArgumentConverter.Wrapper<?>> typeConverters;
+    private final Map<Class<?>, ArgumentConverter.Wrapper<?>> typeConverters;
     private final Logger logger;
 
-    public DefaultArgumentParser(Map<String, ArgumentConverter.Wrapper<?>> typeConverters, Logger logger) {
+    public DefaultArgumentParser(Map<Class<?>, ArgumentConverter.Wrapper<?>> typeConverters, Logger logger) {
         this.typeConverters = typeConverters;
         this.logger = logger;
     }
@@ -80,7 +80,7 @@ public class DefaultArgumentParser<T, S> implements ArgumentParser<T, S, String[
     }
 
     private ParseResult parseSingle(Arguments arguments, Argument<S> arg, String input) {
-        String typeKey = arg.type().key();
+        Class<?> typeKey = arg.type().key();
         ArgumentConverter.Wrapper<?> wrapper = typeConverters.get(typeKey);
 
         if (wrapper == null) {
@@ -88,7 +88,7 @@ public class DefaultArgumentParser<T, S> implements ArgumentParser<T, S, String[
                     ParseError.Type.TYPE_NOT_FOUND,
                     arg.name(),
                     input,
-                    "No converter for type: " + typeKey
+                    "No converter for type: " + typeKey.getSimpleName()
             ));
         }
 

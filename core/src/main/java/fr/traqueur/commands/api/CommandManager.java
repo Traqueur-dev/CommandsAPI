@@ -49,7 +49,7 @@ public abstract class CommandManager<T, S> {
     /**
      * The argument converters registered in the command manager.
      */
-    private final Map<String, ArgumentConverter.Wrapper<?>> typeConverters;
+    private final Map<Class<?>, ArgumentConverter.Wrapper<?>> typeConverters;
 
     /**
      * The tab completer registered in the command manager.
@@ -202,7 +202,7 @@ public abstract class CommandManager<T, S> {
      * @param <C>       The type of the argument.
      */
     public <C> void registerConverter(Class<C> typeClass, ArgumentConverter<C> converter) {
-        this.typeConverters.put(typeClass.getName().toLowerCase(), new ArgumentConverter.Wrapper<>(typeClass, converter));
+        this.typeConverters.put(typeClass, new ArgumentConverter.Wrapper<>(typeClass, converter));
     }
 
     /**
@@ -251,8 +251,8 @@ public abstract class CommandManager<T, S> {
      * @param type The type to check.
      * @return true if a TabCompleter is registered for this type.
      */
-    public boolean hasTabCompleterForType(String type) {
-        ArgumentConverter.Wrapper<?> wrapper = this.typeConverters.get(type.toLowerCase());
+    public boolean hasTabCompleterForType(Class<?> type) {
+        ArgumentConverter.Wrapper<?> wrapper = this.typeConverters.get(type);
         return wrapper != null && wrapper.converter() instanceof TabCompleter;
     }
 
@@ -263,8 +263,8 @@ public abstract class CommandManager<T, S> {
      * @return The TabCompleter for this type, or null if none exists.
      */
     @SuppressWarnings("unchecked")
-    public TabCompleter<S> getTabCompleterForType(String type) {
-        ArgumentConverter.Wrapper<?> wrapper = this.typeConverters.get(type.toLowerCase());
+    public TabCompleter<S> getTabCompleterForType(Class<?> type) {
+        ArgumentConverter.Wrapper<?> wrapper = this.typeConverters.get(type);
         if (wrapper != null && wrapper.converter() instanceof TabCompleter) {
             return (TabCompleter<S>) wrapper.converter();
         }
@@ -411,7 +411,7 @@ public abstract class CommandManager<T, S> {
     private void addCompletionForArgs(String label, int commandSize, List<Argument<S>> args) {
         for (int i = 0; i < args.size(); i++) {
             Argument<S> arg = args.get(i);
-            String type = arg.type().key();
+            Class<?> type = arg.type().key();
             ArgumentConverter.Wrapper<?> entry = this.typeConverters.get(type);
             TabCompleter<S> argConverter = arg.tabCompleter();
             if (argConverter != null) {

@@ -22,16 +22,16 @@ class DefaultArgumentParserTest {
 
     @BeforeEach
     void setUp() {
-        Map<String, ArgumentConverter.Wrapper<?>> converters = new HashMap<>();
-        converters.put("string", new ArgumentConverter.Wrapper<>(String.class, s -> s));
-        converters.put("integer", new ArgumentConverter.Wrapper<>(Integer.class, s -> {
+        Map<Class<?>, ArgumentConverter.Wrapper<?>> converters = new HashMap<>();
+        converters.put(String.class, new ArgumentConverter.Wrapper<>(String.class, s -> s));
+        converters.put(Integer.class, new ArgumentConverter.Wrapper<>(Integer.class, s -> {
             try {
                 return Integer.valueOf(s);
             } catch (NumberFormatException e) {
                 return null;
             }
         }));
-        converters.put("double", new ArgumentConverter.Wrapper<>(Double.class, s -> {
+        converters.put(Double.class, new ArgumentConverter.Wrapper<>(Double.class, s -> {
             try {
                 return Double.valueOf(s);
             } catch (NumberFormatException e) {
