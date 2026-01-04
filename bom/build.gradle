@@ -1,0 +1,77 @@
+plugins {
+    id 'java-platform'
+    id 'maven-publish'
+}
+
+description = 'CommandsAPI BOM (Bill of Materials)'
+
+javaPlatform {
+    allowDependencies()
+}
+
+dependencies {
+    constraints {
+        api(project(':core'))
+        api(project(':spigot'))
+        api(project(':velocity'))
+        api(project(':jda'))
+        api(project(':annotations-addon'))
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            def repository = System.getProperty('repository.name', 'snapshots')
+            def repoType = repository.toLowerCase()
+
+            name = "groupez${repository.capitalize()}"
+            url = uri("https://repo.groupez.dev/${repoType}")
+
+            credentials {
+                username = findProperty("${name}Username") ?: System.getenv('MAVEN_USERNAME')
+                password = findProperty("${name}Password") ?: System.getenv('MAVEN_PASSWORD')
+            }
+
+            authentication {
+                create("basic", BasicAuthentication)
+            }
+        }
+    }
+
+    publications {
+        create('maven', MavenPublication) {
+            from components.javaPlatform
+
+            groupId = rootProject.group.toString()
+            artifactId = 'bom'
+            version = rootProject.version.toString()
+
+            pom {
+                name = 'CommandsAPI BOM'
+                description = 'CommandsAPI Bill of Materials - Manages consistent versions across CommandsAPI modules'
+                url = 'https://github.com/Traqueur-dev/CommandsAPI'
+
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'traqueur'
+                        name = 'Traqueur'
+                    }
+                }
+
+                scm {
+                    connection = 'scm:git:git://github.com/Traqueur-dev/CommandsAPI.git'
+                    developerConnection = 'scm:git:ssh://github.com/Traqueur-dev/CommandsAPI.git'
+                    url = 'https://github.com/Traqueur-dev/CommandsAPI'
+                }
+            }
+        }
+    }
+}

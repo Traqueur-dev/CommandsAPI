@@ -9,7 +9,7 @@ public sealed interface ArgumentType permits ArgumentType.Simple, ArgumentType.I
         return new Simple(clazz);
     }
 
-    String key();
+    Class<?> key();
 
     /**
      * Check if this is the infinite type.
@@ -23,8 +23,8 @@ public sealed interface ArgumentType permits ArgumentType.Simple, ArgumentType.I
     record Simple(Class<?> clazz) implements ArgumentType {
 
         @Override
-        public String key() {
-            return clazz.getSimpleName().toLowerCase();
+        public Class<?> key() {
+            return clazz;
         }
 
     }
@@ -33,8 +33,8 @@ public sealed interface ArgumentType permits ArgumentType.Simple, ArgumentType.I
         public static final Infinite INSTANCE = new Infinite();
 
         @Override
-        public String key() {
-            return "infinite";
+        public Class<?> key() {
+            return fr.traqueur.commands.api.arguments.Infinite.class;
         }
     }
 
