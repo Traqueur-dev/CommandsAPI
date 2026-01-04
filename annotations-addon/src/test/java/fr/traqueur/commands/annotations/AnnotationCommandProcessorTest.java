@@ -387,15 +387,97 @@ class AnnotationCommandProcessorTest {
             processor.register(commands);
 
             List<String> labels = platform.getRegisteredLabels();
-            
+
             int adminIndex = labels.indexOf("admin");
             int adminReloadIndex = labels.indexOf("admin.reload");
             int adminReloadConfigIndex = labels.indexOf("admin.reload.config");
-            
-            assertTrue(adminIndex < adminReloadIndex, 
+
+            assertTrue(adminIndex < adminReloadIndex,
                 "admin should be registered before admin.reload");
             assertTrue(adminReloadIndex < adminReloadConfigIndex,
                 "admin.reload should be registered before admin.reload.config");
+        }
+    }
+
+    @Nested
+    @DisplayName("Primitive Types Support")
+    class PrimitiveTypesSupport {
+
+        @Test
+        @DisplayName("should register command with primitive int argument")
+        void shouldRegisterCommandWithPrimitiveInt() {
+            PrimitiveTypesTestCommands commands = new PrimitiveTypesTestCommands();
+            processor.register(commands);
+
+            assertTrue(platform.hasCommand("primitiveint"));
+            Command<Object, MockSender> cmd = platform.getCommand("primitiveint");
+            assertNotNull(cmd);
+
+            List<Argument<MockSender>> args = cmd.getArgs();
+            assertEquals(1, args.size());
+            assertEquals("value", args.get(0).name());
+        }
+
+        @Test
+        @DisplayName("should register command with primitive long argument")
+        void shouldRegisterCommandWithPrimitiveLong() {
+            PrimitiveTypesTestCommands commands = new PrimitiveTypesTestCommands();
+            processor.register(commands);
+
+            assertTrue(platform.hasCommand("primitivelong"));
+            Command<Object, MockSender> cmd = platform.getCommand("primitivelong");
+            assertNotNull(cmd);
+
+            List<Argument<MockSender>> args = cmd.getArgs();
+            assertEquals(1, args.size());
+            assertEquals("value", args.get(0).name());
+        }
+
+        @Test
+        @DisplayName("should register command with primitive double argument")
+        void shouldRegisterCommandWithPrimitiveDouble() {
+            PrimitiveTypesTestCommands commands = new PrimitiveTypesTestCommands();
+            processor.register(commands);
+
+            assertTrue(platform.hasCommand("primitivedouble"));
+            Command<Object, MockSender> cmd = platform.getCommand("primitivedouble");
+            assertNotNull(cmd);
+
+            List<Argument<MockSender>> args = cmd.getArgs();
+            assertEquals(1, args.size());
+            assertEquals("value", args.get(0).name());
+        }
+
+        @Test
+        @DisplayName("should register command with primitive boolean argument")
+        void shouldRegisterCommandWithPrimitiveBoolean() {
+            PrimitiveTypesTestCommands commands = new PrimitiveTypesTestCommands();
+            processor.register(commands);
+
+            assertTrue(platform.hasCommand("primitivebool"));
+            Command<Object, MockSender> cmd = platform.getCommand("primitivebool");
+            assertNotNull(cmd);
+
+            List<Argument<MockSender>> args = cmd.getArgs();
+            assertEquals(1, args.size());
+            assertEquals("enabled", args.get(0).name());
+        }
+
+        @Test
+        @DisplayName("should register command with mixed primitive types")
+        void shouldRegisterCommandWithMixedPrimitives() {
+            PrimitiveTypesTestCommands commands = new PrimitiveTypesTestCommands();
+            processor.register(commands);
+
+            assertTrue(platform.hasCommand("mixedprimitives"));
+            Command<Object, MockSender> cmd = platform.getCommand("mixedprimitives");
+            assertNotNull(cmd);
+
+            List<Argument<MockSender>> args = cmd.getArgs();
+            assertEquals(3, args.size());
+            assertEquals("count", args.get(0).name());
+            assertEquals("enabled", args.get(1).name());
+            assertEquals("ratio", args.get(2).name());
         }
     }
 }
