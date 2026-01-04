@@ -7,8 +7,10 @@ allprojects {
     group = 'fr.traqueur.commands'
     version = property('version')
 
-    apply {
-        plugin 'java-library'
+    if (project.name != 'bom') {
+        apply {
+            plugin 'java-library'
+        }
     }
 
     ext.classifier = System.getProperty('archive.classifier')
@@ -27,7 +29,7 @@ allprojects {
 }
 
 subprojects {
-    if (project.name.contains('test-')) {
+    if (project.name.contains('test-') || project.name == 'bom') {
         return;
     }
 

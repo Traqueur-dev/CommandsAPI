@@ -24,7 +24,7 @@ public sealed interface ArgumentType permits ArgumentType.Simple, ArgumentType.I
 
         @Override
         public String key() {
-            return clazz.getSimpleName().toLowerCase();
+            return clazz.getName().toLowerCase();
         }
 
     }
