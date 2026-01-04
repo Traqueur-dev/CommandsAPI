@@ -1,5 +1,6 @@
 rootProject.name = 'CommandsAPI'
 
+include 'bom'
 include 'velocity-test-plugin'
 include 'spigot-test-plugin'
 include 'spigot'

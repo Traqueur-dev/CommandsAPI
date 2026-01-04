@@ -202,7 +202,7 @@ public abstract class CommandManager<T, S> {
      * @param <C>       The type of the argument.
      */
     public <C> void registerConverter(Class<C> typeClass, ArgumentConverter<C> converter) {
-        this.typeConverters.put(typeClass.getSimpleName().toLowerCase(), new ArgumentConverter.Wrapper<>(typeClass, converter));
+        this.typeConverters.put(typeClass.getName().toLowerCase(), new ArgumentConverter.Wrapper<>(typeClass, converter));
     }
 
     /**
