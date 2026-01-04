@@ -43,7 +43,7 @@ public record Argument<S>(String name, ArgumentType type, TabCompleter<S> tabCom
     }
 
     public String canonicalName() {
-        return this.name + ":" + this.type.key();
+        return this.name + ":" + this.type.key().getSimpleName().toLowerCase();
     }
 
 

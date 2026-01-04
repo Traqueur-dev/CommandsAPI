@@ -7,6 +7,8 @@ import fr.traqueur.commands.api.models.CommandPlatform;
 import fr.traqueur.commands.api.resolver.SenderResolver;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.*;
@@ -288,19 +290,55 @@ public class JDAPlatform<T> implements CommandPlatform<T, JDAInteractionContext>
      * @param type The type string.
      * @return The corresponding OptionType.
      */
-    private OptionType mapToOptionType(String type) {
-        return switch (type.toLowerCase()) {
-            case "integer", "int", "long" -> OptionType.INTEGER;
-            case "boolean" -> OptionType.BOOLEAN;
-            case "user", "member" -> OptionType.USER;
-            case "role" -> OptionType.ROLE;
-            case "channel", "guildchannelunion" -> OptionType.CHANNEL;
-            case "double", "float" -> OptionType.NUMBER;
-            case "attachment" -> OptionType.ATTACHMENT;
-            case "mentionable" -> OptionType.MENTIONABLE;
+    private OptionType mapToOptionType(Class<?> type) {
+        return switch (type) {
+
+            // INTEGER
+            case Class<?> t when t == int.class
+                    || t == Integer.class
+                    || t == long.class
+                    || t == Long.class
+                    -> OptionType.INTEGER;
+
+            // BOOLEAN
+            case Class<?> t when t == boolean.class
+                    || t == Boolean.class
+                    -> OptionType.BOOLEAN;
+
+            // USER / MEMBER
+            case Class<?> t when User.class.isAssignableFrom(t)
+                    || Member.class.isAssignableFrom(t)
+                    -> OptionType.USER;
+
+            // ROLE
+            case Class<?> t when Role.class.isAssignableFrom(t)
+                    -> OptionType.ROLE;
+
+            // CHANNEL (tous types de channels)
+            case Class<?> t when GuildChannel.class.isAssignableFrom(t)
+                    -> OptionType.CHANNEL;
+
+            // NUMBER
+            case Class<?> t when t == double.class
+                    || t == Double.class
+                    || t == float.class
+                    || t == Float.class
+                    -> OptionType.NUMBER;
+
+            // ATTACHMENT
+            case Class<?> t when Message.Attachment.class.isAssignableFrom(t)
+                    -> OptionType.ATTACHMENT;
+
+            // MENTIONABLE
+            case Class<?> t when IMentionable.class.isAssignableFrom(t)
+                    -> OptionType.MENTIONABLE;
+
             default -> OptionType.STRING;
         };
     }
+
+
+
 
     /**
      * Synchronize all registered commands with Discord globally.
