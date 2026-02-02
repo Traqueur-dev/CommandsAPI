@@ -42,4 +42,18 @@ public interface MessageHandler {
      * @return The command disabled message.
      */
     String getCommandDisabledMessage();
+
+    /**
+     * This method is used to get the argument too long message.
+     *
+     * @return The argument too long message.
+     */
+    String getArgumentTooLongMessage();
+
+    /**
+     * This method is used to get the invalid format message.
+     *
+     * @return The invalid format message.
+     */
+    String getInvalidFormatMessage();
 }

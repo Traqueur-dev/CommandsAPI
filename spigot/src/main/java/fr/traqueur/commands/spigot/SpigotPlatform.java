@@ -5,6 +5,7 @@ import fr.traqueur.commands.api.exceptions.CommandRegistrationException;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandPlatform;
 import fr.traqueur.commands.api.resolver.SenderResolver;
+import fr.traqueur.commands.api.utils.Patterns;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandMap;
@@ -128,7 +129,7 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
      */
     @Override
     public void addCommand(Command<T, CommandSender> command, String label) {
-        String[] labelParts = label.split("\\.");
+        String[] labelParts = Patterns.DOT.split(label);
         String cmdLabel = labelParts[0].toLowerCase();
 
         boolean alreadyInTree = commandManager.getCommands()
@@ -144,7 +145,7 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
                 cmd.setTabCompleter(spigotExecutor);
                 cmd.setAliases(
                         command.getAliases().stream()
-                                .map(a -> a.split("\\.")[0])
+                                .map(a -> Patterns.DOT.split(a)[0])
                                 .filter(a -> !a.equalsIgnoreCase(cmdLabel))
                                 .distinct()
                                 .collect(Collectors.toList())

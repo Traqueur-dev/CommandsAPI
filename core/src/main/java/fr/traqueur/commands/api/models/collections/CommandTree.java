@@ -1,6 +1,7 @@
 package fr.traqueur.commands.api.models.collections;
 
 import fr.traqueur.commands.api.models.Command;
+import fr.traqueur.commands.api.utils.Patterns;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -14,23 +15,25 @@ import java.util.regex.Pattern;
 public class CommandTree<T, S> {
 
     /**
-     * Pre-compiled pattern for splitting labels.
-     */
-    private static final Pattern DOT_PATTERN = Pattern.compile("\\.");
-
-    /**
-     * Valid label pattern: starts with letter, followed by letters, digits, underscores, or dots.
-     * Each segment must start with a letter.
+     * Valid label pattern: starts with letter, followed by letters, digits, underscores.
+     * Each segment must start with a letter to ensure valid command syntax across platforms.
+     * Example valid segments: "help", "setHome", "player_info"
+     * Example invalid segments: "123cmd", "_hidden", "cmd-name"
      */
     private static final Pattern VALID_LABEL_SEGMENT = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$");
 
     /**
-     * Maximum length for a single label segment.
+     * Maximum length for a single label segment (64 characters).
+     * This limit prevents excessively long command names that could cause
+     * display issues in help menus or tab completion interfaces.
      */
     private static final int MAX_SEGMENT_LENGTH = 64;
 
     /**
-     * Maximum depth for nested commands.
+     * Maximum depth for nested commands (10 levels).
+     * This limit prevents deeply nested command hierarchies that could
+     * impact performance during command lookup and cause usability issues.
+     * Example: "admin.user.permission.group.add" has depth 5.
      */
     private static final int MAX_DEPTH = 10;
 
@@ -54,7 +57,7 @@ public class CommandTree<T, S> {
     public void addCommand(String label, Command<T, S> command) {
         validateLabel(label);
 
-        String[] parts = DOT_PATTERN.split(label);
+        String[] parts = Patterns.DOT.split(label);
         CommandNode<T, S> node = root;
 
         for (String seg : parts) {
@@ -77,7 +80,7 @@ public class CommandTree<T, S> {
             throw new IllegalArgumentException("Command label cannot be null or empty");
         }
 
-        String[] segments = DOT_PATTERN.split(label);
+        String[] segments = Patterns.DOT.split(label);
 
         if (segments.length > MAX_DEPTH) {
             throw new IllegalArgumentException(
@@ -162,7 +165,7 @@ public class CommandTree<T, S> {
      * Remove a command node by its full label.
      */
     public void removeCommand(String label, boolean prune) {
-        CommandNode<T, S> target = this.findNode(DOT_PATTERN.split(label))
+        CommandNode<T, S> target = this.findNode(Patterns.DOT.split(label))
                 .map(MatchResult::node)
                 .orElse(null);
         if (target == null) return;

@@ -80,6 +80,43 @@ dependencies {
 
 ---
 
+## 🏷️ Annotations Addon
+
+The `annotations-addon` module provides annotation-based command registration. When using `@Arg` implicitly (without annotation), parameter names are used as argument names. This requires the `-parameters` compiler flag.
+
+### Maven
+
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.13.0</version>
+    <configuration>
+        <parameters>true</parameters>
+    </configuration>
+</plugin>
+```
+
+### Gradle (Groovy)
+
+```groovy
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add('-parameters')
+}
+```
+
+### Gradle (Kotlin DSL)
+
+```kotlin
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.add("-parameters")
+}
+```
+
+> 💡 Without this flag, parameter names default to `arg0`, `arg1`, etc. You can always use `@Arg("name")` explicitly to avoid this requirement.
+
+---
+
 ## 💡 Example (Spigot)
 
 Be sure to extends all the classes from the platform you are using (Spigot, Velocity, etc.):

@@ -363,16 +363,17 @@ class AnnotationCommandProcessorTest {
         }
 
         @Test
-        @DisplayName("should throw when parameter is missing @Arg annotation")
-        void shouldThrowWhenMissingArgAnnotation() {
-            InvalidContainerMissingArg invalid = new InvalidContainerMissingArg();
-            
-            IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> processor.register(invalid)
-            );
-            
-            assertTrue(ex.getMessage().contains("@Arg"));
+        @DisplayName("should use parameter name when @Arg is missing")
+        void shouldUseParameterNameWhenArgMissing() {
+            InvalidContainerMissingArg container = new InvalidContainerMissingArg();
+
+            // Should not throw - @Arg is optional, uses parameter name instead
+            List<Command<Object, MockSender>> commands = processor.register(container);
+
+            assertEquals(1, commands.size());
+            Command<Object, MockSender> cmd = commands.get(0);
+            // The command should have an argument named after the parameter
+            assertFalse(cmd.getArgs().isEmpty());
         }
     }
 

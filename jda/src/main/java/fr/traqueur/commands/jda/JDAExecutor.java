@@ -7,6 +7,7 @@ import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.collections.CommandTree;
 import fr.traqueur.commands.api.parsing.ParseResult;
 import fr.traqueur.commands.api.requirements.Requirement;
+import fr.traqueur.commands.api.utils.Patterns;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -41,7 +42,7 @@ public class JDAExecutor<T> extends ListenerAdapter {
         JDAInteractionContext context = JDAInteractionContext.wrap(event);
 
         // Find command
-        String[] labelParts = label.split("\\.");
+        String[] labelParts = Patterns.DOT.split(label);
         Optional<CommandTree.MatchResult<T, JDAInteractionContext>> found =
                 commandManager.getCommands().findNode(labelParts);
 
@@ -134,7 +135,7 @@ public class JDAExecutor<T> extends ListenerAdapter {
         JDAInteractionContext context = JDAInteractionContext.wrap(event);
 
         // Find command
-        String[] labelParts = label.split("\\.");
+        String[] labelParts = Patterns.DOT.split(label);
         Optional<CommandTree.MatchResult<T, JDAInteractionContext>> found =
                 commandManager.getCommands().findNode(labelParts);
 

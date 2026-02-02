@@ -35,83 +35,184 @@ public class CommandBuilder<T, S> {
         this.command = new SimpleCommand(manager.getPlatform().getPlugin(), name);
     }
 
+    /**
+     * Set the command description.
+     *
+     * @param description the description text
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> description(String description) {
         this.description = description;
         return this;
     }
 
+    /**
+     * Set the command usage string.
+     *
+     * @param usage the usage text
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> usage(String usage) {
         this.usage = usage;
         return this;
     }
 
+    /**
+     * Set the required permission for this command.
+     *
+     * @param permission the permission node
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> permission(String permission) {
         this.permission = permission;
         return this;
     }
 
+    /**
+     * Mark this command as game-only (cannot be used from console).
+     *
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> gameOnly() {
         this.gameOnly = true;
         return this;
     }
 
+    /**
+     * Set whether this command is game-only.
+     *
+     * @param gameOnly true if game-only, false otherwise
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> gameOnly(boolean gameOnly) {
         this.gameOnly = gameOnly;
         return this;
     }
 
+    /**
+     * Add an alias for this command.
+     *
+     * @param alias the alias to add
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> alias(String alias) {
         this.command.addAlias(alias);
         return this;
     }
 
+    /**
+     * Add multiple aliases for this command.
+     *
+     * @param aliases the aliases to add
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> aliases(String... aliases) {
         this.command.addAlias(aliases);
         return this;
     }
 
+    /**
+     * Add a required argument to this command.
+     *
+     * @param name the argument name
+     * @param type the argument type class
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> arg(String name, Class<?> type) {
         this.command.addArg(name, type);
         return this;
     }
 
+    /**
+     * Add a required argument with a custom tab completer.
+     *
+     * @param name      the argument name
+     * @param type      the argument type class
+     * @param completer the tab completer for this argument
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> arg(String name, Class<?> type, TabCompleter<S> completer) {
         this.command.addArg(name, type, completer);
         return this;
     }
 
+    /**
+     * Add an optional argument to this command.
+     *
+     * @param name the argument name
+     * @param type the argument type class
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> optionalArg(String name, Class<?> type) {
         this.command.addOptionalArg(name, type);
         return this;
     }
 
+    /**
+     * Add an optional argument with a custom tab completer.
+     *
+     * @param name      the argument name
+     * @param type      the argument type class
+     * @param completer the tab completer for this argument
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> optionalArg(String name, Class<?> type, TabCompleter<S> completer) {
         this.command.addOptionalArg(name, type, completer);
         return this;
     }
 
+    /**
+     * Add a requirement that must be met to execute this command.
+     *
+     * @param requirement the requirement to add
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> requirement(Requirement<S> requirement) {
         this.command.addRequirements(requirement);
         return this;
     }
 
+    /**
+     * Add multiple requirements that must be met to execute this command.
+     *
+     * @param requirements the requirements to add
+     * @return this builder for chaining
+     */
     @SafeVarargs
     public final CommandBuilder<T, S> requirements(Requirement<S>... requirements) {
         this.command.addRequirements(requirements);
         return this;
     }
 
+    /**
+     * Add a subcommand to this command.
+     *
+     * @param subcommand the subcommand to add
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> subcommand(Command<T, S> subcommand) {
         this.command.addSubCommand(subcommand);
         return this;
     }
 
+    /**
+     * Add multiple subcommands to this command.
+     *
+     * @param subcommands the subcommands to add
+     * @return this builder for chaining
+     */
     @SafeVarargs
     public final CommandBuilder<T, S> subcommands(Command<T, S>... subcommands) {
         this.command.addSubCommand(subcommands);
         return this;
     }
 
+    /**
+     * Set the executor for this command.
+     *
+     * @param executor the executor that handles command execution
+     * @return this builder for chaining
+     */
     public CommandBuilder<T, S> executor(BiConsumer<S, Arguments> executor) {
         this.executor = executor;
         return this;
