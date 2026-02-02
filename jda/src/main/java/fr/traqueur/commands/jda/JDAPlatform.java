@@ -5,6 +5,7 @@ import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandPlatform;
 import fr.traqueur.commands.api.resolver.SenderResolver;
+import fr.traqueur.commands.api.utils.Patterns;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
@@ -112,7 +113,7 @@ public class JDAPlatform<T> implements CommandPlatform<T, JDAInteractionContext>
 
     @Override
     public void addCommand(Command<T, JDAInteractionContext> command, String label) {
-        String[] parts = label.split("\\.");
+        String[] parts = Patterns.DOT.split(label);
         String rootName = parts[0].toLowerCase();
 
         if (parts.length == 1) {
@@ -185,7 +186,7 @@ public class JDAPlatform<T> implements CommandPlatform<T, JDAInteractionContext>
 
     @Override
     public void removeCommand(String label, boolean subcommand) {
-        String[] parts = label.split("\\.");
+        String[] parts = Patterns.DOT.split(label);
         String rootName = parts[0].toLowerCase();
 
         if (!subcommand && parts.length == 1) {

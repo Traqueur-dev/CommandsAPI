@@ -8,9 +8,9 @@ import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.models.collections.CommandTree;
 import fr.traqueur.commands.api.models.collections.CommandTree.MatchResult;
 import fr.traqueur.commands.api.requirements.Requirement;
+import fr.traqueur.commands.api.utils.Patterns;
 
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,8 +23,6 @@ import java.util.stream.Stream;
  * @param <S>     sender type
  */
 public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
-
-    private static final Pattern DOT_PATTERN = Pattern.compile("\\.");
 
     /**
      * Invokes a command based on the provided source, base label, and raw arguments.
@@ -298,7 +296,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
     private boolean allowedSuggestion(S src, String label, String opt) {
         String full = label + "." + opt.toLowerCase();
         Optional<Command<T, S>> copt = manager.getCommands()
-                .findNode(DOT_PATTERN.split(full))
+                .findNode(Patterns.DOT.split(full))
                 .flatMap(r -> r.node().getCommand());
         if (copt.isEmpty()) return true;
         Command<T, S> c = copt.get();

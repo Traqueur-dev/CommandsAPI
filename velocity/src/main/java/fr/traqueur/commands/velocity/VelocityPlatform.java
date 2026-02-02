@@ -6,6 +6,7 @@ import fr.traqueur.commands.api.CommandManager;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandPlatform;
 import fr.traqueur.commands.api.resolver.SenderResolver;
+import fr.traqueur.commands.api.utils.Patterns;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -115,7 +116,7 @@ public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
      */
     @Override
     public void addCommand(Command<T, CommandSource> command, String label) {
-        String[] labelParts = label.split("\\.");
+        String[] labelParts = Patterns.DOT.split(label);
         String cmdLabel = labelParts[0].toLowerCase();
 
         com.velocitypowered.api.command.CommandManager velocityCmdManager = server.getCommandManager();
@@ -128,7 +129,7 @@ public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
 
         if (!alreadyInTree && !alreadyInMap) {
             String[] aliases = command.getAliases().stream()
-                    .map(a -> a.split("\\.")[0].toLowerCase())
+                    .map(a -> Patterns.DOT.split(a)[0].toLowerCase())
                     .filter(a -> !a.equalsIgnoreCase(cmdLabel))
                     .distinct()
                     .toArray(String[]::new);

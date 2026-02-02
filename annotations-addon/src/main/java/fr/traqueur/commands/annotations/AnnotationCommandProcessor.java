@@ -6,6 +6,7 @@ import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandBuilder;
 import fr.traqueur.commands.api.resolver.SenderResolver;
+import fr.traqueur.commands.api.utils.Patterns;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -31,30 +32,47 @@ public class AnnotationCommandProcessor<T, S> {
         this.senderResolver = manager.getPlatform().getSenderResolver();
     }
 
-    public void register(Object... handlers) {
+    public List<Command<T, S>> register(Object... handlers) {
+        List<Command<T, S>> allCommands = new ArrayList<>();
         for (Object handler : handlers) {
-            processHandler(handler);
+            allCommands.addAll(processHandler(handler));
         }
+        return allCommands;
     }
 
-    private void processHandler(Object handler) {
+    private List<Command<T, S>> processHandler(Object handler) {
         Class<?> clazz = handler.getClass();
+        validateCommandContainer(clazz);
 
+        collectTabCompleters(handler, clazz);
+
+        List<CommandMethodInfo> commandMethods = collectCommandMethods(handler, clazz);
+        Set<String> allPaths = extractAllPaths(commandMethods);
+
+        Map<String, Command<T, S>> builtCommands = buildAllCommands(commandMethods, allPaths);
+        Set<String> rootCommands = organizeHierarchy(commandMethods, allPaths, builtCommands);
+
+        return registerRootCommands(rootCommands, builtCommands);
+    }
+
+    private void validateCommandContainer(Class<?> clazz) {
         if (!clazz.isAnnotationPresent(CommandContainer.class)) {
             throw new IllegalArgumentException(
                     "Class must be annotated with @CommandContainer: " + clazz.getName()
             );
         }
+    }
 
-        // First pass: collect all @TabComplete methods
+    private void collectTabCompleters(Object handler, Class<?> clazz) {
         tabCompleters.clear();
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.isAnnotationPresent(TabComplete.class)) {
                 processTabCompleter(handler, method);
             }
         }
+    }
 
-        // Second pass: collect all @Command methods and sort by depth
+    private List<CommandMethodInfo> collectCommandMethods(Object handler, Class<?> clazz) {
         List<CommandMethodInfo> commandMethods = new ArrayList<>();
         for (Method method : clazz.getDeclaredMethods()) {
             if (method.isAnnotationPresent(fr.traqueur.commands.annotations.Command.class)) {
@@ -63,46 +81,51 @@ public class AnnotationCommandProcessor<T, S> {
                 commandMethods.add(new CommandMethodInfo(handler, method, annotation.name()));
             }
         }
+        commandMethods.sort(Comparator.comparingInt(info -> Patterns.DOT.split(info.name).length));
+        return commandMethods;
+    }
 
-        // Sort by depth (parents first)
-        commandMethods.sort(Comparator.comparingInt(info -> info.name.split("\\.").length));
-
-        // Collect all command paths to determine which have parents defined
+    private Set<String> extractAllPaths(List<CommandMethodInfo> commandMethods) {
         Set<String> allPaths = new HashSet<>();
         for (CommandMethodInfo info : commandMethods) {
             allPaths.add(info.name);
         }
+        return allPaths;
+    }
 
-        // Third pass: build ALL commands first
+    private Map<String, Command<T, S>> buildAllCommands(List<CommandMethodInfo> commandMethods, Set<String> allPaths) {
         Map<String, Command<T, S>> builtCommands = new LinkedHashMap<>();
-        Set<String> rootCommands = new LinkedHashSet<>();
-
         for (CommandMethodInfo info : commandMethods) {
             String parentPath = getParentPath(info.name);
             boolean hasParentInBatch = parentPath != null && allPaths.contains(parentPath);
-
             Command<T, S> command = buildCommand(info.handler, info.method, info.name, hasParentInBatch);
             builtCommands.put(info.name, command);
         }
+        return builtCommands;
+    }
 
-        // Fourth pass: organize hierarchy (add subcommands to parents)
+    private Set<String> organizeHierarchy(List<CommandMethodInfo> commandMethods, Set<String> allPaths,
+                                          Map<String, Command<T, S>> builtCommands) {
+        Set<String> rootCommands = new LinkedHashSet<>();
         for (CommandMethodInfo info : commandMethods) {
             String parentPath = getParentPath(info.name);
-
             if (parentPath != null && allPaths.contains(parentPath)) {
-                Command<T, S> parent = builtCommands.get(parentPath);
-                Command<T, S> child = builtCommands.get(info.name);
-                parent.addSubCommand(child);
+                builtCommands.get(parentPath).addSubCommand(builtCommands.get(info.name));
             } else {
                 rootCommands.add(info.name);
             }
         }
+        return rootCommands;
+    }
 
-        // Fifth pass: register only root commands
+    private List<Command<T, S>> registerRootCommands(Set<String> rootCommands, Map<String, Command<T, S>> builtCommands) {
+        List<Command<T, S>> registeredCommands = new ArrayList<>();
         for (String rootPath : rootCommands) {
-            Command<T, S> rootCommand = builtCommands.get(rootPath);
-            manager.registerCommand(rootCommand);
+            Command<T, S> command = builtCommands.get(rootPath);
+            manager.registerCommand(command);
+            registeredCommands.add(command);
         }
+        return registeredCommands;
     }
 
     private String getParentPath(String path) {
@@ -167,67 +190,48 @@ public class AnnotationCommandProcessor<T, S> {
 
     private void processParameters(CommandBuilder<T, S> builder, Method method, String commandPath) {
         Parameter[] params = method.getParameters();
-        Type[] genericTypes = method.getGenericParameterTypes();
 
         for (int i = 0; i < params.length; i++) {
             Parameter param = params[i];
-            Class<?> paramType = param.getType();
 
-            // First parameter is sender (skip it for args)
-            if (i == 0) {
-                Class<?> senderType = paramType;
-                if (paramType == Optional.class) {
-                    senderType = extractOptionalType(param);
-                }
-                if (senderResolver.canResolve(senderType)) {
-                    continue;
-                }
+            if (i == 0 && isSenderParameter(param)) {
+                continue;
             }
 
-            // Must have @Arg annotation
-            Arg argAnnotation = param.getAnnotation(Arg.class);
-            if (argAnnotation == null) {
-                throw new IllegalArgumentException(
-                        "Parameter '" + param.getName() + "' in method '" + method.getName() +
-                                "' must be annotated with @Arg or be the sender type"
-                );
-            }
-
-            String argName = argAnnotation.value();
-            boolean isOptional = paramType == Optional.class;
-            boolean isInfinite = param.isAnnotationPresent(Infinite.class);
-
-            // Determine the actual argument type
-            Class<?> argType;
-            if (isOptional) {
-                argType = extractOptionalType(param);
-            } else {
-                argType = paramType;
-            }
-
-            // If @Infinite, use Infinite.class as the type
-            if (isInfinite) {
-                argType = fr.traqueur.commands.api.arguments.Infinite.class;
-            }
-
-            // Get tab completer if exists
-            TabCompleter<S> completer = getTabCompleter(commandPath, argName);
-
-            // Add argument to builder
-            if (isOptional) {
-                if (completer != null) {
-                    builder.optionalArg(argName, argType, completer);
-                } else {
-                    builder.optionalArg(argName, argType);
-                }
-            } else {
-                if (completer != null) {
-                    builder.arg(argName, argType, completer);
-                } else {
-                    builder.arg(argName, argType);
-                }
-            }
+            registerArgument(builder, param, commandPath);
         }
+    }
+
+    private boolean isSenderParameter(Parameter param) {
+        Class<?> paramType = param.getType();
+        Class<?> senderType = (paramType == Optional.class) ? extractOptionalType(param) : paramType;
+        return senderResolver.canResolve(senderType);
+    }
+
+    private void registerArgument(CommandBuilder<T, S> builder, Parameter param, String commandPath) {
+        String argName = getArgumentName(param);
+        Class<?> argType = resolveArgumentType(param);
+        boolean isOptional = param.getType() == Optional.class;
+        TabCompleter<S> completer = getTabCompleter(commandPath, argName);
+
+        if (isOptional) {
+            builder.optionalArg(argName, argType, completer);
+        } else {
+            builder.arg(argName, argType, completer);
+        }
+    }
+
+    private String getArgumentName(Parameter param) {
+        Arg argAnnotation = param.getAnnotation(Arg.class);
+        return (argAnnotation != null) ? argAnnotation.value() : param.getName();
+    }
+
+    private Class<?> resolveArgumentType(Parameter param) {
+        if (param.isAnnotationPresent(Infinite.class)) {
+            return fr.traqueur.commands.api.arguments.Infinite.class;
+        }
+        Class<?> paramType = param.getType();
+        return (paramType == Optional.class) ? extractOptionalType(param) : paramType;
     }
 
     /**
@@ -257,65 +261,69 @@ public class AnnotationCommandProcessor<T, S> {
 
         return (sender, args) -> {
             try {
-                Object result;
-                Parameter[] params = tcMethod.method.getParameters();
-
-                if (params.length == 0) {
-                    result = tcMethod.method.invoke(tcMethod.handler);
-                } else if (params.length == 1) {
-                    Object resolvedSender = senderResolver.resolve(sender, params[0].getType());
-                    result = tcMethod.method.invoke(tcMethod.handler, resolvedSender);
-                } else {
-                    Object resolvedSender = senderResolver.resolve(sender, params[0].getType());
-                    String current = !args.isEmpty() ? args.getLast() : "";
-                    result = tcMethod.method.invoke(tcMethod.handler, resolvedSender, current);
-                }
-
+                Object result = invokeTabCompleter(tcMethod, sender, args);
                 return (List<String>) result;
             } catch (Exception e) {
-                throw new RuntimeException("Failed to invoke tab completer", e);
+                throw new RuntimeException(
+                        "Failed to invoke tab completer for command '" + commandPath +
+                        "', argument '" + argName + "', method '" + tcMethod.method.getName() + "'", e);
             }
         };
+    }
+
+    private Object invokeTabCompleter(TabCompleterMethod tcMethod, S sender, List<String> args) throws Exception {
+        Parameter[] params = tcMethod.method.getParameters();
+
+        if (params.length == 0) {
+            return tcMethod.method.invoke(tcMethod.handler);
+        }
+
+        Object resolvedSender = senderResolver.resolve(sender, params[0].getType());
+        if (params.length == 1) {
+            return tcMethod.method.invoke(tcMethod.handler, resolvedSender);
+        }
+
+        String current = !args.isEmpty() ? args.getLast() : "";
+        return tcMethod.method.invoke(tcMethod.handler, resolvedSender, current);
     }
 
     private void invokeMethod(Object handler, Method method, S sender, Arguments args) {
         try {
             Parameter[] params = method.getParameters();
-            Object[] invokeArgs = new Object[params.length];
-
-            for (int i = 0; i < params.length; i++) {
-                Parameter param = params[i];
-                Class<?> paramType = param.getType();
-                boolean isOptional = paramType == Optional.class;
-
-                // First param: sender
-                if (i == 0) {
-                    Class<?> senderType = isOptional ? extractOptionalType(param) : paramType;
-                    if (senderResolver.canResolve(senderType)) {
-                        Object resolved = senderResolver.resolve(sender, senderType);
-                        invokeArgs[i] = isOptional ? Optional.ofNullable(resolved) : resolved;
-                        continue;
-                    }
-                }
-
-                // Other params: @Arg
-                Arg argAnnotation = param.getAnnotation(Arg.class);
-                if (argAnnotation != null) {
-                    String argName = argAnnotation.value();
-
-                    if (isOptional) {
-                        invokeArgs[i] = args.getOptional(argName);
-                    } else {
-                        invokeArgs[i] = args.get(argName);
-                    }
-                }
-            }
-
+            Object[] invokeArgs = buildInvokeArgs(params, sender, args);
             method.invoke(handler, invokeArgs);
-
         } catch (Exception e) {
             throw new RuntimeException("Failed to invoke command method: " + method.getName(), e);
         }
+    }
+
+    private Object[] buildInvokeArgs(Parameter[] params, S sender, Arguments args) {
+        Object[] invokeArgs = new Object[params.length];
+
+        for (int i = 0; i < params.length; i++) {
+            Parameter param = params[i];
+
+            if (i == 0 && isSenderParameter(param)) {
+                invokeArgs[i] = resolveSender(param, sender);
+            } else {
+                invokeArgs[i] = resolveArgument(param, args);
+            }
+        }
+        return invokeArgs;
+    }
+
+    private Object resolveSender(Parameter param, S sender) {
+        Class<?> paramType = param.getType();
+        boolean isOptional = paramType == Optional.class;
+        Class<?> senderType = isOptional ? extractOptionalType(param) : paramType;
+        Object resolved = senderResolver.resolve(sender, senderType);
+        return isOptional ? Optional.ofNullable(resolved) : resolved;
+    }
+
+    private Object resolveArgument(Parameter param, Arguments args) {
+        String argName = getArgumentName(param);
+        boolean isOptional = param.getType() == Optional.class;
+        return isOptional ? args.getOptional(argName) : args.get(argName);
     }
 
     private record CommandMethodInfo(Object handler, Method method, String name) {}

@@ -32,24 +32,49 @@ public class Arguments {
         this.logger = logger;
     }
 
+    /**
+     * Convert all arguments to a simple map of String to Object.
+     *
+     * @return an unmodifiable map containing argument names as keys and their values
+     */
     public Map<String, Object> toMap() {
         Map<String, Object> result = new HashMap<>();
         arguments.forEach((k, v) -> result.put(k, v.value()));
         return result;
     }
 
+    /**
+     * Get the number of arguments stored.
+     *
+     * @return the number of arguments
+     */
     public int size() {
         return arguments.size();
     }
 
+    /**
+     * Check if there are no arguments stored.
+     *
+     * @return true if there are no arguments, false otherwise
+     */
     public boolean isEmpty() {
         return arguments.isEmpty();
     }
 
+    /**
+     * Get all argument keys.
+     *
+     * @return an unmodifiable set of argument names
+     */
     public Set<String> getKeys() {
         return Collections.unmodifiableSet(arguments.keySet());
     }
 
+    /**
+     * Iterate over all arguments and apply the given action.
+     *
+     * @param action the action to apply to each argument (key, value)
+     */
     public void forEach(BiConsumer<String, Object> action) {
         arguments.forEach((k, v) -> action.accept(k, v.value()));
     }

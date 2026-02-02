@@ -17,10 +17,9 @@ import fr.traqueur.commands.api.parsing.ArgumentParser;
 import fr.traqueur.commands.api.parsing.ParseError;
 import fr.traqueur.commands.api.parsing.ParseResult;
 import fr.traqueur.commands.api.updater.Updater;
+import fr.traqueur.commands.api.utils.Patterns;
 import fr.traqueur.commands.impl.arguments.BooleanArgument;
-import fr.traqueur.commands.impl.arguments.DoubleArgument;
-import fr.traqueur.commands.impl.arguments.IntegerArgument;
-import fr.traqueur.commands.impl.arguments.LongArgument;
+import fr.traqueur.commands.impl.arguments.NumberArgument;
 import fr.traqueur.commands.impl.logging.InternalLogger;
 import fr.traqueur.commands.impl.logging.InternalMessageHandler;
 import fr.traqueur.commands.impl.parsing.DefaultArgumentParser;
@@ -159,7 +158,7 @@ public abstract class CommandManager<T, S> {
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregisterCommand(String label, boolean subcommands) {
-        String[] rawArgs = label.split("\\.");
+        String[] rawArgs = Patterns.DOT.split(label);
         Optional<Command<T, S>> commandOptional = this.commands.findNode(rawArgs)
                 .flatMap(result -> result.node().getCommand());
 
@@ -371,7 +370,7 @@ public abstract class CommandManager<T, S> {
         }
         List<Argument<S>> args = command.getArgs();
         List<Argument<S>> optArgs = command.getOptionalArgs();
-        String[] labelParts = label.split("\\.");
+        String[] labelParts = Patterns.DOT.split(label);
         int labelSize = labelParts.length;
 
         command.setManager(this);
@@ -472,11 +471,15 @@ public abstract class CommandManager<T, S> {
         // Primitive types (int.class, long.class, etc.) are registered to support primitive method parameters.
         this.registerConverter(Boolean.class, new BooleanArgument<>());
         this.registerConverter(boolean.class, new BooleanArgument<>());
-        this.registerConverter(Integer.class, new IntegerArgument());
-        this.registerConverter(int.class, new IntegerArgument());
-        this.registerConverter(Double.class, new DoubleArgument());
-        this.registerConverter(double.class, new DoubleArgument());
-        this.registerConverter(Long.class, new LongArgument());
-        this.registerConverter(long.class, new LongArgument());
+        this.registerConverter(Integer.class, new NumberArgument<>(Integer::valueOf));
+        this.registerConverter(int.class, new NumberArgument<>(Integer::valueOf));
+        this.registerConverter(Double.class, new NumberArgument<>(Double::valueOf));
+        this.registerConverter(double.class, new NumberArgument<>(Double::valueOf));
+        this.registerConverter(Long.class, new NumberArgument<>(Long::valueOf));
+        this.registerConverter(long.class, new NumberArgument<>(Long::valueOf));
+        this.registerConverter(Float.class, new NumberArgument<>(Float::valueOf));
+        this.registerConverter(float.class, new NumberArgument<>(Float::valueOf));
+        this.registerConverter(Byte.class, new NumberArgument<>(Byte::valueOf));
+        this.registerConverter(byte.class, new NumberArgument<>(Byte::valueOf));
     }
 }

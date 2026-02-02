@@ -54,4 +54,20 @@ public class InternalMessageHandler implements MessageHandler {
         return "&cThis command is currently disabled.";
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getArgumentTooLongMessage() {
+        return "&cArgument &e%arg% &cexceeds maximum length.";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getInvalidFormatMessage() {
+        return "&cInvalid format for argument &e%arg%&c.";
+    }
+
 }
