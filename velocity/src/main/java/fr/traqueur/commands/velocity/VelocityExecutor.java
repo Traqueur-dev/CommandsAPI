@@ -37,7 +37,8 @@ public class VelocityExecutor<T> implements RawCommand {
     @Override
     public void execute(Invocation invocation) {
         CommandSource source = invocation.source();
-        String[] args = invocation.arguments().split(" ");
+        String rawInput = invocation.arguments();
+        String[] args = rawInput.isEmpty() ? new String[0] : rawInput.split(" ");
         String label = invocation.alias();
         String labelLower = label.toLowerCase();
         this.manager.getInvoker().invoke(source, labelLower, args);
@@ -53,7 +54,8 @@ public class VelocityExecutor<T> implements RawCommand {
     @Override
     public List<String> suggest(Invocation invocation) {
         CommandSource source = invocation.source();
-        String[] args = invocation.arguments().split(" ");
+        String rawInput = invocation.arguments();
+        String[] args = rawInput.isEmpty() ? new String[0] : rawInput.split(" ", -1);
         String label = invocation.alias();
         String labelLower = label.toLowerCase();
         return this.manager.getInvoker().suggest(source, labelLower, args);
