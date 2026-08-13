@@ -11,12 +11,15 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -145,7 +148,7 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
 
         if (!alreadyInTree && alreadyInMap && !alreadyOurs) {
             if (command.isOverride()) {
-                alreadyInMap = !this.freeLabel(cmdLabel);
+                alreadyInMap = !this.releaseLabel(cmdLabel);
             } else {
                 String owner = existing instanceof PluginCommand ownerCommand
                         ? "the plugin " + ownerCommand.getPlugin().getName()
@@ -193,28 +196,58 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
     }
 
     /**
-     * Removes the command currently holding a label so that it can be registered again.
+     * Makes the command currently holding a label give it up, so that a new registration can claim it.
      *
-     * <p>Only the plain label is dropped: the namespaced entry ({@code minecraft:gamemode},
-     * {@code otherplugin:home}) is left in place, so the overridden command stays reachable — this is
-     * how a plugin command shadows a vanilla one on Spigot.</p>
+     * <p>The command map refuses a label whose holder still claims it as its own
+     * ({@code conflict.getLabel().equals(label)}), and only lets a command be relabelled while it is
+     * detached. So the holder is unregistered, then relabelled to its namespaced form: the plain
+     * label is up for grabs and the next {@code register} overwrites it, while the namespaced entry
+     * ({@code minecraft:gamemode}, {@code otherplugin:home}) keeps pointing at it — this is how a
+     * plugin command shadows a vanilla one on Spigot.</p>
      *
-     * @param label The label to free.
-     * @return {@code true} if the label is now free.
+     * @param label The label to release.
+     * @return {@code true} if the label can now be claimed.
      */
-    private boolean freeLabel(String label) {
+    private boolean releaseLabel(String label) {
         org.bukkit.command.Command existing = commandMap.getCommand(label);
         if (existing == null) {
             return true;
         }
-        if (!(commandMap instanceof SimpleCommandMap simpleCommandMap)) {
-            getLogger().warning("Cannot override command '" + label + "': the server command map is a "
-                    + commandMap.getClass().getName() + ", which does not expose its known commands.");
-            return false;
-        }
-        simpleCommandMap.getKnownCommands().remove(label);
+
+        String namespace = this.namespaceOf(existing, label);
         existing.unregister(commandMap);
-        return commandMap.getCommand(label) == null;
+        existing.setLabel(namespace + ":" + label);
+
+        org.bukkit.command.Command holder = commandMap.getCommand(label);
+        boolean released = holder == null || !label.equals(holder.getLabel());
+        if (!released) {
+            getLogger().warning("Cannot override command '" + label + "': the server did not let "
+                    + holder.getClass().getName() + " release the label.");
+        }
+        return released;
+    }
+
+    /**
+     * Finds the namespace a command is registered under, by probing the command map for the
+     * namespaced entry that points back at it.
+     *
+     * @param command The registered command.
+     * @param label   The label it is registered under.
+     * @return The namespace, or {@code overridden} when none could be confirmed.
+     */
+    private String namespaceOf(org.bukkit.command.Command command, String label) {
+        List<String> candidates = new ArrayList<>();
+        if (command instanceof PluginCommand pluginCommand) {
+            candidates.add(pluginCommand.getPlugin().getName().toLowerCase(Locale.ENGLISH));
+        }
+        candidates.addAll(Arrays.asList("minecraft", "bukkit", "spigot", "paper"));
+
+        for (String candidate : candidates) {
+            if (commandMap.getCommand(candidate + ":" + label) == command) {
+                return candidate;
+            }
+        }
+        return "overridden";
     }
 
     /**
