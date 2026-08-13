@@ -11,6 +11,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.command.PluginIdentifiableCommand;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -146,14 +147,20 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
         boolean alreadyOurs = existing instanceof PluginCommand pluginCommand
                 && pluginCommand.getExecutor() == spigotExecutor;
 
+        boolean overriding = false;
+
         if (!alreadyInTree && alreadyInMap && !alreadyOurs) {
             if (command.isOverride()) {
-                alreadyInMap = !this.releaseLabel(cmdLabel);
+                overriding = true;
+                this.releaseLabel(cmdLabel);
+                // The command map has the last word, not the release attempt: a server can hand the
+                // label over on its own (Paper lets any vanilla command be overridden), and the
+                // registration is the only thing that says whether the takeover actually happened.
+                // Refusing to even try, on the sole ground that the holder did not step aside, is
+                // how an override ended up doing nothing at all on Paper.
+                alreadyInMap = false;
             } else {
-                String owner = existing instanceof PluginCommand ownerCommand
-                        ? "the plugin " + ownerCommand.getPlugin().getName()
-                        : "the server";
-                getLogger().warning("Command '" + cmdLabel + "' is already registered by " + owner
+                getLogger().warning("Command '" + cmdLabel + "' is already registered by " + this.ownerOf(existing)
                         + " and was not bound: that command answers instead."
                         + " Mark it as an override to take the label over.");
             }
@@ -173,7 +180,16 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
                 );
 
                 if (!commandMap.register(cmdLabel, plugin.getName(), cmd)) {
-                    getLogger().severe("Unable to add command " + cmdLabel);
+                    if (overriding) {
+                        // Not a failed registration: the command is bound, under its namespaced form
+                        // only (the command map relabels what it refuses). Saying which name answers
+                        // is the difference between a bug report and a permission to fix.
+                        getLogger().warning("Cannot override command '" + cmdLabel + "': the label is still held by "
+                                + this.ownerOf(commandMap.getCommand(cmdLabel)) + "."
+                                + " '/" + plugin.getName().toLowerCase(Locale.ENGLISH) + ":" + cmdLabel + "' answers instead.");
+                    } else {
+                        getLogger().severe("Unable to add command " + cmdLabel);
+                    }
                     return;
                 }
             } catch (Exception e) {
@@ -205,26 +221,43 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
      * ({@code minecraft:gamemode}, {@code otherplugin:home}) keeps pointing at it — this is how a
      * plugin command shadows a vanilla one on Spigot.</p>
      *
+     * <p>Best effort, and deliberately silent: on a Brigadier-backed server the map is a live view
+     * over the dispatcher, and a label held by something that is not a Bukkit command (a vanilla
+     * command, or one registered through the modern API) is wrapped into a NEW object on every
+     * lookup — so both calls below land on a throwaway and change nothing. That is not a failure:
+     * those same servers let the registration overwrite the holder by itself. The label is still
+     * released here for the case the map cannot handle alone, another plugin's legacy command, and
+     * what actually happened is read from the registration, not from here.</p>
+     *
      * @param label The label to release.
-     * @return {@code true} if the label can now be claimed.
      */
-    private boolean releaseLabel(String label) {
+    private void releaseLabel(String label) {
         org.bukkit.command.Command existing = commandMap.getCommand(label);
         if (existing == null) {
-            return true;
+            return;
         }
 
         String namespace = this.namespaceOf(existing, label);
         existing.unregister(commandMap);
         existing.setLabel(namespace + ":" + label);
+    }
 
-        org.bukkit.command.Command holder = commandMap.getCommand(label);
-        boolean released = holder == null || !label.equals(holder.getLabel());
-        if (!released) {
-            getLogger().warning("Cannot override command '" + label + "': the server did not let "
-                    + holder.getClass().getName() + " release the label.");
+    /**
+     * Names who currently answers on a label, for a log line the reader can act on.
+     *
+     * <p>Identification goes through {@link PluginIdentifiableCommand} rather than
+     * {@link PluginCommand}: a command registered through a modern Brigadier API is not a
+     * {@code PluginCommand}, but it does carry its plugin — reporting it as "the server" would send
+     * the reader looking for a conflict on the wrong side.</p>
+     *
+     * @param command The command holding the label, may be {@code null}.
+     * @return A human readable owner.
+     */
+    private String ownerOf(org.bukkit.command.Command command) {
+        if (command instanceof PluginIdentifiableCommand identifiable) {
+            return "the plugin " + identifiable.getPlugin().getName();
         }
-        return released;
+        return "the server";
     }
 
     /**
@@ -237,8 +270,8 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
      */
     private String namespaceOf(org.bukkit.command.Command command, String label) {
         List<String> candidates = new ArrayList<>();
-        if (command instanceof PluginCommand pluginCommand) {
-            candidates.add(pluginCommand.getPlugin().getName().toLowerCase(Locale.ENGLISH));
+        if (command instanceof PluginIdentifiableCommand identifiable) {
+            candidates.add(identifiable.getPlugin().getName().toLowerCase(Locale.ENGLISH));
         }
         candidates.addAll(Arrays.asList("minecraft", "bukkit", "spigot", "paper"));
 
