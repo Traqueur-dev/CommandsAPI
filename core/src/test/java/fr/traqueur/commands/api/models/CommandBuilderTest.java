@@ -72,6 +72,39 @@ class CommandBuilderTest {
         assertFalse(cmd.inGameOnly());
     }
 
+    @Test
+    void build_withoutOverride_defaultsToFalse() {
+        Command<Object, MockSender> cmd = manager.command("test")
+                .executor((sender, args) -> {
+                })
+                .build();
+
+        assertFalse(cmd.isOverride());
+    }
+
+    @Test
+    void build_withOverride_setsFlag() {
+        Command<Object, MockSender> cmd = manager.command("test")
+                .override()
+                .executor((sender, args) -> {
+                })
+                .build();
+
+        assertTrue(cmd.isOverride());
+    }
+
+    @Test
+    void build_withOverrideFalse_clearsFlag() {
+        Command<Object, MockSender> cmd = manager.command("test")
+                .override()
+                .override(false)
+                .executor((sender, args) -> {
+                })
+                .build();
+
+        assertFalse(cmd.isOverride());
+    }
+
     // --- Arguments ---
 
     @Test

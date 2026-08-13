@@ -22,6 +22,7 @@ public class CommandBuilder<T, S> {
     private String usage = "";
     private String permission = "";
     private boolean gameOnly = false;
+    private boolean override = false;
     private BiConsumer<S, Arguments> executor;
 
     /**
@@ -86,6 +87,28 @@ public class CommandBuilder<T, S> {
      */
     public CommandBuilder<T, S> gameOnly(boolean gameOnly) {
         this.gameOnly = gameOnly;
+        return this;
+    }
+
+    /**
+     * Take over the label even if it is already registered on the platform (a vanilla command, or a
+     * command owned by another plugin): the existing registration is removed first.
+     *
+     * @return this builder for chaining
+     */
+    public CommandBuilder<T, S> override() {
+        this.override = true;
+        return this;
+    }
+
+    /**
+     * Set whether this command takes over an already registered label.
+     *
+     * @param override true to take over the label, false to leave the existing command in place
+     * @return this builder for chaining
+     */
+    public CommandBuilder<T, S> override(boolean override) {
+        this.override = override;
         return this;
     }
 
@@ -233,6 +256,7 @@ public class CommandBuilder<T, S> {
         this.command.setUsage(this.usage);
         this.command.setPermission(this.permission);
         this.command.setGameOnly(this.gameOnly);
+        this.command.setOverride(this.override);
         this.command.setExecutor(this.executor);
 
         return this.command;

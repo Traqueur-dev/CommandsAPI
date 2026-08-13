@@ -17,7 +17,29 @@ multi-platform support.
 * ✅ **Permission & Context Requirements**
 * ✅ **Optional and Infinite Arguments**
 * ✅ **Auto-Generated Usage Help**
+* ✅ **Overriding of Existing Labels** (vanilla or another plugin)
 * ✅ **Lightweight, Fast, and Fully Extensible**
+
+---
+
+## 🔁 Overriding an existing command
+
+A label already registered on the platform — a vanilla command such as `/gamemode`, `/tp`, `/ban`,
+or one owned by another plugin — is **left alone by default**: the command is not bound and the
+existing one keeps answering. This is now logged as a warning, instead of failing silently.
+
+To take the label over, mark the command as an override:
+
+```java
+@Command(name = "gamemode", permission = "admin.gamemode", override = true)
+public void gamemode(Player sender, @Arg("mode") GameMode mode) { ... }
+
+// or, with the builder
+manager.command("gamemode").override().executor(...).register();
+```
+
+The previous command stays reachable through its namespace (`/minecraft:gamemode`,
+`/otherplugin:home`) — only the plain label changes hands.
 
 ---
 

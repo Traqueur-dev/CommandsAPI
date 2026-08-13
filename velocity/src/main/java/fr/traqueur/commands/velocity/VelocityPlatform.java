@@ -125,7 +125,21 @@ public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
                 .getRoot()
                 .getChildren()
                 .containsKey(cmdLabel);
-        boolean alreadyInMap = velocityCmdManager.getCommandMeta(cmdLabel) != null;
+        com.velocitypowered.api.command.CommandMeta existing = velocityCmdManager.getCommandMeta(cmdLabel);
+        boolean alreadyInMap = existing != null;
+        // An alias we registered ourselves comes back through here: nothing to take over.
+        boolean alreadyOurs = alreadyInMap && this.plugin.equals(existing.getPlugin());
+
+        if (!alreadyInTree && alreadyInMap && !alreadyOurs) {
+            if (command.isOverride()) {
+                velocityCmdManager.unregister(cmdLabel);
+                alreadyInMap = velocityCmdManager.getCommandMeta(cmdLabel) != null;
+            } else {
+                this.getLogger().warning("Command '" + cmdLabel + "' is already registered on the proxy"
+                        + " and was not bound: that command answers instead."
+                        + " Mark it as an override to take the label over.");
+            }
+        }
 
         if (!alreadyInTree && !alreadyInMap) {
             String[] aliases = command.getAliases().stream()

@@ -85,6 +85,11 @@ public abstract class Command<T, S> {
     private boolean subcommand;
 
     /**
+     * If the command takes over a label already registered on the platform.
+     */
+    private boolean override;
+
+    /**
      * The constructor of the command.
      *
      * @param plugin The plugin that owns the command.
@@ -104,6 +109,7 @@ public abstract class Command<T, S> {
         this.requirements = new ArrayList<>();
         this.subcommand = false;
         this.enable = true;
+        this.override = false;
     }
 
     /**
@@ -433,6 +439,29 @@ public abstract class Command<T, S> {
      */
     public final boolean isSubCommand() {
         return subcommand;
+    }
+
+    /**
+     * Check if the command takes over a label already registered on the platform.
+     *
+     * <p>By default a label already known to the platform (a vanilla command such as
+     * {@code /gamemode}, or a command owned by another plugin) is left untouched and the command is
+     * simply not registered. When this flag is set, the existing registration is removed first so
+     * that this command answers instead.</p>
+     *
+     * @return if the command overrides an existing label.
+     */
+    public final boolean isOverride() {
+        return override;
+    }
+
+    /**
+     * Set if the command takes over a label already registered on the platform.
+     *
+     * @param override if the command overrides an existing label.
+     */
+    public final void setOverride(boolean override) {
+        this.override = override;
     }
 
     /**

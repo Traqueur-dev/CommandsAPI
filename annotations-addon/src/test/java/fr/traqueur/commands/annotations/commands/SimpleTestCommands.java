@@ -31,4 +31,10 @@ public class SimpleTestCommands {
         executedCommands.add("add");
         executedArgs.add(new Object[]{sender, a, b});
     }
+
+    @Command(name = "gamemode", description = "Takes over an existing label", override = true)
+    public void gamemodeCommand(MockSender sender) {
+        executedCommands.add("gamemode");
+        executedArgs.add(new Object[]{sender});
+    }
 }

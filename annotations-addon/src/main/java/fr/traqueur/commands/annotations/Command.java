@@ -54,8 +54,24 @@ public @interface Command {
     /**
      * The usage string displayed on incorrect usage.
      * If empty, auto-generated from arguments.
-     * 
+     *
      * @return the usage string
      */
     String usage() default "";
+
+    /**
+     * Whether this command takes over its label when it is already registered on the platform.
+     *
+     * <p>By default the platform keeps the existing command — a vanilla one such as
+     * {@code /gamemode}, {@code /tp}, {@code /ban}, or one owned by another plugin — and this
+     * command is simply never bound, silently. Set this to {@code true} to unregister the existing
+     * label first so that this command answers instead. On Spigot the previous command stays
+     * reachable through its namespace ({@code /minecraft:gamemode}).</p>
+     *
+     * <p>Only meaningful on a root label: for {@code name = "home.set"} it is the {@code home}
+     * label that would be taken over.</p>
+     *
+     * @return true if the command overrides an existing label
+     */
+    boolean override() default false;
 }

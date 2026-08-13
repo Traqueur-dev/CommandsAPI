@@ -11,6 +11,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -136,7 +137,24 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
                 .getRoot()
                 .getChildren()
                 .containsKey(cmdLabel);
-        boolean alreadyInMap = commandMap.getCommand(cmdLabel) != null;
+        org.bukkit.command.Command existing = commandMap.getCommand(cmdLabel);
+        boolean alreadyInMap = existing != null;
+        // An alias we registered ourselves comes back through here: nothing to take over.
+        boolean alreadyOurs = existing instanceof PluginCommand pluginCommand
+                && pluginCommand.getExecutor() == spigotExecutor;
+
+        if (!alreadyInTree && alreadyInMap && !alreadyOurs) {
+            if (command.isOverride()) {
+                alreadyInMap = !this.freeLabel(cmdLabel);
+            } else {
+                String owner = existing instanceof PluginCommand ownerCommand
+                        ? "the plugin " + ownerCommand.getPlugin().getName()
+                        : "the server";
+                getLogger().warning("Command '" + cmdLabel + "' is already registered by " + owner
+                        + " and was not bound: that command answers instead."
+                        + " Mark it as an override to take the label over.");
+            }
+        }
 
         if (!alreadyInTree && !alreadyInMap) {
             try {
@@ -160,13 +178,43 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
             }
         }
 
-        if (!command.getDescription().equalsIgnoreCase("") && labelParts.length == 1) {
-            Objects.requireNonNull(commandMap.getCommand(cmdLabel)).setDescription(command.getDescription());
+        // Only decorate our own registration: on a label we did not take over, the command sitting in
+        // the map belongs to the server or to another plugin.
+        if (labelParts.length == 1
+                && commandMap.getCommand(cmdLabel) instanceof PluginCommand registered
+                && registered.getPlugin().equals(plugin)) {
+            if (!command.getDescription().isEmpty()) {
+                registered.setDescription(command.getDescription());
+            }
+            if (!command.getUsage().isEmpty()) {
+                registered.setUsage(command.getUsage());
+            }
         }
+    }
 
-        if (!command.getUsage().equalsIgnoreCase("") && labelParts.length == 1) {
-            Objects.requireNonNull(commandMap.getCommand(cmdLabel)).setUsage(command.getUsage());
+    /**
+     * Removes the command currently holding a label so that it can be registered again.
+     *
+     * <p>Only the plain label is dropped: the namespaced entry ({@code minecraft:gamemode},
+     * {@code otherplugin:home}) is left in place, so the overridden command stays reachable — this is
+     * how a plugin command shadows a vanilla one on Spigot.</p>
+     *
+     * @param label The label to free.
+     * @return {@code true} if the label is now free.
+     */
+    private boolean freeLabel(String label) {
+        org.bukkit.command.Command existing = commandMap.getCommand(label);
+        if (existing == null) {
+            return true;
         }
+        if (!(commandMap instanceof SimpleCommandMap simpleCommandMap)) {
+            getLogger().warning("Cannot override command '" + label + "': the server command map is a "
+                    + commandMap.getClass().getName() + ", which does not expose its known commands.");
+            return false;
+        }
+        simpleCommandMap.getKnownCommands().remove(label);
+        existing.unregister(commandMap);
+        return commandMap.getCommand(label) == null;
     }
 
     /**

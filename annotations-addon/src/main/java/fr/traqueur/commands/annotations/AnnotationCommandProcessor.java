@@ -153,7 +153,8 @@ public class AnnotationCommandProcessor<T, S> {
         CommandBuilder<T, S> builder = manager.command(commandName)
                 .description(annotation.description())
                 .permission(annotation.permission())
-                .usage(annotation.usage());
+                .usage(annotation.usage())
+                .override(annotation.override());
 
         if (method.isAnnotationPresent(Alias.class)) {
             Alias aliasAnnotation = method.getAnnotation(Alias.class);

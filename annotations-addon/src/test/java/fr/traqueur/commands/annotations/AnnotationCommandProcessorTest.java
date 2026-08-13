@@ -44,6 +44,25 @@ class AnnotationCommandProcessorTest {
         }
 
         @Test
+        @DisplayName("should not override an existing label by default")
+        void shouldNotOverrideByDefault() {
+            SimpleTestCommands commands = new SimpleTestCommands();
+            processor.register(commands);
+
+            assertFalse(platform.getCommand("test").isOverride());
+        }
+
+        @Test
+        @DisplayName("should carry the override flag to the platform")
+        void shouldCarryOverrideFlag() {
+            SimpleTestCommands commands = new SimpleTestCommands();
+            processor.register(commands);
+
+            assertTrue(platform.hasCommand("gamemode"));
+            assertTrue(platform.getCommand("gamemode").isOverride());
+        }
+
+        @Test
         @DisplayName("should register command with string argument")
         void shouldRegisterCommandWithStringArg() {
             SimpleTestCommands commands = new SimpleTestCommands();
