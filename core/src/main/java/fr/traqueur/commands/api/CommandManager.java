@@ -7,6 +7,7 @@ import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
+import fr.traqueur.commands.api.logging.MessageFormatter;
 import fr.traqueur.commands.api.logging.MessageHandler;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandBuilder;
@@ -64,6 +65,11 @@ public abstract class CommandManager<T, S> {
     private MessageHandler messageHandler;
 
     /**
+     * The message formatter of the command manager, or null if the messages are sent as-is.
+     */
+    private MessageFormatter<S> messageFormatter;
+
+    /**
      * The logger of the command manager.
      */
     private Logger logger;
@@ -84,6 +90,7 @@ public abstract class CommandManager<T, S> {
         this.platform = platform;
         this.platform.injectManager(this);
         this.messageHandler = new InternalMessageHandler();
+        this.messageFormatter = null;
         this.logger = new InternalLogger(platform.getLogger());
         this.debug = false;
         this.commands = new CommandTree<>();
@@ -110,6 +117,59 @@ public abstract class CommandManager<T, S> {
      */
     public void setMessageHandler(MessageHandler messageHandler) {
         this.messageHandler = messageHandler;
+    }
+
+    /**
+     * Get the message formatter of the command manager.
+     *
+     * @return The message formatter of the command manager, or null if none is registered.
+     */
+    public MessageFormatter<S> getMessageFormatter() {
+        return this.messageFormatter;
+    }
+
+    /**
+     * Set the message formatter of the command manager.
+     * <p>
+     * The formatter is applied to every message the library sends, right before it leaves,
+     * and it knows the sender it is sent to. It is the place to add a plugin prefix, to
+     * render MiniMessage, to resolve external placeholders, or to translate a message for
+     * a given sender.
+     * </p>
+     * <p>
+     * Passing null removes the formatter and restores the default behaviour, where messages
+     * are sent exactly as the {@link MessageHandler} produced them.
+     * </p>
+     * <p>
+     * Example:
+     * </p>
+     * <pre>{@code
+     * manager.setMessageFormatter((sender, raw) -> "&8[&bMyPlugin&8] " + raw);
+     * }</pre>
+     *
+     * @param messageFormatter The message formatter to set, or null to remove it.
+     * @since 5.3.0
+     */
+    public void setMessageFormatter(MessageFormatter<S> messageFormatter) {
+        this.messageFormatter = messageFormatter;
+    }
+
+    /**
+     * Format a message for a sender through the registered message formatter.
+     * <p>
+     * This is the single formatting point of the library: every message sent by the
+     * command handling goes through it, whatever the platform and whatever the sending
+     * path. When no formatter is registered, the message is returned unchanged.
+     * </p>
+     *
+     * @param sender  The sender the message is about to be sent to.
+     * @param message The message, with the internal placeholders already substituted.
+     * @return The message to send.
+     * @since 5.3.0
+     */
+    public String formatMessage(S sender, String message) {
+        MessageFormatter<S> formatter = this.messageFormatter;
+        return formatter == null ? message : formatter.format(sender, message);
     }
 
     /**

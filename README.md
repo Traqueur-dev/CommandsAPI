@@ -18,6 +18,7 @@ multi-platform support.
 * ✅ **Optional and Infinite Arguments**
 * ✅ **Auto-Generated Usage Help**
 * ✅ **Overriding of Existing Labels** (vanilla or another plugin)
+* ✅ **Message Formatter** (prefix, MiniMessage, placeholders, per-sender translation)
 * ✅ **Lightweight, Fast, and Fully Extensible**
 
 ---
@@ -40,6 +41,49 @@ manager.command("gamemode").override().executor(...).register();
 
 The previous command stays reachable through its namespace (`/minecraft:gamemode`,
 `/otherplugin:home`) — only the plain label changes hands.
+
+---
+
+## 💬 Formatting command messages
+
+The messages the library sends — no permission, only in-game, command disabled, unmet
+requirement, usage, unrecognised argument — come from the `MessageHandler`. A **message
+formatter** is the last step before one of them leaves, and unlike the handler it knows
+**who** the message is being sent to:
+
+```java
+public interface MessageFormatter<S> {
+    String format(S sender, String raw);
+}
+```
+
+Register one on the manager:
+
+```java
+// A plugin prefix, without repeating it in every message of the handler
+manager.setMessageFormatter((sender, raw) -> "&8[&bMyPlugin&8] " + raw);
+
+// MiniMessage, serialized back to the legacy format
+manager.setMessageFormatter((sender, raw) -> LegacyComponentSerializer.legacySection()
+        .serialize(MiniMessage.miniMessage().deserialize(raw)));
+
+// External placeholders, resolved for the sender the message is about to reach
+manager.setMessageFormatter((sender, raw) -> sender instanceof Player player
+        ? PlaceholderAPI.setPlaceholders(player, raw)
+        : raw);
+```
+
+The formatter is called on every sending path, including the direct interaction replies of
+the JDA platform, and it receives the message **after** the internal placeholders (`%arg%`,
+`%requirement%`) have been substituted, so it always sees the final text. Setting it back to
+`null` restores the default behaviour: with no formatter registered, messages are sent
+exactly as the handler produced them.
+
+> ⚠️ Messages are plain `String` in and out, because the `core` module also serves platforms
+> without Adventure, such as JDA. A consumer working with `Component` has to serialize it,
+> usually to the legacy `§` format, which drops `hover` and `click` events — command messages
+> such as "you do not have permission" do not need them, and honouring them would mean
+> pulling Adventure into `core`.
 
 ---
 
