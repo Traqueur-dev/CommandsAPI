@@ -20,6 +20,10 @@ jobs:
     name: Build and Publish CommandsAPI
     uses: GroupeZ-dev/actions/.github/workflows/build.yml@main
     with:
+      # Gradle 8.14 (gradle/wrapper/gradle-wrapper.properties) supports Java 24 at most:
+      # the shared workflow now defaults to Java 25, which fails while compiling the build
+      # scripts. Pin the toolchain to the version the project targets.
+      java-version: "21"
       default-branch: "master"
       project-name: "CommandsAPI"
       publish: true

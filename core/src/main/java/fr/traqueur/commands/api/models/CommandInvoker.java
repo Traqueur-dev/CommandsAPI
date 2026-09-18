@@ -99,7 +99,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
      */
     private boolean checkEnabled(S source, Command<T, S> command) {
         if (!command.isEnabled()) {
-            manager.getPlatform().sendMessage(source, manager.getMessageHandler().getCommandDisabledMessage());
+            this.sendMessage(source, manager.getMessageHandler().getCommandDisabledMessage());
             return false;
         }
         return true;
@@ -114,7 +114,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
      */
     private boolean checkInGameOnly(S source, Command<T, S> command) {
         if (command.inGameOnly() && !manager.getPlatform().isPlayer(source)) {
-            manager.getPlatform().sendMessage(source, manager.getMessageHandler().getOnlyInGameMessage());
+            this.sendMessage(source, manager.getMessageHandler().getOnlyInGameMessage());
             return false;
         }
         return true;
@@ -130,7 +130,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
     private boolean checkPermission(S source, Command<T, S> command) {
         String perm = command.getPermission();
         if (!perm.isEmpty() && !manager.getPlatform().hasPermission(source, perm)) {
-            manager.getPlatform().sendMessage(source, manager.getMessageHandler().getNoPermissionMessage());
+            this.sendMessage(source, manager.getMessageHandler().getNoPermissionMessage());
             return false;
         }
         return true;
@@ -147,7 +147,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
         for (Requirement<S> req : command.getRequirements()) {
             if (!req.check(source)) {
                 String msg = buildRequirementMessage(req);
-                manager.getPlatform().sendMessage(source, msg);
+                this.sendMessage(source, msg);
                 return false;
             }
         }
@@ -183,7 +183,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
 
         if (args.length < min || args.length > max) {
             String usage = buildUsageMessage(source, context);
-            manager.getPlatform().sendMessage(source, usage);
+            this.sendMessage(source, usage);
             return false;
         }
         return true;
@@ -231,7 +231,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
      * @return false to indicate internal error
      */
     private boolean handleTypeArgumentError(S source) {
-        manager.getPlatform().sendMessage(source, "&cInternal error: invalid argument type");
+        this.sendMessage(source, "&cInternal error: invalid argument type");
         return false;
     }
 
@@ -244,8 +244,23 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
      */
     private boolean handleArgumentIncorrectError(S source, ArgumentIncorrectException e) {
         String msg = manager.getMessageHandler().getArgNotRecognized().replace("%arg%", e.getInput());
-        manager.getPlatform().sendMessage(source, msg);
+        this.sendMessage(source, msg);
         return true;
+    }
+
+    /**
+     * Sends a message to the sender, through the message formatter of the manager.
+     * <p>
+     * Every message this invoker emits goes through here, so a formatter registered with
+     * {@link CommandManager#setMessageFormatter} sees them all, once the internal
+     * placeholders have been substituted. Without a formatter the message is sent as-is.
+     * </p>
+     *
+     * @param source  the command sender
+     * @param message the message to send
+     */
+    private void sendMessage(S source, String message) {
+        manager.getPlatform().sendMessage(source, manager.formatMessage(source, message));
     }
 
     /**

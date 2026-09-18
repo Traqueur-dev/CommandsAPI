@@ -47,13 +47,13 @@ public class JDAExecutor<T> extends ListenerAdapter {
                 commandManager.getCommands().findNode(labelParts);
 
         if (found.isEmpty()) {
-            event.reply("Command not found!").setEphemeral(true).queue();
+            reply(event, context, "Command not found!");
             return;
         }
 
         Command<T, JDAInteractionContext> command = found.get().node().getCommand().orElse(null);
         if (command == null) {
-            event.reply("Command implementation not found!").setEphemeral(true).queue();
+            reply(event, context, "Command implementation not found!");
             return;
         }
 
@@ -68,7 +68,7 @@ public class JDAExecutor<T> extends ListenerAdapter {
         if (result.isError()) {
             String msg = commandManager.getMessageHandler().getArgNotRecognized()
                     .replace("%arg%", result.error().argumentName() != null ? result.error().argumentName() : "unknown");
-            event.reply(msg).setEphemeral(true).queue();
+            reply(event, context, msg);
             return;
         }
 
@@ -77,9 +77,25 @@ public class JDAExecutor<T> extends ListenerAdapter {
         } catch (Exception e) {
             commandManager.getLogger().error("Error executing command " + label + ": " + e.getMessage());
             if (!event.isAcknowledged()) {
-                event.reply("An error occurred!").setEphemeral(true).queue();
+                reply(event, context, "An error occurred!");
             }
         }
+    }
+
+    /**
+     * Replies to an interaction, through the message formatter of the manager.
+     * <p>
+     * The JDA executor answers the interaction directly instead of going through
+     * {@link fr.traqueur.commands.api.models.CommandPlatform#sendMessage}, so every reply goes
+     * through here to reach the same formatting point as the other platforms.
+     * </p>
+     *
+     * @param event   the interaction to reply to
+     * @param context the wrapped interaction, used as the recipient of the message
+     * @param message the message to send
+     */
+    private void reply(SlashCommandInteractionEvent event, JDAInteractionContext context, String message) {
+        event.reply(commandManager.formatMessage(context, message)).setEphemeral(true).queue();
     }
 
     private boolean validateCommand(JDAInteractionContext context,
@@ -87,23 +103,20 @@ public class JDAExecutor<T> extends ListenerAdapter {
                                     Command<T, JDAInteractionContext> command) {
         // Enabled check
         if (!command.isEnabled()) {
-            event.reply(commandManager.getMessageHandler().getCommandDisabledMessage())
-                    .setEphemeral(true).queue();
+            reply(event, context, commandManager.getMessageHandler().getCommandDisabledMessage());
             return false;
         }
 
         // Game-only check
         if (command.inGameOnly() && !event.isFromGuild()) {
-            event.reply(commandManager.getMessageHandler().getOnlyInGameMessage())
-                    .setEphemeral(true).queue();
+            reply(event, context, commandManager.getMessageHandler().getOnlyInGameMessage());
             return false;
         }
 
         // Permission check
         String perm = command.getPermission();
         if (!perm.isEmpty() && !commandManager.getPlatform().hasPermission(context, perm)) {
-            event.reply(commandManager.getMessageHandler().getNoPermissionMessage())
-                    .setEphemeral(true).queue();
+            reply(event, context, commandManager.getMessageHandler().getNoPermissionMessage());
             return false;
         }
 
@@ -114,7 +127,7 @@ public class JDAExecutor<T> extends ListenerAdapter {
                         ? commandManager.getMessageHandler().getRequirementMessage()
                         .replace("%requirement%", req.getClass().getSimpleName())
                         : req.errorMessage();
-                event.reply(msg).setEphemeral(true).queue();
+                reply(event, context, msg);
                 return false;
             }
         }
