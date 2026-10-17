@@ -9,8 +9,10 @@ import java.lang.annotation.Target;
  * Defines a tab completer for a specific argument of a command.
  * 
  * <p>The annotated method must return {@code List<String>} and can have
- * the sender as first parameter, followed by the current input string.</p>
- * 
+ * the sender as first parameter, followed by either the current input string
+ * ({@code String}) or every argument typed so far ({@code List<String>}, the last
+ * element being the current input) when the completion depends on an earlier argument.</p>
+ *
  * <p>Example:</p>
  * <pre>{@code
  * @Command(name = "warp")

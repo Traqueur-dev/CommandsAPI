@@ -337,6 +337,40 @@ class AnnotationCommandProcessorTest {
             assertEquals(1, args.size());
             assertNotNull(args.get(0).tabCompleter());
         }
+
+        @Test
+        @DisplayName("should pass the current input to a String completer")
+        void shouldPassCurrentInputToStringCompleter() {
+            TabCompleteTestCommands commands = new TabCompleteTestCommands();
+            processor.register(commands);
+
+            Argument<MockSender> world = platform.getCommand("world").getArgs().get(0);
+            List<String> result = world.tabCompleter().onCompletion(player(), List.of("world_n"));
+
+            assertEquals(List.of("world_nether"), result);
+            assertEquals(List.of("world:world_n"), commands.tabCompleteInvocations);
+        }
+
+        @Test
+        @DisplayName("should pass every typed argument to a List completer")
+        void shouldPassTypedArgumentsToListCompleter() {
+            TabCompleteTestCommands commands = new TabCompleteTestCommands();
+            processor.register(commands);
+
+            Argument<MockSender> item = platform.getCommand("give").getArgs().get(1);
+            List<String> result = item.tabCompleter().onCompletion(player(), List.of("Steve", "sw"));
+
+            assertEquals(List.of("Steve:sword"), result);
+            assertEquals(List.of("give:Steve,sw"), commands.tabCompleteInvocations);
+        }
+
+        private MockPlayer player() {
+            return new MockPlayer() {
+                @Override public String getName() { return "tester"; }
+                @Override public void sendMessage(String message) { }
+                @Override public boolean hasPermission(String permission) { return true; }
+            };
+        }
     }
 
     @Nested

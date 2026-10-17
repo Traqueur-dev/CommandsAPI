@@ -284,6 +284,11 @@ public class AnnotationCommandProcessor<T, S> {
             return tcMethod.method.invoke(tcMethod.handler, resolvedSender);
         }
 
+        // A List second parameter receives every argument typed so far, for completions that depend
+        // on an earlier argument; a String one receives only the argument being typed.
+        if (List.class.isAssignableFrom(params[1].getType())) {
+            return tcMethod.method.invoke(tcMethod.handler, resolvedSender, args);
+        }
         String current = !args.isEmpty() ? args.getLast() : "";
         return tcMethod.method.invoke(tcMethod.handler, resolvedSender, current);
     }

@@ -42,6 +42,18 @@ public class TabCompleteTestCommands {
             .toList();
     }
 
+    @Command(name = "give", description = "Give an item")
+    public void give(MockPlayer sender, @Arg("target") String target, @Arg("item") String item) {
+        executedCommands.add("give:" + target + ":" + item);
+    }
+
+    // Tab completer receiving every argument typed so far
+    @TabComplete(command = "give", arg = "item")
+    public List<String> completeGiveItem(MockPlayer sender, List<String> args) {
+        tabCompleteInvocations.add("give:" + String.join(",", args));
+        return List.of(args.getFirst() + ":sword");
+    }
+
     // Tab completer without parameters
     @Command(name = "gamemode", description = "Change gamemode")
     public void gamemode(MockPlayer sender, @Arg("mode") String mode) {
