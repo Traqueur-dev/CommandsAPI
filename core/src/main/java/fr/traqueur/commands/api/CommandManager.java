@@ -7,8 +7,10 @@ import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
+import fr.traqueur.commands.api.logging.MessageDispatcher;
 import fr.traqueur.commands.api.logging.MessageFormatter;
 import fr.traqueur.commands.api.logging.MessageHandler;
+import fr.traqueur.commands.api.logging.MessageKey;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandBuilder;
 import fr.traqueur.commands.api.models.CommandInvoker;
@@ -73,6 +75,11 @@ public abstract class CommandManager<T, S> {
      * The message formatter of the command manager, or null if the messages are sent as-is.
      */
     private MessageFormatter<S> messageFormatter;
+
+    /**
+     * The dispatcher sending messages by key, or null if every message is sent as text.
+     */
+    private MessageDispatcher<S> messageDispatcher;
 
     /**
      * The logger of the command manager.
@@ -179,6 +186,53 @@ public abstract class CommandManager<T, S> {
     public String formatMessage(S sender, String message) {
         MessageFormatter<S> formatter = this.messageFormatter;
         return formatter == null ? message : formatter.format(sender, message);
+    }
+
+    /**
+     * Get the message dispatcher of the command manager.
+     *
+     * @return The message dispatcher, or null if every message is sent as text.
+     * @since 5.5.0
+     */
+    public MessageDispatcher<S> getMessageDispatcher() {
+        return this.messageDispatcher;
+    }
+
+    /**
+     * Set the message dispatcher of the command manager.
+     * <p>
+     * A dispatcher receives every message of the library by its {@link MessageKey}, with its
+     * values apart, before the text path. It is how a platform sends rich messages: on Paper
+     * and Velocity, prefer {@code setComponentFormatter}, which installs one.
+     * </p>
+     *
+     * @param messageDispatcher The dispatcher, or null to send every message as text.
+     * @since 5.5.0
+     */
+    public void setMessageDispatcher(MessageDispatcher<S> messageDispatcher) {
+        this.messageDispatcher = messageDispatcher;
+    }
+
+    /**
+     * Send a library message to a sender.
+     * <p>
+     * The message goes to the {@link MessageDispatcher} first, if one is set. When there is
+     * none, or it declines, the text is sent through {@link #formatMessage} and the platform,
+     * exactly as before 5.5.0.
+     * </p>
+     *
+     * @param receiver     The sender the message is sent to.
+     * @param key          The message.
+     * @param text         The text of the message, with its placeholders already substituted.
+     * @param placeholders The named values of the message, see {@link MessageKey}.
+     * @since 5.5.0
+     */
+    public void sendMessage(S receiver, MessageKey key, String text, Map<String, String> placeholders) {
+        MessageDispatcher<S> dispatcher = this.messageDispatcher;
+        if (dispatcher != null && dispatcher.dispatch(receiver, key, Collections.unmodifiableMap(placeholders))) {
+            return;
+        }
+        this.platform.sendMessage(receiver, this.formatMessage(receiver, text));
     }
 
     /**

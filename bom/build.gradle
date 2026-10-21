@@ -16,6 +16,7 @@ dependencies {
         api(project(':velocity'))
         api(project(':jda'))
         api(project(':annotations-addon'))
+        api(project(':adventure-addon'))
     }
 }
 

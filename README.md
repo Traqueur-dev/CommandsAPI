@@ -79,11 +79,41 @@ the JDA platform, and it receives the message **after** the internal placeholder
 `null` restores the default behaviour: with no formatter registered, messages are sent
 exactly as the handler produced them.
 
-> ⚠️ Messages are plain `String` in and out, because the `core` module also serves platforms
-> without Adventure, such as JDA. A consumer working with `Component` has to serialize it,
-> usually to the legacy `§` format, which drops `hover` and `click` events — command messages
-> such as "you do not have permission" do not need them, and honouring them would mean
-> pulling Adventure into `core`.
+> ℹ️ The text formatter works on plain `String`, because the `core` module also serves
+> platforms without Adventure, such as JDA. To keep `click` and `hover` events, use a
+> component formatter (below) on Paper and Velocity.
+
+### Messages as `Component` (Paper, Velocity)
+
+A **component formatter** builds each message as an Adventure `Component`, which is then sent
+as a component — click and hover events reach the player intact:
+
+```java
+public interface ComponentMessageFormatter<S> {
+    Component format(S receiver, MessageKey key, Map<String, String> placeholders);
+}
+```
+
+The message comes by its `MessageKey` (`NO_PERMISSION`, `ONLY_IN_GAME`, `ARG_NOT_RECOGNIZED`,
+`REQUIREMENT`, `DISABLED`, `TOO_LONG`, `INVALID_FORMAT`, `USAGE`, `INTERNAL_ERROR`), and its values
+come apart, never substituted in the text: `arg` (the input), `requirement` (the requirement's
+`errorMessage()`, or its `name()` when empty) and `usage`.
+
+```java
+// MiniMessage templates from the server's configuration; values become <arg>, <requirement>, <usage>
+manager.setComponentFormatter(ComponentMessageFormatter.miniMessage(
+        key -> getConfig().getString("messages." + key.name().toLowerCase())));
+
+// Or keep the texts in a MessageHandler written in MiniMessage: %arg% is read as <arg>
+manager.setComponentFormatter(ComponentMessageFormatter.miniMessage(myHandler));
+```
+
+Values are inserted as plain text: an argument typed as `<red>abc` is shown as typed. A formatter
+returning `null` for a key sends that message as text, through the `MessageHandler` and the text
+formatter, as before. With a component formatter set, the text formatter only sees those messages.
+
+The formatter lives in the `adventure-addon` module, pulled in by the Paper and Velocity
+platforms. On another Adventure platform, install it with `ComponentMessages.install(manager, formatter)`.
 
 ---
 
@@ -140,6 +170,7 @@ nothing. A server can turn the check off for every plugin with `-Dcommands.updat
 traqueur-dev-commandsapi/
 ├── core/                    # Platform-agnostic command logic
 ├── spigot/                  # Spigot implementation
+├── adventure-addon/         # Component messages, for Adventure platforms
 ├── <platform>-test-plugin/  # The test plugin for the specified platform
 └── velocity/                # Velocity implementation
 ```

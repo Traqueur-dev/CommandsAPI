@@ -3,6 +3,23 @@
 Every minor version ships one batch of changes. Nothing changes for code that does not use the
 new APIs, except where a section says otherwise.
 
+## 5.5.0
+
+### Added
+
+- **Messages as `Component`** on Paper and Velocity: `manager.setComponentFormatter(...)` with a
+  `ComponentMessageFormatter<S>`, which receives the `MessageKey` and the values (`arg`,
+  `requirement`, `usage`) apart, and whose component is sent as a component, click and hover
+  events included. `ComponentMessageFormatter.miniMessage(...)` reads MiniMessage templates, from a
+  function or from a `MessageHandler`.
+- New `adventure-addon` module holding it (`ComponentMessages.install` for other Adventure
+  platforms); the Velocity platform depends on it.
+- Core: `MessageKey`, `MessageDispatcher` and `CommandManager#setMessageDispatcher` /
+  `#sendMessage(receiver, key, text, values)`, the platform-neutral hook the component formatter
+  uses. `MessageHandler#getMessage(MessageKey)` gives the text of a key.
+
+Without a component formatter or a dispatcher, messages are sent exactly as in 5.4.0.
+
 ## 5.4.0
 
 ### Changed

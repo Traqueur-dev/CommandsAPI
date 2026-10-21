@@ -105,6 +105,8 @@ subprojects {
                     artifactId = 'core'
                 } else if (project.name == 'annotations-addon') {
                     artifactId = 'annotations-addon'
+                } else if (project.name == 'adventure-addon') {
+                    artifactId = 'adventure-addon'
                 } else {
                     def platform = project.name.replaceFirst(/^platform-/, '')
                     artifactId = "platform-${platform}"
