@@ -79,11 +79,158 @@ the JDA platform, and it receives the message **after** the internal placeholder
 `null` restores the default behaviour: with no formatter registered, messages are sent
 exactly as the handler produced them.
 
-> ⚠️ Messages are plain `String` in and out, because the `core` module also serves platforms
-> without Adventure, such as JDA. A consumer working with `Component` has to serialize it,
-> usually to the legacy `§` format, which drops `hover` and `click` events — command messages
-> such as "you do not have permission" do not need them, and honouring them would mean
-> pulling Adventure into `core`.
+> ℹ️ The text formatter works on plain `String`, because the `core` module also serves
+> platforms without Adventure, such as JDA. To keep `click` and `hover` events, use a
+> component formatter (below) on Paper and Velocity.
+
+### Messages as `Component` (Paper, Velocity)
+
+A **component formatter** builds each message as an Adventure `Component`, which is then sent
+as a component — click and hover events reach the player intact:
+
+```java
+public interface ComponentMessageFormatter<S> {
+    Component format(S receiver, MessageKey key, Map<String, String> placeholders);
+}
+```
+
+The message comes by its `MessageKey` (`NO_PERMISSION`, `ONLY_IN_GAME`, `ARG_NOT_RECOGNIZED`,
+`REQUIREMENT`, `DISABLED`, `TOO_LONG`, `INVALID_FORMAT`, `USAGE`, `INTERNAL_ERROR`), and its values
+come apart, never substituted in the text: `arg` (the input), `requirement` (the requirement's
+`errorMessage()`, or its `name()` when empty) and `usage`.
+
+```java
+// MiniMessage templates from the server's configuration; values become <arg>, <requirement>, <usage>
+manager.setComponentFormatter(ComponentMessageFormatter.miniMessage(
+        key -> getConfig().getString("messages." + key.name().toLowerCase())));
+
+// Or keep the texts in a MessageHandler written in MiniMessage: %arg% is read as <arg>
+manager.setComponentFormatter(ComponentMessageFormatter.miniMessage(myHandler));
+```
+
+Values are inserted as plain text: an argument typed as `<red>abc` is shown as typed. A formatter
+returning `null` for a key sends that message as text, through the `MessageHandler` and the text
+formatter, as before. With a component formatter set, the text formatter only sees those messages.
+
+The formatter lives in the `adventure-addon` module, pulled in by the Paper and Velocity
+platforms. On another Adventure platform, install it with `ComponentMessages.install(manager, formatter)`.
+
+---
+
+## 🧭 Paper platform (Brigadier)
+
+`platform-paper` registers commands through Paper's Brigadier API (`LifecycleEvents.COMMANDS`)
+instead of the Bukkit command map, so the client knows the shape of each command: arguments are
+coloured, a wrong value is flagged before it is sent, and suggestions come from the tab completers.
+
+```java
+public final class MyPlugin extends JavaPlugin {
+    @Override
+    public void onEnable() {
+        CommandManager<MyPlugin> manager = new fr.traqueur.commands.paper.CommandManager<>(this);
+        manager.command("give").arg("amount", Integer.class).executor((sender, args) -> { ... }).register();
+    }
+}
+```
+
+| CommandsAPI argument | Brigadier node |
+|---|---|
+| `int`/`Integer`, `long`, `double`, `float`, `byte` (library converter) | the matching number |
+| `boolean`/`Boolean` (library converter) | boolean |
+| `Infinite` | greedy string, to the end of the line |
+| `String`, a type with a custom converter, a number with your own converter | word, with the tab completer's suggestions |
+
+The permission and the requirements of a command become the `requires` of its node: a player who
+cannot run a command does not see it. A command is executable once its required arguments are
+given; running it goes through the usual invoker, so conversion, checks and messages are unchanged.
+`setComponentFormatter` is available as on Velocity.
+
+> ℹ️ A word only accepts `0-9 A-Z a-z _ - . +`, as in vanilla: the client refuses a `String`
+> argument holding other characters (accents, `<`, `&`). Declare it `Infinite` when it must accept
+> any text.
+
+### When Paper builds the tree
+
+Paper asks for the commands when it builds its command tree: **once at startup, after the plugins
+are enabled, then on every `/minecraft:reload`**. The nodes are built from what the manager holds
+at that moment. Tested on Paper 1.21.4 and 26.3:
+
+| What happens | Result |
+|---|---|
+| Command registered in `onEnable` | Available at startup. |
+| New label registered after startup | Unknown command until the next `/minecraft:reload` (a warning is logged), then available. |
+| Command unregistered after startup | Its node stays, hidden by its `requires`: unknown command, and the clients' command lists are refreshed. |
+| Same label registered again | Visible again, **with the arguments the node had when it was built**; a changed shape needs a reload. |
+| `unregisterAll()` | Every command of the manager becomes unknown; other plugins' commands stay. |
+
+`platform-spigot` stays available for Spigot, or for a Paper server that prefers the command map.
+
+---
+
+## 📖 Describing the commands
+
+`manager.describe()` returns a public, read-only tree of the commands registered through the
+manager, to generate a plugin's documentation without touching the internal structures:
+
+```java
+for (CommandDescription command : manager.describe()) {
+    System.out.println(command.usage() + " - " + command.description()
+            + (command.permission().isEmpty() ? "" : " (" + command.permission() + ")"));
+    command.requiredArguments();  // List<ArgumentDescription>: name, type, optional, infinite
+    command.optionalArguments();
+    command.subcommands();        // List<CommandDescription>, with their full path ("home set")
+}
+```
+
+The usage is the one set on the command, or the one the library generates, listing every
+subcommand.
+
+---
+
+## 🧹 Removing every command of a manager
+
+When a plugin stops, `unregisterAll()` removes every command its manager registered, with their
+aliases and subcommands:
+
+```java
+@Override
+public void onDisable() {
+    manager.unregisterAll();
+}
+```
+
+Only the commands of **this** manager go: those of other managers, other plugins and the
+server stay in place, including a label another plugin held and this manager did not get.
+
+---
+
+## 🚧 Requirement messages
+
+A requirement that fails sends its `errorMessage()` as-is. When it is empty, the generic
+`MessageHandler#getRequirementMessage()` is sent instead, and its `%requirement%` placeholder
+is filled with `Requirement#name()` — the simple name of the requirement's class by default.
+Override `name()` to show something readable:
+
+```java
+@Override
+public String name() {
+    return "être dans le Nether";
+}
+```
+
+---
+
+## 🔄 Update check
+
+Creating a `CommandManager` makes **no network call**. To be told about a newer version of the
+library, ask for it:
+
+```java
+Updater.checkUpdates(); // asynchronous, logs once
+```
+
+A failed check, or a version that cannot be compared (a build named after a commit), announces
+nothing. A server can turn the check off for every plugin with `-Dcommands.updater=false`.
 
 ---
 
@@ -93,6 +240,8 @@ exactly as the handler produced them.
 traqueur-dev-commandsapi/
 ├── core/                    # Platform-agnostic command logic
 ├── spigot/                  # Spigot implementation
+├── paper/                   # Paper implementation, on Brigadier
+├── adventure-addon/         # Component messages, for Adventure platforms
 ├── <platform>-test-plugin/  # The test plugin for the specified platform
 └── velocity/                # Velocity implementation
 ```
@@ -180,6 +329,21 @@ tasks.withType<JavaCompile>().configureEach {
 ```
 
 > 💡 Without this flag, parameter names default to `arg0`, `arg1`, etc. You can always use `@Arg("name")` explicitly to avoid this requirement.
+
+### Optional arguments and default values
+
+| Parameter | Left out by the sender |
+|---|---|
+| `@Arg("amount") int amount` | required: the usage is sent |
+| `@Arg("amount") Optional<Integer> amount` | `Optional.empty()` |
+| `@Arg("amount") @Default("1") int amount` | `1` |
+| `@Arg("amount") @Default("1") Optional<Integer> amount` | `Optional.of(1)` |
+| `@Arg("text") @Infinite @Default("hello") String text` | `"hello"` |
+
+The `@Default` value is written as the sender would type it and goes through the converter of the
+parameter's type when the command runs, custom converters included. On a primitive parameter, an
+invalid value (`@Default("lots") int`) is refused when the commands are registered. Optional
+parameters must come after the required ones: required arguments are always read first.
 
 ---
 

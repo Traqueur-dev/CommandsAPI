@@ -5,6 +5,7 @@ import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabCompleter;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
+import fr.traqueur.commands.api.logging.MessageKey;
 import fr.traqueur.commands.api.models.collections.CommandTree;
 import fr.traqueur.commands.api.models.collections.CommandTree.MatchResult;
 import fr.traqueur.commands.api.requirements.Requirement;
@@ -99,7 +100,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
      */
     private boolean checkEnabled(S source, Command<T, S> command) {
         if (!command.isEnabled()) {
-            this.sendMessage(source, manager.getMessageHandler().getCommandDisabledMessage());
+            this.sendMessage(source, MessageKey.DISABLED, manager.getMessageHandler().getCommandDisabledMessage(), Map.of());
             return false;
         }
         return true;
@@ -114,7 +115,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
      */
     private boolean checkInGameOnly(S source, Command<T, S> command) {
         if (command.inGameOnly() && !manager.getPlatform().isPlayer(source)) {
-            this.sendMessage(source, manager.getMessageHandler().getOnlyInGameMessage());
+            this.sendMessage(source, MessageKey.ONLY_IN_GAME, manager.getMessageHandler().getOnlyInGameMessage(), Map.of());
             return false;
         }
         return true;
@@ -130,7 +131,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
     private boolean checkPermission(S source, Command<T, S> command) {
         String perm = command.getPermission();
         if (!perm.isEmpty() && !manager.getPlatform().hasPermission(source, perm)) {
-            this.sendMessage(source, manager.getMessageHandler().getNoPermissionMessage());
+            this.sendMessage(source, MessageKey.NO_PERMISSION, manager.getMessageHandler().getNoPermissionMessage(), Map.of());
             return false;
         }
         return true;
@@ -147,7 +148,8 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
         for (Requirement<S> req : command.getRequirements()) {
             if (!req.check(source)) {
                 String msg = buildRequirementMessage(req);
-                this.sendMessage(source, msg);
+                String reason = req.errorMessage().isEmpty() ? requirementName(req) : req.errorMessage();
+                this.sendMessage(source, MessageKey.REQUIREMENT, msg, Map.of(MessageKey.REQUIREMENT_VALUE, reason));
                 return false;
             }
         }
@@ -163,8 +165,20 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
     private String buildRequirementMessage(Requirement<S> req) {
         return req.errorMessage().isEmpty()
                 ? manager.getMessageHandler().getRequirementMessage()
-                .replace("%requirement%", req.getClass().getSimpleName())
+                .replace("%requirement%", requirementName(req))
                 : req.errorMessage();
+    }
+
+    /**
+     * Name a requirement for the generic message, falling back on its class name when
+     * {@link Requirement#name()} gives nothing usable.
+     *
+     * @param req the requirement
+     * @return the name to show
+     */
+    private String requirementName(Requirement<S> req) {
+        String name = req.name();
+        return name == null || name.isBlank() ? req.getClass().getSimpleName() : name;
     }
 
     /**
@@ -183,7 +197,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
 
         if (args.length < min || args.length > max) {
             String usage = buildUsageMessage(source, context);
-            this.sendMessage(source, usage);
+            this.sendMessage(source, MessageKey.USAGE, usage, Map.of(MessageKey.USAGE_VALUE, usage));
             return false;
         }
         return true;
@@ -231,7 +245,7 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
      * @return false to indicate internal error
      */
     private boolean handleTypeArgumentError(S source) {
-        this.sendMessage(source, "&cInternal error: invalid argument type");
+        this.sendMessage(source, MessageKey.INTERNAL_ERROR, "&cInternal error: invalid argument type", Map.of());
         return false;
     }
 
@@ -244,23 +258,27 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
      */
     private boolean handleArgumentIncorrectError(S source, ArgumentIncorrectException e) {
         String msg = manager.getMessageHandler().getArgNotRecognized().replace("%arg%", e.getInput());
-        this.sendMessage(source, msg);
+        this.sendMessage(source, MessageKey.ARG_NOT_RECOGNIZED, msg, Map.of(MessageKey.ARG, Objects.toString(e.getInput(), "")));
         return true;
     }
 
     /**
-     * Sends a message to the sender, through the message formatter of the manager.
+     * Sends a message to the sender, through the message dispatcher or formatter of the manager.
      * <p>
-     * Every message this invoker emits goes through here, so a formatter registered with
-     * {@link CommandManager#setMessageFormatter} sees them all, once the internal
-     * placeholders have been substituted. Without a formatter the message is sent as-is.
+     * Every message this invoker emits goes through here, so a dispatcher registered with
+     * {@link CommandManager#setMessageDispatcher} sees them all by key, and a formatter
+     * registered with {@link CommandManager#setMessageFormatter} sees the text of the others,
+     * once the internal placeholders have been substituted. Without either, the message is
+     * sent as-is.
      * </p>
      *
-     * @param source  the command sender
-     * @param message the message to send
+     * @param source       the command sender
+     * @param key          the message
+     * @param message      the text of the message
+     * @param placeholders the named values of the message
      */
-    private void sendMessage(S source, String message) {
-        manager.getPlatform().sendMessage(source, manager.formatMessage(source, message));
+    private void sendMessage(S source, MessageKey key, String message, Map<String, String> placeholders) {
+        manager.sendMessage(source, key, message, placeholders);
     }
 
     /**

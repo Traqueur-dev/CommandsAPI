@@ -4,11 +4,15 @@ import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabCompleter;
+import fr.traqueur.commands.api.description.ArgumentDescription;
+import fr.traqueur.commands.api.description.CommandDescription;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
+import fr.traqueur.commands.api.logging.MessageDispatcher;
 import fr.traqueur.commands.api.logging.MessageFormatter;
 import fr.traqueur.commands.api.logging.MessageHandler;
+import fr.traqueur.commands.api.logging.MessageKey;
 import fr.traqueur.commands.api.models.Command;
 import fr.traqueur.commands.api.models.CommandBuilder;
 import fr.traqueur.commands.api.models.CommandInvoker;
@@ -47,6 +51,11 @@ public abstract class CommandManager<T, S> {
     private final CommandTree<T, S> commands;
 
     /**
+     * The commands registered through {@link #registerCommand(Command)}, in registration order.
+     */
+    private final Set<Command<T, S>> registered;
+
+    /**
      * The argument converters registered in the command manager.
      */
     private final Map<Class<?>, ArgumentConverter.Wrapper<?>> typeConverters;
@@ -70,6 +79,11 @@ public abstract class CommandManager<T, S> {
     private MessageFormatter<S> messageFormatter;
 
     /**
+     * The dispatcher sending messages by key, or null if every message is sent as text.
+     */
+    private MessageDispatcher<S> messageDispatcher;
+
+    /**
      * The logger of the command manager.
      */
     private Logger logger;
@@ -82,11 +96,14 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Create a new command manager.
+     * <p>
+     * Since 5.4.0, creating a manager makes no network call: call {@link Updater#checkUpdates()}
+     * to check for a newer version of the library.
+     * </p>
      *
      * @param platform The platform of the command manager.
      */
     public CommandManager(CommandPlatform<T, S> platform) {
-        Updater.checkUpdates();
         this.platform = platform;
         this.platform.injectManager(this);
         this.messageHandler = new InternalMessageHandler();
@@ -94,6 +111,7 @@ public abstract class CommandManager<T, S> {
         this.logger = new InternalLogger(platform.getLogger());
         this.debug = false;
         this.commands = new CommandTree<>();
+        this.registered = new LinkedHashSet<>();
         this.typeConverters = new HashMap<>();
         this.completers = new HashMap<>();
         this.invoker = new CommandInvoker<>(this);
@@ -173,6 +191,53 @@ public abstract class CommandManager<T, S> {
     }
 
     /**
+     * Get the message dispatcher of the command manager.
+     *
+     * @return The message dispatcher, or null if every message is sent as text.
+     * @since 5.5.0
+     */
+    public MessageDispatcher<S> getMessageDispatcher() {
+        return this.messageDispatcher;
+    }
+
+    /**
+     * Set the message dispatcher of the command manager.
+     * <p>
+     * A dispatcher receives every message of the library by its {@link MessageKey}, with its
+     * values apart, before the text path. It is how a platform sends rich messages: on Paper
+     * and Velocity, prefer {@code setComponentFormatter}, which installs one.
+     * </p>
+     *
+     * @param messageDispatcher The dispatcher, or null to send every message as text.
+     * @since 5.5.0
+     */
+    public void setMessageDispatcher(MessageDispatcher<S> messageDispatcher) {
+        this.messageDispatcher = messageDispatcher;
+    }
+
+    /**
+     * Send a library message to a sender.
+     * <p>
+     * The message goes to the {@link MessageDispatcher} first, if one is set. When there is
+     * none, or it declines, the text is sent through {@link #formatMessage} and the platform,
+     * exactly as before 5.5.0.
+     * </p>
+     *
+     * @param receiver     The sender the message is sent to.
+     * @param key          The message.
+     * @param text         The text of the message, with its placeholders already substituted.
+     * @param placeholders The named values of the message, see {@link MessageKey}.
+     * @since 5.5.0
+     */
+    public void sendMessage(S receiver, MessageKey key, String text, Map<String, String> placeholders) {
+        MessageDispatcher<S> dispatcher = this.messageDispatcher;
+        if (dispatcher != null && dispatcher.dispatch(receiver, key, Collections.unmodifiableMap(placeholders))) {
+            return;
+        }
+        this.platform.sendMessage(receiver, this.formatMessage(receiver, text));
+    }
+
+    /**
      * Get the debug mode of the command manager.
      *
      * @return If the debug mode is enabled.
@@ -200,6 +265,82 @@ public abstract class CommandManager<T, S> {
             this.addCommand(command, label);
             this.registerSubCommands(label, command.getSubcommands());
         }
+        this.registered.add(command);
+    }
+
+    /**
+     * Unregister every command this manager registered, with their aliases and subcommands.
+     * <p>
+     * Meant for the shutdown of a plugin: only the commands registered through this manager
+     * are removed, the commands of other managers, other plugins and the server stay in place.
+     * Calling it twice, or on a manager without commands, does nothing.
+     * </p>
+     *
+     * @since 5.4.0
+     */
+    public void unregisterAll() {
+        for (Command<T, S> command : new ArrayList<>(this.registered)) {
+            this.unregisterCommand(command, true);
+        }
+        this.registered.clear();
+    }
+
+    /**
+     * Describe the commands registered through this manager.
+     * <p>
+     * The result is a public, read-only tree, in registration order, meant to generate the
+     * documentation of a plugin's commands: name, aliases, description, usage, permission,
+     * required and optional arguments, and subcommands. It is a snapshot: later registrations
+     * do not change it.
+     * </p>
+     *
+     * @return The description of every root command.
+     * @since 5.7.0
+     */
+    public List<CommandDescription> describe() {
+        List<CommandDescription> descriptions = new ArrayList<>();
+        for (Command<T, S> command : this.registered) {
+            descriptions.add(this.describe(command, command.getName().replace('.', ' ')));
+        }
+        return descriptions;
+    }
+
+    private CommandDescription describe(Command<T, S> command, String path) {
+        List<ArgumentDescription> arguments = new ArrayList<>();
+        for (Argument<S> argument : command.getArgs()) {
+            arguments.add(new ArgumentDescription(argument.name(), argument.type().key(), false, argument.isInfinite()));
+        }
+        for (Argument<S> argument : command.getOptionalArgs()) {
+            arguments.add(new ArgumentDescription(argument.name(), argument.type().key(), true, argument.isInfinite()));
+        }
+        List<CommandDescription> subcommands = new ArrayList<>();
+        for (Command<T, S> subcommand : command.getSubcommands()) {
+            subcommands.add(this.describe(subcommand, path + " " + subcommand.getName().replace('.', ' ')));
+        }
+        String usage = command.getUsage().isEmpty() ? this.usageOf(command, path) : command.getUsage();
+        return new CommandDescription(command.getName(), path, command.getAliases(), command.getDescription(),
+                usage, command.getPermission(), command.inGameOnly(), arguments, subcommands);
+    }
+
+    /**
+     * The usage the library generates, in the format of {@link Command#generateDefaultUsage}, but
+     * listing every subcommand, whatever the permission of the reader.
+     */
+    private String usageOf(Command<T, S> command, String path) {
+        StringBuilder usage = new StringBuilder("/").append(path);
+        List<String> subs = command.getSubcommands().stream()
+                .map(sub -> Patterns.DOT.split(sub.getName())[0])
+                .toList();
+        if (!subs.isEmpty()) {
+            usage.append(" <").append(String.join("|", subs)).append(">");
+        }
+        List<String> args = new ArrayList<>();
+        command.getArgs().forEach(argument -> args.add("<" + argument.canonicalName() + ">"));
+        command.getOptionalArgs().forEach(argument -> args.add("[" + argument.canonicalName() + "]"));
+        if (!args.isEmpty()) {
+            usage.append(subs.isEmpty() ? " " : "|").append(String.join(" ", args));
+        }
+        return usage.toString();
     }
 
     /**
@@ -244,6 +385,7 @@ public abstract class CommandManager<T, S> {
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregisterCommand(Command<T, S> command, boolean subcommands) {
+        this.registered.remove(command);
         List<String> labels = new ArrayList<>(command.getAllLabels());
         for (String label : labels) {
             this.removeCommand(label, subcommands);
@@ -302,6 +444,18 @@ public abstract class CommandManager<T, S> {
      */
     public Map<String, Map<Integer, TabCompleter<S>>> getCompleters() {
         return this.completers;
+    }
+
+    /**
+     * Get the converter registered for a type.
+     *
+     * @param type The type.
+     * @return The converter, or null when none is registered.
+     * @since 5.6.0
+     */
+    public ArgumentConverter<?> getConverter(Class<?> type) {
+        ArgumentConverter.Wrapper<?> wrapper = this.typeConverters.get(type);
+        return wrapper == null ? null : wrapper.converter();
     }
 
     /**

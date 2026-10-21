@@ -56,4 +56,29 @@ public interface MessageHandler {
      * @return The invalid format message.
      */
     String getInvalidFormatMessage();
+
+    /**
+     * Get the text of a message by its key.
+     * <p>
+     * The text still holds its placeholders ({@code %arg%}, {@code %requirement%}). Handy for a
+     * {@link MessageDispatcher} or a component formatter that keeps its texts in the handler.
+     * </p>
+     *
+     * @param key The message.
+     * @return The text of the message, or null for {@link MessageKey#USAGE} and
+     * {@link MessageKey#INTERNAL_ERROR}, which the handler does not hold.
+     * @since 5.5.0
+     */
+    default String getMessage(MessageKey key) {
+        return switch (key) {
+            case NO_PERMISSION -> getNoPermissionMessage();
+            case ONLY_IN_GAME -> getOnlyInGameMessage();
+            case ARG_NOT_RECOGNIZED -> getArgNotRecognized();
+            case REQUIREMENT -> getRequirementMessage();
+            case DISABLED -> getCommandDisabledMessage();
+            case TOO_LONG -> getArgumentTooLongMessage();
+            case INVALID_FORMAT -> getInvalidFormatMessage();
+            case USAGE, INTERNAL_ERROR -> null;
+        };
+    }
 }

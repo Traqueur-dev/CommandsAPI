@@ -212,8 +212,21 @@ public class AnnotationCommandProcessor<T, S> {
     private void registerArgument(CommandBuilder<T, S> builder, Parameter param, String commandPath) {
         String argName = getArgumentName(param);
         Class<?> argType = resolveArgumentType(param);
-        boolean isOptional = param.getType() == Optional.class;
+        boolean isOptional = param.getType() == Optional.class || param.isAnnotationPresent(Default.class);
         TabCompleter<S> completer = getTabCompleter(commandPath, argName);
+
+        if (param.isAnnotationPresent(Default.class)
+                && argType != fr.traqueur.commands.api.arguments.Infinite.class
+                && manager.getConverter(argType) == null) {
+            throw new IllegalArgumentException("No converter for the @Default value of parameter '" + argName
+                    + "' of type " + argType.getName() + " in " + commandPath);
+        }
+        // A primitive cannot receive null: its value is checked now rather than when the command runs.
+        if (param.isAnnotationPresent(Default.class) && param.getType().isPrimitive()
+                && convertDefault(param, param.getAnnotation(Default.class).value()) == null) {
+            throw new IllegalArgumentException("The @Default value '" + param.getAnnotation(Default.class).value()
+                    + "' of parameter '" + argName + "' is not a valid " + argType.getName() + " in " + commandPath);
+        }
 
         if (isOptional) {
             builder.optionalArg(argName, argType, completer);
@@ -329,7 +342,25 @@ public class AnnotationCommandProcessor<T, S> {
     private Object resolveArgument(Parameter param, Arguments args) {
         String argName = getArgumentName(param);
         boolean isOptional = param.getType() == Optional.class;
+        Default defaultValue = param.getAnnotation(Default.class);
+        if (defaultValue != null) {
+            Optional<Object> given = args.getOptional(argName);
+            Object value = given.isPresent() ? given.get() : convertDefault(param, defaultValue.value());
+            return isOptional ? Optional.ofNullable(value) : value;
+        }
         return isOptional ? args.getOptional(argName) : args.get(argName);
+    }
+
+    /**
+     * Convert the {@link Default} value of a parameter with the converter of its type.
+     */
+    private Object convertDefault(Parameter param, String raw) {
+        Class<?> type = resolveArgumentType(param);
+        if (type == fr.traqueur.commands.api.arguments.Infinite.class) {
+            return raw;
+        }
+        fr.traqueur.commands.api.arguments.ArgumentConverter<?> converter = manager.getConverter(type);
+        return converter == null ? null : converter.apply(raw);
     }
 
     private record CommandMethodInfo(Object handler, Method method, String name) {}

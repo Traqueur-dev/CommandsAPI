@@ -24,4 +24,20 @@ public interface Requirement<S> {
      * @return The error message
      */
     String errorMessage();
+
+    /**
+     * Get the name of the requirement, shown in the generic requirement message.
+     * <p>
+     * When {@link #errorMessage()} is empty, the library sends the generic message of the
+     * {@link fr.traqueur.commands.api.logging.MessageHandler} and fills its
+     * {@code %requirement%} placeholder with this name. Override it to give the sender
+     * something more readable than a class name.
+     * </p>
+     *
+     * @return The name of the requirement, the simple name of its class by default.
+     * @since 5.4.0
+     */
+    default String name() {
+        return this.getClass().getSimpleName();
+    }
 }
