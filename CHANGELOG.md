@@ -3,6 +3,18 @@
 Every minor version ships one batch of changes. Nothing changes for code that does not use the
 new APIs, except where a section says otherwise.
 
+## 5.7.0
+
+### Added
+
+- Annotations: `@Default("value")` makes an argument optional with a value used when it is left
+  out, converted by the parameter type's converter (on an `Optional` parameter, the value is
+  wrapped). An invalid default on a primitive parameter is refused at registration.
+  `Optional<T>` parameters, already supported, are now documented.
+- `CommandManager#describe()` returns a public tree of `CommandDescription` / `ArgumentDescription`
+  records (name, path, aliases, description, usage, permission, in-game only, required and optional
+  arguments, subcommands) to generate a plugin's command documentation.
+
 ## 5.6.0
 
 ### Added

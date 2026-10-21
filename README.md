@@ -167,6 +167,26 @@ at that moment. Tested on Paper 1.21.4 and 26.3:
 
 ---
 
+## 📖 Describing the commands
+
+`manager.describe()` returns a public, read-only tree of the commands registered through the
+manager, to generate a plugin's documentation without touching the internal structures:
+
+```java
+for (CommandDescription command : manager.describe()) {
+    System.out.println(command.usage() + " - " + command.description()
+            + (command.permission().isEmpty() ? "" : " (" + command.permission() + ")"));
+    command.requiredArguments();  // List<ArgumentDescription>: name, type, optional, infinite
+    command.optionalArguments();
+    command.subcommands();        // List<CommandDescription>, with their full path ("home set")
+}
+```
+
+The usage is the one set on the command, or the one the library generates, listing every
+subcommand.
+
+---
+
 ## 🧹 Removing every command of a manager
 
 When a plugin stops, `unregisterAll()` removes every command its manager registered, with their
@@ -309,6 +329,21 @@ tasks.withType<JavaCompile>().configureEach {
 ```
 
 > 💡 Without this flag, parameter names default to `arg0`, `arg1`, etc. You can always use `@Arg("name")` explicitly to avoid this requirement.
+
+### Optional arguments and default values
+
+| Parameter | Left out by the sender |
+|---|---|
+| `@Arg("amount") int amount` | required: the usage is sent |
+| `@Arg("amount") Optional<Integer> amount` | `Optional.empty()` |
+| `@Arg("amount") @Default("1") int amount` | `1` |
+| `@Arg("amount") @Default("1") Optional<Integer> amount` | `Optional.of(1)` |
+| `@Arg("text") @Infinite @Default("hello") String text` | `"hello"` |
+
+The `@Default` value is written as the sender would type it and goes through the converter of the
+parameter's type when the command runs, custom converters included. On a primitive parameter, an
+invalid value (`@Default("lots") int`) is refused when the commands are registered. Optional
+parameters must come after the required ones: required arguments are always read first.
 
 ---
 

@@ -4,6 +4,8 @@ import fr.traqueur.commands.api.arguments.Argument;
 import fr.traqueur.commands.api.arguments.ArgumentConverter;
 import fr.traqueur.commands.api.arguments.Arguments;
 import fr.traqueur.commands.api.arguments.TabCompleter;
+import fr.traqueur.commands.api.description.ArgumentDescription;
+import fr.traqueur.commands.api.description.CommandDescription;
 import fr.traqueur.commands.api.exceptions.ArgumentIncorrectException;
 import fr.traqueur.commands.api.exceptions.TypeArgumentNotExistException;
 import fr.traqueur.commands.api.logging.Logger;
@@ -281,6 +283,64 @@ public abstract class CommandManager<T, S> {
             this.unregisterCommand(command, true);
         }
         this.registered.clear();
+    }
+
+    /**
+     * Describe the commands registered through this manager.
+     * <p>
+     * The result is a public, read-only tree, in registration order, meant to generate the
+     * documentation of a plugin's commands: name, aliases, description, usage, permission,
+     * required and optional arguments, and subcommands. It is a snapshot: later registrations
+     * do not change it.
+     * </p>
+     *
+     * @return The description of every root command.
+     * @since 5.7.0
+     */
+    public List<CommandDescription> describe() {
+        List<CommandDescription> descriptions = new ArrayList<>();
+        for (Command<T, S> command : this.registered) {
+            descriptions.add(this.describe(command, command.getName().replace('.', ' ')));
+        }
+        return descriptions;
+    }
+
+    private CommandDescription describe(Command<T, S> command, String path) {
+        List<ArgumentDescription> arguments = new ArrayList<>();
+        for (Argument<S> argument : command.getArgs()) {
+            arguments.add(new ArgumentDescription(argument.name(), argument.type().key(), false, argument.isInfinite()));
+        }
+        for (Argument<S> argument : command.getOptionalArgs()) {
+            arguments.add(new ArgumentDescription(argument.name(), argument.type().key(), true, argument.isInfinite()));
+        }
+        List<CommandDescription> subcommands = new ArrayList<>();
+        for (Command<T, S> subcommand : command.getSubcommands()) {
+            subcommands.add(this.describe(subcommand, path + " " + subcommand.getName().replace('.', ' ')));
+        }
+        String usage = command.getUsage().isEmpty() ? this.usageOf(command, path) : command.getUsage();
+        return new CommandDescription(command.getName(), path, command.getAliases(), command.getDescription(),
+                usage, command.getPermission(), command.inGameOnly(), arguments, subcommands);
+    }
+
+    /**
+     * The usage the library generates, in the format of {@link Command#generateDefaultUsage}, but
+     * listing every subcommand, whatever the permission of the reader.
+     */
+    private String usageOf(Command<T, S> command, String path) {
+        StringBuilder usage = new StringBuilder("/").append(path);
+        List<String> subs = command.getSubcommands().stream()
+                .map(sub -> Patterns.DOT.split(sub.getName())[0])
+                .toList();
+        if (!subs.isEmpty()) {
+            usage.append(" <").append(String.join("|", subs)).append(">");
+        }
+        List<String> args = new ArrayList<>();
+        command.getArgs().forEach(argument -> args.add("<" + argument.canonicalName() + ">"));
+        command.getOptionalArgs().forEach(argument -> args.add("[" + argument.canonicalName() + "]"));
+        if (!args.isEmpty()) {
+            usage.append(subs.isEmpty() ? " " : "|").append(String.join(" ", args));
+        }
+        return usage.toString();
     }
 
     /**
