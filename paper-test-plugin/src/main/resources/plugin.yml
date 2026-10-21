@@ -1,0 +1,4 @@
+name: PaperTestPlugin
+version: '${version}'
+main: fr.traqueur.papertest.PaperTestPlugin
+api-version: '1.21'

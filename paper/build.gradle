@@ -1,0 +1,24 @@
+repositories {
+    mavenCentral()
+    maven {
+        name = "papermc-repo"
+        url = "https://repo.papermc.io/repository/maven-public/"
+    }
+}
+
+dependencies {
+    api project(":core")
+    api project(":spigot")
+    api project(":adventure-addon")
+    compileOnly "io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"
+    testImplementation "io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"
+    testImplementation project(':core').sourceSets.test.output
+}
+
+// The Spigot API the spigot module compiles against must not shadow Paper's on the test classpath.
+configurations.testRuntimeClasspath {
+    exclude group: 'org.spigotmc', module: 'spigot-api'
+}
+configurations.testCompileClasspath {
+    exclude group: 'org.spigotmc', module: 'spigot-api'
+}

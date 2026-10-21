@@ -45,7 +45,9 @@ public interface ComponentMessageFormatter<S> {
      * {@code <requirement>} and {@code <usage>} tags.
      * <p>
      * The values are inserted as plain text: a value holding MiniMessage tags is shown as typed,
-     * it is not parsed. A key whose template is null falls back to the text path.
+     * it is not parsed. The three tags are known for every key, empty when the key has no such
+     * value, so one template can serve several keys. A key whose template is null falls back to
+     * the text path.
      * </p>
      *
      * @param templates The MiniMessage template of each key.
@@ -71,8 +73,13 @@ public interface ComponentMessageFormatter<S> {
             if (template == null) {
                 return null;
             }
+            Map<String, String> values = new java.util.HashMap<>();
+            values.put(MessageKey.ARG, "");
+            values.put(MessageKey.REQUIREMENT_VALUE, "");
+            values.put(MessageKey.USAGE_VALUE, "");
+            values.putAll(placeholders);
             TagResolver.Builder resolver = TagResolver.builder();
-            placeholders.forEach((name, value) -> resolver.resolver(Placeholder.unparsed(name, value)));
+            values.forEach((name, value) -> resolver.resolver(Placeholder.unparsed(name, value)));
             return miniMessage.deserialize(template, resolver.build());
         };
     }

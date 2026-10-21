@@ -117,6 +117,56 @@ platforms. On another Adventure platform, install it with `ComponentMessages.ins
 
 ---
 
+## 🧭 Paper platform (Brigadier)
+
+`platform-paper` registers commands through Paper's Brigadier API (`LifecycleEvents.COMMANDS`)
+instead of the Bukkit command map, so the client knows the shape of each command: arguments are
+coloured, a wrong value is flagged before it is sent, and suggestions come from the tab completers.
+
+```java
+public final class MyPlugin extends JavaPlugin {
+    @Override
+    public void onEnable() {
+        CommandManager<MyPlugin> manager = new fr.traqueur.commands.paper.CommandManager<>(this);
+        manager.command("give").arg("amount", Integer.class).executor((sender, args) -> { ... }).register();
+    }
+}
+```
+
+| CommandsAPI argument | Brigadier node |
+|---|---|
+| `int`/`Integer`, `long`, `double`, `float`, `byte` (library converter) | the matching number |
+| `boolean`/`Boolean` (library converter) | boolean |
+| `Infinite` | greedy string, to the end of the line |
+| `String`, a type with a custom converter, a number with your own converter | word, with the tab completer's suggestions |
+
+The permission and the requirements of a command become the `requires` of its node: a player who
+cannot run a command does not see it. A command is executable once its required arguments are
+given; running it goes through the usual invoker, so conversion, checks and messages are unchanged.
+`setComponentFormatter` is available as on Velocity.
+
+> ℹ️ A word only accepts `0-9 A-Z a-z _ - . +`, as in vanilla: the client refuses a `String`
+> argument holding other characters (accents, `<`, `&`). Declare it `Infinite` when it must accept
+> any text.
+
+### When Paper builds the tree
+
+Paper asks for the commands when it builds its command tree: **once at startup, after the plugins
+are enabled, then on every `/minecraft:reload`**. The nodes are built from what the manager holds
+at that moment. Tested on Paper 1.21.4 and 26.3:
+
+| What happens | Result |
+|---|---|
+| Command registered in `onEnable` | Available at startup. |
+| New label registered after startup | Unknown command until the next `/minecraft:reload` (a warning is logged), then available. |
+| Command unregistered after startup | Its node stays, hidden by its `requires`: unknown command, and the clients' command lists are refreshed. |
+| Same label registered again | Visible again, **with the arguments the node had when it was built**; a changed shape needs a reload. |
+| `unregisterAll()` | Every command of the manager becomes unknown; other plugins' commands stay. |
+
+`platform-spigot` stays available for Spigot, or for a Paper server that prefers the command map.
+
+---
+
 ## 🧹 Removing every command of a manager
 
 When a plugin stops, `unregisterAll()` removes every command its manager registered, with their
@@ -170,6 +220,7 @@ nothing. A server can turn the check off for every plugin with `-Dcommands.updat
 traqueur-dev-commandsapi/
 ├── core/                    # Platform-agnostic command logic
 ├── spigot/                  # Spigot implementation
+├── paper/                   # Paper implementation, on Brigadier
 ├── adventure-addon/         # Component messages, for Adventure platforms
 ├── <platform>-test-plugin/  # The test plugin for the specified platform
 └── velocity/                # Velocity implementation

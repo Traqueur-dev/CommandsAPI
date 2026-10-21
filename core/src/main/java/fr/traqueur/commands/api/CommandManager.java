@@ -387,6 +387,18 @@ public abstract class CommandManager<T, S> {
     }
 
     /**
+     * Get the converter registered for a type.
+     *
+     * @param type The type.
+     * @return The converter, or null when none is registered.
+     * @since 5.6.0
+     */
+    public ArgumentConverter<?> getConverter(Class<?> type) {
+        ArgumentConverter.Wrapper<?> wrapper = this.typeConverters.get(type);
+        return wrapper == null ? null : wrapper.converter();
+    }
+
+    /**
      * Check if a TabCompleter exists for the given type.
      *
      * @param type The type to check.

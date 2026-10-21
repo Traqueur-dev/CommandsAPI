@@ -3,6 +3,26 @@
 Every minor version ships one batch of changes. Nothing changes for code that does not use the
 new APIs, except where a section says otherwise.
 
+## 5.6.0
+
+### Added
+
+- **`platform-paper`**: registers commands through Paper's Brigadier API (`LifecycleEvents.COMMANDS`).
+  Typed arguments become Brigadier nodes (numbers, boolean, word, greedy string; a type with a
+  custom converter becomes a word with its tab completer's suggestions), permission and
+  requirements become the node's `requires`, and messages can be components
+  (`setComponentFormatter`). Compiled against the Paper API 1.21.4 (Java 21), tested on Paper
+  1.21.4 and 26.3. See the README for what happens to commands added or removed after startup.
+- `BrigadierCommandTree`, the platform-neutral translation of a manager's commands into Brigadier
+  nodes.
+- `CommandManager#getConverter(Class)`.
+- `paper-test-plugin`, a test plugin for the Paper platform.
+
+### Fixed
+
+- `ComponentMessageFormatter.miniMessage(...)`: the `<arg>`, `<requirement>` and `<usage>` tags are
+  known for every key, empty when the key has no such value, instead of being shown as typed.
+
 ## 5.5.0
 
 ### Added

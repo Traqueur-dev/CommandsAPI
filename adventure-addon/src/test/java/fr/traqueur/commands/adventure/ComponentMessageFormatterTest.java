@@ -149,6 +149,15 @@ class ComponentMessageFormatterTest {
         assertNull(formatter.format(sender, MessageKey.INTERNAL_ERROR, Map.of()));
     }
 
+    @Test
+    void absentValues_areEmpty_soOneTemplateServesEveryKey() {
+        ComponentMessageFormatter<MockSender> formatter = ComponentMessageFormatter.miniMessage(key -> key + ":<arg><usage><requirement>");
+
+        Component usage = formatter.format(sender, MessageKey.USAGE, Map.of(MessageKey.USAGE_VALUE, "/give <amount>"));
+
+        assertEquals("USAGE:/give <amount>", PlainTextComponentSerializer.plainText().serialize(usage));
+    }
+
     private void install(ComponentMessageFormatter<MockSender> formatter) {
         ComponentMessages.install(manager, formatter, (receiver, component) -> components.add(component));
     }
