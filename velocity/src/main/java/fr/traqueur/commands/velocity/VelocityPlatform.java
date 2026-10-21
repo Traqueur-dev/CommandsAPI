@@ -163,8 +163,13 @@ public class VelocityPlatform<T> implements CommandPlatform<T, CommandSource> {
      */
     @Override
     public void removeCommand(String label, boolean subcommand) {
-        if (subcommand && this.server.getCommandManager().getCommandMeta(label) != null) {
-            this.server.getCommandManager().unregister(this.server.getCommandManager().getCommandMeta(label));
+        com.velocitypowered.api.command.CommandMeta meta = this.server.getCommandManager().getCommandMeta(label);
+        // Only our own registration goes: a label we did not get belongs to another plugin.
+        if (meta == null || !this.plugin.equals(meta.getPlugin())) {
+            return;
+        }
+        if (subcommand) {
+            this.server.getCommandManager().unregister(meta);
         } else {
             this.server.getCommandManager().unregister(label);
         }

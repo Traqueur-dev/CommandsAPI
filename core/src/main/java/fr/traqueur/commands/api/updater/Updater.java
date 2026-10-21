@@ -54,17 +54,35 @@ public final class Updater {
     /* ------------------------------------------------------------ */
 
     /**
-     * Async update check (non-blocking)
+     * Async update check (non-blocking).
+     * <p>
+     * Nothing in the library calls this: since 5.4.0 a command manager no longer checks for
+     * updates when it is created, so the check only happens when the application asks for it.
+     * A server can still turn it off for every plugin with {@code -Dcommands.updater=false},
+     * in which case this method does nothing.
+     * </p>
+     * <p>
+     * A version is announced as outdated only when the latest version is known and strictly
+     * newer than the current one: a failed check, or a version that cannot be compared (a
+     * build named after a commit), announces nothing.
+     * </p>
      */
     public static void checkUpdates() {
+        if (!UpdaterSettings.isEnabled()) {
+            return;
+        }
         fetchLatestVersionAsync().thenAccept(latest -> {
             if (latest == null) {
                 return;
             }
 
             String current = getVersion();
+            int comparison = VersionComparator.compare(current, latest);
 
-            if (!current.equals(latest)) {
+            if (comparison == VersionComparator.UNKNOWN) {
+                return;
+            }
+            if (comparison < 0) {
                 LOGGER.warning("⚠ CommandsAPI is not up to date!");
                 LOGGER.warning("Current: " + current + " | Latest: " + latest);
             } else {

@@ -87,6 +87,53 @@ exactly as the handler produced them.
 
 ---
 
+## 🧹 Removing every command of a manager
+
+When a plugin stops, `unregisterAll()` removes every command its manager registered, with their
+aliases and subcommands:
+
+```java
+@Override
+public void onDisable() {
+    manager.unregisterAll();
+}
+```
+
+Only the commands of **this** manager go: those of other managers, other plugins and the
+server stay in place, including a label another plugin held and this manager did not get.
+
+---
+
+## 🚧 Requirement messages
+
+A requirement that fails sends its `errorMessage()` as-is. When it is empty, the generic
+`MessageHandler#getRequirementMessage()` is sent instead, and its `%requirement%` placeholder
+is filled with `Requirement#name()` — the simple name of the requirement's class by default.
+Override `name()` to show something readable:
+
+```java
+@Override
+public String name() {
+    return "être dans le Nether";
+}
+```
+
+---
+
+## 🔄 Update check
+
+Creating a `CommandManager` makes **no network call**. To be told about a newer version of the
+library, ask for it:
+
+```java
+Updater.checkUpdates(); // asynchronous, logs once
+```
+
+A failed check, or a version that cannot be compared (a build named after a commit), announces
+nothing. A server can turn the check off for every plugin with `-Dcommands.updater=false`.
+
+---
+
 ## 🧱 Project Structure
 
 ```

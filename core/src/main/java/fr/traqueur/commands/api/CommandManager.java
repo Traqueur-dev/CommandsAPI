@@ -47,6 +47,11 @@ public abstract class CommandManager<T, S> {
     private final CommandTree<T, S> commands;
 
     /**
+     * The commands registered through {@link #registerCommand(Command)}, in registration order.
+     */
+    private final Set<Command<T, S>> registered;
+
+    /**
      * The argument converters registered in the command manager.
      */
     private final Map<Class<?>, ArgumentConverter.Wrapper<?>> typeConverters;
@@ -82,11 +87,14 @@ public abstract class CommandManager<T, S> {
 
     /**
      * Create a new command manager.
+     * <p>
+     * Since 5.4.0, creating a manager makes no network call: call {@link Updater#checkUpdates()}
+     * to check for a newer version of the library.
+     * </p>
      *
      * @param platform The platform of the command manager.
      */
     public CommandManager(CommandPlatform<T, S> platform) {
-        Updater.checkUpdates();
         this.platform = platform;
         this.platform.injectManager(this);
         this.messageHandler = new InternalMessageHandler();
@@ -94,6 +102,7 @@ public abstract class CommandManager<T, S> {
         this.logger = new InternalLogger(platform.getLogger());
         this.debug = false;
         this.commands = new CommandTree<>();
+        this.registered = new LinkedHashSet<>();
         this.typeConverters = new HashMap<>();
         this.completers = new HashMap<>();
         this.invoker = new CommandInvoker<>(this);
@@ -200,6 +209,24 @@ public abstract class CommandManager<T, S> {
             this.addCommand(command, label);
             this.registerSubCommands(label, command.getSubcommands());
         }
+        this.registered.add(command);
+    }
+
+    /**
+     * Unregister every command this manager registered, with their aliases and subcommands.
+     * <p>
+     * Meant for the shutdown of a plugin: only the commands registered through this manager
+     * are removed, the commands of other managers, other plugins and the server stay in place.
+     * Calling it twice, or on a manager without commands, does nothing.
+     * </p>
+     *
+     * @since 5.4.0
+     */
+    public void unregisterAll() {
+        for (Command<T, S> command : new ArrayList<>(this.registered)) {
+            this.unregisterCommand(command, true);
+        }
+        this.registered.clear();
     }
 
     /**
@@ -244,6 +271,7 @@ public abstract class CommandManager<T, S> {
      * @param subcommands If the subcommands must be unregistered.
      */
     public void unregisterCommand(Command<T, S> command, boolean subcommands) {
+        this.registered.remove(command);
         List<String> labels = new ArrayList<>(command.getAllLabels());
         for (String label : labels) {
             this.removeCommand(label, subcommands);

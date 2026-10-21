@@ -163,8 +163,20 @@ public record CommandInvoker<T, S>(CommandManager<T, S> manager) {
     private String buildRequirementMessage(Requirement<S> req) {
         return req.errorMessage().isEmpty()
                 ? manager.getMessageHandler().getRequirementMessage()
-                .replace("%requirement%", req.getClass().getSimpleName())
+                .replace("%requirement%", requirementName(req))
                 : req.errorMessage();
+    }
+
+    /**
+     * Name a requirement for the generic message, falling back on its class name when
+     * {@link Requirement#name()} gives nothing usable.
+     *
+     * @param req the requirement
+     * @return the name to show
+     */
+    private String requirementName(Requirement<S> req) {
+        String name = req.name();
+        return name == null || name.isBlank() ? req.getClass().getSimpleName() : name;
     }
 
     /**

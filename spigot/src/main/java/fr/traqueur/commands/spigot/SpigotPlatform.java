@@ -17,11 +17,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -81,6 +82,23 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
         }
     }
 
+
+    /**
+     * Constructor for tests, with a command map given instead of the server's.
+     *
+     * @param plugin     The plugin.
+     * @param commandMap The command map to register into.
+     */
+    SpigotPlatform(T plugin, CommandMap commandMap) {
+        this.plugin = plugin;
+        this.commandMap = commandMap;
+        try {
+            pluginConstructor = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
+            pluginConstructor.setAccessible(true);
+        } catch (NoSuchMethodException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     /**
      * {@inheritDoc}
@@ -288,9 +306,53 @@ public class SpigotPlatform<T extends JavaPlugin> implements CommandPlatform<T, 
      */
     @Override
     public void removeCommand(String label, boolean subcommand) {
-        if (subcommand && this.commandMap.getCommand(label) != null) {
-            Objects.requireNonNull(this.commandMap.getCommand(label)).unregister(commandMap);
+        if (!subcommand) {
+            return;
         }
+        org.bukkit.command.Command existing = this.commandMap.getCommand(label);
+        // Only our own registration goes: on a label we did not get, the command in the map belongs
+        // to the server or to another plugin, and removing it would break that plugin.
+        if (!(existing instanceof PluginCommand pluginCommand) || pluginCommand.getExecutor() != spigotExecutor) {
+            return;
+        }
+        // Command#unregister only marks the command as detached: the map keeps dispatching to it
+        // through its known commands, under the label, the aliases and the namespaced forms.
+        Map<String, org.bukkit.command.Command> known = this.knownCommands();
+        if (known != null) {
+            known.values().removeIf(registered -> registered == existing);
+        }
+        existing.unregister(commandMap);
+    }
+
+    /**
+     * Finds the live map of the commands known to the command map.
+     * <p>
+     * Paper exposes it as {@code getKnownCommands()}; Spigot keeps it in the protected
+     * {@code knownCommands} field of {@code SimpleCommandMap}.
+     * </p>
+     *
+     * @return The known commands, or null when the command map does not expose them.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, org.bukkit.command.Command> knownCommands() {
+        try {
+            Method getter = this.commandMap.getClass().getMethod("getKnownCommands");
+            return (Map<String, org.bukkit.command.Command>) getter.invoke(this.commandMap);
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // Not a Paper command map: look for the Spigot field.
+        }
+        for (Class<?> type = this.commandMap.getClass(); type != null; type = type.getSuperclass()) {
+            try {
+                Field field = type.getDeclaredField("knownCommands");
+                field.setAccessible(true);
+                return (Map<String, org.bukkit.command.Command>) field.get(this.commandMap);
+            } catch (NoSuchFieldException ignored) {
+                // Keep looking up the hierarchy.
+            } catch (ReflectiveOperationException | RuntimeException e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     @Override
