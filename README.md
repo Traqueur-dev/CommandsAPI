@@ -5,6 +5,8 @@ platforms such as **Spigot** and **Velocity**.
 As of version `4.0.0`, all core logic has been extracted into a dedicated `core` module, enabling seamless
 multi-platform support.
 
+[![CommandsAPI in 40 seconds](docs/media/commandsapi.jpg)](docs/media/commandsapi.mp4)
+
 ---
 
 ## ✨ Features
